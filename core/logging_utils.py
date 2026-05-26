@@ -238,8 +238,8 @@ def setup_logging(
     )
     file_handler.setLevel(level)
     
-    # 콘솔 핸들러
-    console_stream = getattr(sys, "__stderr__", None) or sys.stderr
+    # 콘솔 핸들러 (stdout으로 변경하여 터미널 출력)
+    console_stream = getattr(sys, "__stdout__", None) or sys.stdout
     console_handler = logging.StreamHandler(stream=console_stream)
     console_handler.setLevel(level)
     
