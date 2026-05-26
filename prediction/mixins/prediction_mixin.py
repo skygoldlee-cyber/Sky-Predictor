@@ -803,6 +803,7 @@ class PredictionMixin:
                             "price": float(current_price),
                             "transformer_prob": float(getattr(t_res, "transformer_prob")),
                             "tft_prob": (None if getattr(t_res, "tft_prob", None) is None else float(getattr(t_res, "tft_prob"))),
+                            "llm_actions": llm_actions if isinstance(llm_actions, dict) else {},
                         }
                     )
             except Exception:
