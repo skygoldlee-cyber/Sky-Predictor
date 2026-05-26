@@ -946,7 +946,7 @@ class RealTimeTickProcessor:
 
         # config에서 target_day 읽기
         config = load_config()
-        target_day = config.get("prediction", {}).get("target_day", None)
+        target_day = getattr(config.prediction, "target_day", "")
         # 빈 문자열인 경우 None로 처리
         if target_day == "" or target_day is None:
             target_day = None
@@ -1025,7 +1025,7 @@ class RealTimeTickProcessor:
 
         # config에서 target_day 읽기
         config = load_config()
-        target_day = config.get("prediction", {}).get("target_day", None)
+        target_day = getattr(config.prediction, "target_day", "")
         # 빈 문자열인 경우 None로 처리
         if target_day == "" or target_day is None:
             target_day = None
@@ -1121,7 +1121,7 @@ class RealTimeTickProcessor:
 
         # target_day 변경 확인 및 캐시 초기화
         config = load_config()
-        current_target_day = config.get("prediction", {}).get("target_day", None)
+        current_target_day = getattr(config.prediction, "target_day", "")
         if current_target_day == "" or current_target_day is None:
             current_target_day = None
         if not hasattr(self, "_last_target_day"):
@@ -1345,7 +1345,7 @@ class RealTimeTickProcessor:
 
         # target_day 변경 확인 및 캐시 초기화
         config = load_config()
-        current_target_day = config.get("prediction", {}).get("target_day", None)
+        current_target_day = getattr(config.prediction, "target_day", "")
         if current_target_day == "" or current_target_day is None:
             current_target_day = None
         if not hasattr(self, "_last_target_day"):

@@ -225,6 +225,7 @@ class PredictionConfig:
     sell_threshold: float = 0.38
     confidence_high_margin: float = 0.15
     confidence_mid_margin: float = 0.08
+    target_day: str = ""  # 조회할 타겟 날짜 (YYYYMMDD 형식, 빈 문자열이면 오늘)
     confidence_spread_max_for_high: float = 1.0
     # Conformal 구간 폭이 넓을 때 HIGH/MEDIUM을 낮춤 (검증 세트 Brier/ECE로 튜닝)
     confidence_conformal_width_max_for_high: float = 0.35
