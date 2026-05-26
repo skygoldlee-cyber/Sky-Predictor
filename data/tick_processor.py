@@ -27,6 +27,7 @@ from config import (
     FUTURES_MINUTE_RETENTION_HOURS,
     OPTION_MINUTE_RETENTION_HOURS,
     MAX_FUTURES_TICKS,
+    load_config,
 )
 from core.utils import normalize_ohlcv_columns, parse_ebest_tick_datetime, safe_float, safe_int, parse_chetime
 from core.strike_utils import extract_strike_pt
@@ -925,12 +926,16 @@ class RealTimeTickProcessor:
             return pd.DataFrame()
 
         if date is None:
-            date = datetime.now().strftime("%Y%m%d")
+            date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
+
+        # config에서 target_day 읽기
+        config = load_config()
+        target_day = config.get("prediction", {}).get("target_day", None)
 
         # 더미 뷰 객체 생성 (API 서비스에 필요)
         class DummyView:
             use_replay = False
-            prev_target_day = None
+            prev_target_day = target_day
 
         try:
             import asyncio
@@ -990,12 +995,16 @@ class RealTimeTickProcessor:
             return pd.DataFrame()
 
         if date is None:
-            date = datetime.now().strftime("%Y%m%d")
+            date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
+
+        # config에서 target_day 읽기
+        config = load_config()
+        target_day = config.get("prediction", {}).get("target_day", None)
 
         # 더미 뷰 객체 생성
         class DummyView:
             use_replay = False
-            prev_target_day = None
+            prev_target_day = target_day
 
         try:
             import asyncio
