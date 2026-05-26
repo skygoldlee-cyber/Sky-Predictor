@@ -925,15 +925,19 @@ class RealTimeTickProcessor:
             logger.warning("[TickProcessor] fetch_market_service가 설정되지 않음")
             return pd.DataFrame()
 
-        if date is None:
-            date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
-
         # config에서 target_day 읽기
         config = load_config()
         target_day = config.get("prediction", {}).get("target_day", None)
         # 빈 문자열인 경우 None로 처리
         if target_day == "" or target_day is None:
             target_day = None
+
+        if date is None:
+            # target_day가 설정되어 있으면 해당 날짜 사용, 없으면 오늘 날짜 사용
+            if target_day:
+                date = target_day
+            else:
+                date = datetime.now().strftime("%Y%m%d")
 
         # 더미 뷰 객체 생성 (API 서비스에 필요)
         class DummyView:
@@ -997,12 +1001,19 @@ class RealTimeTickProcessor:
             logger.warning("[TickProcessor] fetch_market_service가 설정되지 않음")
             return pd.DataFrame()
 
-        if date is None:
-            date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
-
         # config에서 target_day 읽기
         config = load_config()
         target_day = config.get("prediction", {}).get("target_day", None)
+        # 빈 문자열인 경우 None로 처리
+        if target_day == "" or target_day is None:
+            target_day = None
+
+        if date is None:
+            # target_day가 설정되어 있으면 해당 날짜 사용, 없으면 오늘 날짜 사용
+            if target_day:
+                date = target_day
+            else:
+                date = datetime.now().strftime("%Y%m%d")
 
         # 더미 뷰 객체 생성
         class DummyView:
