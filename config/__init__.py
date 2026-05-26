@@ -1,5 +1,11 @@
 """Configuration module for SkyPredictor."""
-from .config import AppConfig, load_config, get_config_with_reload, log_ai_provider_keys_loaded
+from .config import (
+    AppConfig,
+    load_config,
+    get_config_with_reload,
+    log_ai_provider_keys_loaded,
+    zigzag_settings_from_dict,
+)
 from .constants import (
     VERSION,
     APP_NAME,
@@ -71,6 +77,7 @@ __all__ = [
     'load_config',
     'get_config_with_reload',
     'log_ai_provider_keys_loaded',
+    'zigzag_settings_from_dict',
     '__version__',
     'VERSION',
     'APP_NAME',
