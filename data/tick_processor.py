@@ -1119,6 +1119,18 @@ class RealTimeTickProcessor:
             minutes = int(getattr(self, "default_futures_minutes", 120) or 120)
             minutes = max(1, int(minutes))
 
+        # target_day 변경 확인 및 캐시 초기화
+        config = load_config()
+        current_target_day = config.get("prediction", {}).get("target_day", None)
+        if current_target_day == "" or current_target_day is None:
+            current_target_day = None
+        if not hasattr(self, "_last_target_day"):
+            self._last_target_day = current_target_day
+        elif self._last_target_day != current_target_day:
+            logger.info("[TickProcessor] target_day 변경 감지: %s -> %s, 캐시 초기화", self._last_target_day, current_target_day)
+            self.clear_minute_cache()
+            self._last_target_day = current_target_day
+
         # API 사용 요청 시
         if use_api and self.fetch_market_service is not None and upcode:
             import asyncio
@@ -1330,6 +1342,18 @@ class RealTimeTickProcessor:
         except Exception:
             minutes = int(getattr(self, "default_futures_minutes", 120) or 120)
             minutes = max(1, int(minutes))
+
+        # target_day 변경 확인 및 캐시 초기화
+        config = load_config()
+        current_target_day = config.get("prediction", {}).get("target_day", None)
+        if current_target_day == "" or current_target_day is None:
+            current_target_day = None
+        if not hasattr(self, "_last_target_day"):
+            self._last_target_day = current_target_day
+        elif self._last_target_day != current_target_day:
+            logger.info("[TickProcessor] target_day 변경 감지: %s -> %s, 캐시 초기화", self._last_target_day, current_target_day)
+            self.clear_minute_cache()
+            self._last_target_day = current_target_day
 
         # API 사용 요청 시
         if use_api and self.fetch_market_service is not None and upcode:
