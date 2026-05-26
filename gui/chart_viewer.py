@@ -2431,7 +2431,8 @@ class ChartViewerWidget:
                     self._fplt_ref.refresh()
                     # 데이터 소스 변경 후 Y축 autorange 트리거
                     if needs_reset and self._renderer:
-                        self._renderer._force_yaxis_range(df)
+                        if hasattr(self._renderer, '_force_yaxis_range'):
+                            self._renderer._force_yaxis_range(df)
                         # refresh() 후에도 v_autozoom 비활성화 유지
                         if hasattr(self._renderer.ax_main, 'vb') and hasattr(self._renderer.ax_main.vb, 'v_autozoom'):
                             self._renderer.ax_main.vb.v_autozoom = False
@@ -2511,7 +2512,8 @@ class ChartViewerWidget:
                     self._fplt_ref.refresh()
                     # 데이터 소스 변경 후 Y축 autorange 트리거
                     if needs_reset and self._renderer:
-                        self._renderer._force_yaxis_range(df)
+                        if hasattr(self._renderer, '_force_yaxis_range'):
+                            self._renderer._force_yaxis_range(df)
                         # refresh() 후에도 v_autozoom 비활성화 유지
                         if hasattr(self._renderer.ax_main, 'vb') and hasattr(self._renderer.ax_main.vb, 'v_autozoom'):
                             self._renderer.ax_main.vb.v_autozoom = False
