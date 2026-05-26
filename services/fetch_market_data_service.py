@@ -74,7 +74,8 @@ class FetchMarketDataService:
                         return (None, None, None, None, None, None, None, pd.DataFrame())
 
             # 전일 데이터 처리 (60분봉)
-            if hasattr(view, 'prev_target_day') and date == str(getattr(view, "prev_target_day", "")):
+            prev_target_day = getattr(view, "prev_target_day", None)
+            if prev_target_day and date == str(prev_target_day):
                 timeframe = 60
 
             # API 요청 파라미터 구성
