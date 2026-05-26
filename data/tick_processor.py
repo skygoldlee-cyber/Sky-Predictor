@@ -931,6 +931,9 @@ class RealTimeTickProcessor:
         # config에서 target_day 읽기
         config = load_config()
         target_day = config.get("prediction", {}).get("target_day", None)
+        # 빈 문자열인 경우 None로 처리
+        if target_day == "" or target_day is None:
+            target_day = None
 
         # 더미 뷰 객체 생성 (API 서비스에 필요)
         class DummyView:
