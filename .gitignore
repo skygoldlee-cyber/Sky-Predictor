@@ -1,0 +1,54 @@
+# Environment files
+.env.local.ps1
+.env.local
+
+# Config secrets
+config.secrets.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Data files
+data/minute_bars/
+data/*.csv
+data/*.npz
+data/*.jsonl
+data/*.jsonl.gz
+
+# Model weights
+prediction/weights/
+*.pt
+*.pth
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backup

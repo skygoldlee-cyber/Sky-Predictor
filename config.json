@@ -1,0 +1,603 @@
+{
+  "log_level": "INFO",
+  "adaptive_mode": false,
+  "ai_providers": {
+    "anthropic": {},
+    "openai": {},
+    "gemini": {}
+  },
+  "ebest": {
+    "kp200_upcode": "A0166000",
+    "kospi_upcode": "001",
+    "target_date": "20260518",
+    "market_close_time": "15:46"
+  },
+  "options_subscription": {
+    "itm": 10,
+    "otm_open_min": 0.5,
+    "max_otm_calls": 30,
+    "max_otm_puts": 40,
+    "wait_sec": 2,
+    "preopen_oh0_window": 10,
+    "oi_itm_count": 10,
+    "oi_otm_count": 10,
+    "oi_rebalance_interval_sec": 60
+  },
+  "option_minute_ohlcv": {
+    "enabled": true,
+    "atm_window": 2
+  },
+  "option_sentiment": {
+    "skew_bullish_threshold": 0.05,
+    "skew_bearish_threshold": -0.05,
+    "volume_pcr_bullish_threshold": 0.8,
+    "volume_pcr_bearish_threshold": 1.2,
+    "oi_pcr_bullish_threshold": 0.9,
+    "oi_pcr_bearish_threshold": 1.1,
+    "skew_weight": 0.3,
+    "volume_pcr_weight": 0.35,
+    "oi_pcr_weight": 0.35,
+    "min_confidence": 0.6,
+    "direction_change_alert": true,
+    "confidence_spike_alert": true,
+    "confidence_spike_threshold": 0.8
+  },
+  "market_regime": {
+    "preset": "balanced",
+    "trading": {
+      "enabled": true,
+      "confidence_threshold": 0.7,
+      "confirmation_bars": 3,
+      "max_changes_per_hour": 3,
+      "position_size_multiplier": 1.0,
+      "use_zigzag_confirmation": false,
+      "use_supertrend_confirmation": true,
+      "use_sentiment_confirmation": true
+    },
+    "presets": {
+      "conservative": {
+        "enable_option_sentiment": false,
+        "sentiment_confidence_boost": 0.1,
+        "sentiment_confidence_penalty": 0.3,
+        "enable_enhanced_trend": true,
+        "ma_short_period": 30,
+        "ma_long_period": 90,
+        "adx_trend_threshold": 30,
+        "adx_weak_threshold": 20,
+        "vol_high_threshold": 0.025,
+        "vol_low_threshold": 0.004
+      },
+      "balanced": {
+        "enable_option_sentiment": true,
+        "sentiment_confidence_boost": 0.2,
+        "sentiment_confidence_penalty": 0.2,
+        "enable_enhanced_trend": true,
+        "ma_short_period": 20,
+        "ma_long_period": 60,
+        "adx_trend_threshold": 25,
+        "adx_weak_threshold": 15,
+        "vol_high_threshold": 0.02,
+        "vol_low_threshold": 0.005
+      },
+      "aggressive": {
+        "enable_option_sentiment": true,
+        "sentiment_confidence_boost": 0.3,
+        "sentiment_confidence_penalty": 0.1,
+        "enable_enhanced_trend": true,
+        "ma_short_period": 10,
+        "ma_long_period": 30,
+        "adx_trend_threshold": 20,
+        "adx_weak_threshold": 10,
+        "vol_high_threshold": 0.015,
+        "vol_low_threshold": 0.006
+      }
+    }
+  },
+  "minute_lookback": {
+    "futures": 60,
+    "options": 60
+  },
+  "market_holidays": [
+    "2026-05-05",
+    "2026-06-06"
+  ],
+  "telegram": {
+    "enabled": true,
+    "option_flow_status_enabled": true,
+    "option_flow_status_cooldown_sec": 300,
+    "option_flow_status_intraday_only": true,
+    "option_flow_status_disable_after_close": true,
+    "option_flow_interp_sr_warn": 1.5,
+    "option_flow_interp_sr_hot": 2.0,
+    "option_flow_interp_pt_low": 0.008,
+    "option_flow_interp_pt_high": 0.03,
+    "option_flow_interp_pcr_v_low": 0.9,
+    "option_flow_interp_pcr_v_high": 1.1,
+    "option_flow_interp_pcr_oi_low": 0.95,
+    "option_flow_interp_pcr_oi_high": 1.05
+  },
+  "meaningful_option_levels": [
+    1.2,
+    2.5,
+    3.5,
+    4.85,
+    5.5
+  ],
+  "chart": {
+    "refresh_ms": 500
+  },
+  "use_llm": false,
+  "prediction_minutes": 0,
+  "seq_len": 60,
+  "fo0_stale_sec": 10,
+  "fo0_log_schema": true,
+  "preferred_provider": "gemini",
+  "prediction": {
+    "numeric_predictor": "transformer",
+    "model_class": "patch_tst",
+    "patch_len": 8,
+    "stride": 4,
+    "mamba_enabled": false,
+    "mamba_weights_path": "",
+    "mamba_weight": 0.33,
+    "mamba_d_state": 16,
+    "mamba_seq_len": 60,
+    "multiscale_5m": true,
+    "conformal_alpha": 0.12,
+    "conformal_path": "",
+    "option_feature_set": "v4",
+    "pcr_atm_strikes_each_side": 3,
+    "multiscale_time_scales": [
+      1,
+      5
+    ],
+    "multiscale_enabled": true,
+    "llm_timeout_sec": 20.0,
+    "gemini_timeout_sec": 45.0,
+    "min_minute_bars_required": 21,
+    "dual_llm": false,
+    "dual_llm_primary_provider": "gemini",
+    "buy_threshold": 0.64,
+    "sell_threshold": 0.36,
+    "transformer_weight": 0.5,
+    "tft_weights_path": "",
+    "tft_horizon": 300,
+    "disagreement_hold": true,
+    "disagreement_hold_prob_diff_max": 0.08,
+    "guard_basis_hold_thr": 2.5,
+    "guard_basis_downgrade_thr": 1.5,
+    "guard_atm_spread_pct_thr": 1.5,
+    "guard_atm_liq_log_thr": 2.0,
+    "llm_min_interval_sec": 30.0,
+    "llm_provider_cooldown_on_timeout_sec": 90.0,
+    "tick_size": 0.05,
+    "feedback_threshold_ticks": 10,
+    "feedback_skip_hold_ticks": 2,
+    "feedback_weight_high": 1.0,
+    "feedback_weight_mid": 0.5,
+    "feedback_weight_low": 0.25,
+    "feedback_use_price_snapshot": true,
+    "feedback_snapshot_tolerance_sec": 30.0,
+    "feedback_snapshot_required": false,
+    "fc0_stale_threshold_sec": 10.0,
+    "fc0_stale_cooldown_sec": 60.0,
+    "oi_alert_cooldown_sec": 120,
+    "transformer_weights_path": "prediction/weights/patch_tst_5m.pt"
+  },
+  "adaptive_indicator": {
+    "enabled": true,
+    "dual_mode": false,
+    "kospi_symbol": "KOSPI 지수",
+    "futures_symbol": "KP200 선물",
+    "warmup_bars": 15,
+    "min_swings_for_ready": 4,
+    "supertrend_pivot_filter": true,
+    "session_min_pivot_interval_table": [
+      [
+        "09:00",
+        "09:30",
+        5
+      ],
+      [
+        "09:30",
+        "10:30",
+        15
+      ],
+      [
+        "10:30",
+        "15:30",
+        10
+      ]
+    ],
+    "higher_tf_pivot_filter": false,
+    "adx_confidence_filter": {
+      "enabled": true,
+      "hold_threshold": 15.0,
+      "weak_threshold": 20.0,
+      "strong_threshold": 35.0
+    },
+    "trade_logging": {
+      "enabled": true,
+      "log_dir": "logs/trades"
+    },
+    "supertrend": {
+      "atr_min_period": 7,
+      "atr_max_period": 21,
+      "multiplier_min": 1.5,
+      "multiplier_max": 4.0,
+      "er_period": 10,
+      "adx_period": 14,
+      "use_bb_correction": true,
+      "adx_mult_norm_cap": 60.0,
+      "bb_correction_floor": 0.7,
+      "bb_correction_ref_pct": 0.05,
+      "bb_period": 20,
+      "bb_std": 2.0,
+      "smooth_period": 3
+    },
+    "ranging_filter": {
+      "adx_min": 18.0,
+      "er_min": 0.2
+    },
+    "zigzag": {
+      "atr_multiplier": 1.5,
+      "atr_period": 14,
+      "pivot_threshold_min_pct": 0.5,
+      "pivot_threshold_max_pct": 3.0,
+      "major_swing_ratio": 1.5,
+      "max_swings": 50,
+      "confirmation_bars": 2,
+      "decay_rate_per_bar": 0.005,
+      "decay_max_pct": 0.3,
+      "major_wave_ratio": 1.5,
+      "major_wave_lookback": 3,
+      "der_mismatch_threshold": 0.3,
+      "der_mismatch_mult_ratio": 0.7,
+      "pivot_lifecycle_log": true,
+      "pivot_lifecycle_log_prefix": "[KP200]",
+      "enable_pivot_collector": false,
+      "pivot_collector_max_sequence": 120,
+      "enable_pivot_filtering": true,
+      "pivot_filter_replace_with_extreme": true,
+      "pivot_filter_min_bar_gap": 0,
+      "use_atr_based_filtering": false,
+      "min_wave_atr_ratio": 1.5,
+      "cluster_atr_ratio": 1.0,
+      "session_min_wave_bars_table": [
+        [
+          "09:00",
+          "09:30",
+          10
+        ],
+        [
+          "09:30",
+          "10:30",
+          7
+        ],
+        [
+          "10:30",
+          "14:30",
+          8
+        ],
+        [
+          "14:30",
+          "15:20",
+          10
+        ],
+        [
+          "15:20",
+          "15:30",
+          15
+        ]
+      ],
+      "session_min_wave_atr_ratio_table": [
+        [
+          "08:45",
+          "09:30",
+          3.5
+        ],
+        [
+          "09:30",
+          "10:30",
+          2.0
+        ],
+        [
+          "10:30",
+          "13:00",
+          1.5
+        ],
+        [
+          "13:00",
+          "14:30",
+          1.2
+        ],
+        [
+          "14:30",
+          "15:20",
+          1.8
+        ],
+        [
+          "15:20",
+          "15:31",
+          2.5
+        ]
+      ],
+      "er_period": 10,
+      "atr_multiplier_min": 1.0,
+      "atr_multiplier_max": 4.0,
+      "freeze_on_confirm": true,
+      "min_wave_bars": 1,
+      "min_wave_pct": 0.4,
+      "cluster_tolerance_pct": 0.3,
+      "structure_lookback_swings": 30,
+      "structure_points": 4,
+      "use_hybrid_mode": false,
+      "base_pct": 0.3,
+      "atr_weight": 1.0,
+      "multiplier_min": 0.8,
+      "multiplier_max": 2.0,
+      "session_multiplier_table": []
+    },
+    "kospi_zigzag": {
+      "pivot_lifecycle_log": true,
+      "pivot_lifecycle_log_prefix": "[KOSPI]",
+      "min_wave_atr_ratio": 0.5,
+      "cluster_atr_ratio": 1.0,
+      "min_wave_pct": 0.3,
+      "min_wave_bars": 5,
+      "atr_multiplier": 1.0,
+      "atr_multiplier_min": 0.6,
+      "atr_multiplier_max": 2.0,
+      "confirmation_bars": 1,
+      "confirmation_bars_ranging": 1,
+      "confirmation_bars_unknown": 1,
+      "freeze_on_confirm": false,
+      "pivot_threshold_min_pct": 0.3,
+      "pivot_threshold_max_pct": 2.0,
+      "use_atr_based_filtering": false,
+      "major_swing_ratio": 1.5,
+      "cluster_tolerance_pct": 0.1,
+      "multi_timeframe_enabled": false,
+      "multi_timeframe_scales": [
+        1,
+        5,
+        15
+      ],
+      "multi_timeframe_consensus_threshold": 2,
+      "session_min_wave_bars_table": [
+        [
+          "09:00",
+          "09:30",
+          4
+        ],
+        [
+          "09:30",
+          "10:30",
+          4
+        ],
+        [
+          "10:30",
+          "15:30",
+          5
+        ]
+      ],
+      "session_min_wave_atr_ratio_table": [
+        [
+          "09:00",
+          "09:30",
+          0.3
+        ],
+        [
+          "09:30",
+          "10:30",
+          0.25
+        ],
+        [
+          "10:30",
+          "13:00",
+          0.2
+        ],
+        [
+          "13:00",
+          "14:30",
+          0.15
+        ],
+        [
+          "14:30",
+          "15:20",
+          0.2
+        ],
+        [
+          "15:20",
+          "15:31",
+          0.25
+        ]
+      ],
+      "multi_timeframe_price_tolerance_pct": 1.0,
+      "multi_timeframe_index_tolerance_multiplier": 2.0,
+      "enable_pivot_collector": true,
+      "pivot_collector_max_sequence": 120
+    },
+    "futures_zigzag": {
+      "pivot_lifecycle_log": true,
+      "pivot_lifecycle_log_prefix": "[KP200]",
+      "use_atr_based_filtering": false,
+      "min_wave_atr_ratio": 0.6,
+      "cluster_atr_ratio": 1.0,
+      "min_wave_pct": 0.25,
+      "pivot_threshold_min_pct": 0.25,
+      "min_wave_bars": 5,
+      "atr_multiplier": 1.0,
+      "atr_multiplier_min": 0.6,
+      "atr_multiplier_max": 2.0,
+      "confirmation_bars": 1,
+      "confirmation_bars_ranging": 1,
+      "confirmation_bars_unknown": 1,
+      "freeze_on_confirm": true,
+      "pivot_threshold_max_pct": 2.0,
+      "major_swing_ratio": 1.5,
+      "cluster_tolerance_pct": 0.1,
+      "multi_timeframe_enabled": false,
+      "multi_timeframe_scales": [
+        1,
+        5,
+        15
+      ],
+      "multi_timeframe_consensus_threshold": 2,
+      "session_min_wave_bars_table": [
+        [
+          "09:00",
+          "09:30",
+          5
+        ],
+        [
+          "09:30",
+          "10:30",
+          4
+        ],
+        [
+          "10:30",
+          "15:30",
+          6
+        ]
+      ],
+      "session_min_wave_atr_ratio_table": [
+        [
+          "08:45",
+          "09:30",
+          0.6
+        ],
+        [
+          "09:30",
+          "10:30",
+          0.5
+        ],
+        [
+          "10:30",
+          "13:00",
+          0.4
+        ],
+        [
+          "13:00",
+          "14:30",
+          0.3
+        ],
+        [
+          "14:30",
+          "15:20",
+          0.4
+        ],
+        [
+          "15:20",
+          "15:31",
+          0.5
+        ]
+      ],
+      "multi_timeframe_price_tolerance_pct": 1.0,
+      "multi_timeframe_index_tolerance_multiplier": 2.0,
+      "enable_pivot_collector": true,
+      "pivot_collector_max_sequence": 120
+    },
+    "pivot_proximity_alert": {
+      "enabled": true,
+      "max_bars_diff": 1,
+      "telegram_enabled": true
+    },
+    "pivot_candidate_alert": {
+      "enabled": true,
+      "telegram_enabled": true,
+      "events": [
+        "registered",
+        "changed",
+        "cancelled",
+        "confirmed"
+      ],
+      "change_cooldown_sec": 60
+    },
+    "pivot_type": "atr",
+    "atr_pivot": {
+      "atr_period": 7,
+      "base_multiplier": 1.45,
+      "multiplier_min": 1.0,
+      "multiplier_max": 3.5,
+      "er_period": 10,
+      "confirmation_bars": 0,
+      "min_wave_atr_ratio": 0.24,
+      "warmup_bars": 15
+    },
+    "percent_pivot": {
+      "base_pct": 0.3,
+      "multiplier_min": 0.8,
+      "multiplier_max": 2.0,
+      "er_period": 10,
+      "confirmation_bars": 1,
+      "min_wave_pct": 0.15,
+      "min_bar_gap": 3,
+      "max_pivots": 30,
+      "warmup_bars": 20,
+      "cancel_ratio": 0.3
+    },
+    "msb": {
+      "swing_lookback": 3,
+      "bos_buffer_pct": 0.743,
+      "structure_lookback_pivots": 6,
+      "choch_enabled": true
+    },
+    "kalman": {
+      "q": 0.01,
+      "r": 2.0,
+      "warmup_bars": 15,
+      "slope_flip_min": 0.022,
+      "adaptive_q": true
+    },
+    "integrator": {
+      "w_aap": 0.25,
+      "w_pap": 0.25,
+      "w_msb": 0.25,
+      "w_oi": 0.1,
+      "w_kf": 0.15,
+      "entry_threshold": 0.4,
+      "strong_threshold": 0.72,
+      "regime_boost": 1.15,
+      "regime_suppress": 0.85
+    },
+    "oi_proximity_pct": 0.3
+  },
+  "trade_gate": {
+    "enabled": true,
+    "max_daily_trades": 5,
+    "min_confidence": "MEDIUM",
+    "iv_stop_mult": 0.25,
+    "iv_target_min": 1.5,
+    "iv_target_max": 5.0,
+    "iv_stop_min": 0.75,
+    "iv_stop_max": 2.5,
+    "gamma_gate_enabled": false,
+    "confidence_dynamic_enabled": true,
+    "confidence_high_target_mult": 1.5,
+    "confidence_high_stop_mult": 0.8,
+    "confidence_medium_target_mult": 1.0,
+    "confidence_medium_stop_mult": 1.0,
+    "confidence_low_target_mult": 0.7,
+    "confidence_low_stop_mult": 1.3,
+    "max_consecutive_losses": 3,
+    "max_daily_loss_pt": 5.0,
+    "slot_performance_enabled": false,
+    "trailing_stop_enabled": false,
+    "trailing_stop_activation_pt": 1.0,
+    "trailing_stop_distance_pt": 0.5,
+    "history_save_enabled": true,
+    "history_dir": "trade_history",
+    "sizing_method": "fixed_fractional",
+    "sizing_fixed_fraction": 0.95,
+    "sizing_kelly_fraction": 0.5,
+    "sizing_min_kelly": 0.1,
+    "sizing_max_kelly": 0.25,
+    "sizing_risk_per_trade": 0.02,
+    "sizing_stop_loss_pt": 1.0,
+    "sizing_atr_multiplier": 2.0,
+    "sizing_volatility_target": 0.15,
+    "sizing_max_position": 0.3,
+    "sizing_min_position": 0.05
+  }
+}
