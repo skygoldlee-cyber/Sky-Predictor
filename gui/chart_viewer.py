@@ -1947,6 +1947,8 @@ class ChartViewerWidget:
                     )
                 except Exception as e:
                     logger.error("[ChartViewerWidget] 시장 레짐 분류기 초기화 실패: %s", e)
+                    import traceback
+                    logger.error(traceback.format_exc())
 
             # 시장 레짐 분류 실행
             if self._regime_classifier is not None:
@@ -2532,8 +2534,14 @@ class ChartViewerWidget:
                 return
 
             # 차트 렌더링 (메인 스레드에서 실행)
-            was_redrawn = self._render_chart(df, pm, force_clear)
-            logger.debug("[ChartViewer] 렌더링 완료 (was_redrawn=%s)", was_redrawn)
+            try:
+                was_redrawn = self._render_chart(df, pm, force_clear)
+                logger.debug("[ChartViewer] 렌더링 완료 (was_redrawn=%s)", was_redrawn)
+            except Exception as e:
+                logger.error("[ChartViewer] _render_chart 실패: %s", e)
+                import traceback
+                logger.error(traceback.format_exc())
+                was_redrawn = False
 
             # 시간축 변경이 있는 경우 x축 뷰 리셋 + Y축 autorange
             needs_reset = self._renderer and getattr(self._renderer, '_xaxis_needs_reset', False)
