@@ -474,6 +474,7 @@ class AdaptiveZigZag:
                 bar_idx=bar_idx,
                 timestamp=timestamp,
                 features=features,
+                close=close,
             )
             
             # [PIVOT-EVENT-LOG] 후보 등록 시 직접 콜백 호출 (과거 데이터 replay 지원)
