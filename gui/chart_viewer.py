@@ -850,21 +850,30 @@ class ChartViewerWidget:
         if not checked:
             return
 
-        if self._control_bar.plot_kospi_rb.isChecked():
-            self._selected_plot = "kospi"
-            if self._control_bar.title_lbl is not None:
-                self._control_bar.title_lbl.setText("📈 KOSPI 지수 차트")
-        elif self._control_bar.plot_futures_rb.isChecked():
-            self._selected_plot = "futures"
-            if self._control_bar.title_lbl is not None:
-                self._control_bar.title_lbl.setText("📈 KP200 선물 차트")
+        try:
+            if self._control_bar.plot_kospi_rb.isChecked():
+                self._selected_plot = "kospi"
+                if self._control_bar.title_lbl is not None:
+                    self._control_bar.title_lbl.setText("📈 KOSPI 지수 차트")
+            elif self._control_bar.plot_futures_rb.isChecked():
+                self._selected_plot = "futures"
+                if self._control_bar.title_lbl is not None:
+                    self._control_bar.title_lbl.setText("📈 KP200 선물 차트")
 
-        # DataFetcher 상태 업데이트
-        self._data_fetcher.set_selected_plot(self._selected_plot)
+            # DataFetcher 상태 업데이트
+            self._data_fetcher.set_selected_plot(self._selected_plot)
 
-        # 플롯 변경 시 캐시 삭제
-        self._clear_cache()
-        self.refresh()
+            # 플롯 변경 시 캐시 삭제
+            self._clear_cache()
+            self.refresh()
+        except Exception as e:
+            logger.error("[ChartViewer] 데이터 소스 변경 실패: %s", e)
+            import traceback
+            logger.error(traceback.format_exc())
+            # 로딩 상태 숨김
+            if self._loading_enabled:
+                self._loading_lbl.setVisible(False)
+            self._set_status(f"데이터 소스 변경 실패: {e}")
 
     def _on_ma_toggled(self, checked: bool) -> None:
         """MA 체크박스 토글."""
@@ -1652,190 +1661,197 @@ class ChartViewerWidget:
         _cd_t0 = _time.perf_counter()
         logger.info("[ChartViewer][RT] _compute_data 시작 (plot=%s csv=%s)", self._selected_plot, self._csv_mode)
 
-        # _engine 초기화 체크
-        if not hasattr(self, '_engine') or self._engine is None:
-            from gui.engines.chart_engine import ChartEngine
-            self._engine = ChartEngine()
-            self._engine.set_max_bars(self._minutes)
-            logger.info("[ChartViewer] _engine 초기화 완료")
+        try:
+            # _engine 초기화 체크
+            if not hasattr(self, '_engine') or self._engine is None:
+                from gui.engines.chart_engine import ChartEngine
+                self._engine = ChartEngine()
+                self._engine.set_max_bars(self._minutes)
+                logger.info("[ChartViewer] _engine 초기화 완료")
 
-        # 매번 콜백 설정 (초기화 상관없이)
-        self._engine.set_pivot_candidate_callback(self._on_pivot_candidate_event)
-        logger.info("[ChartViewer] _engine 콜백 설정 완료")
+            # 매번 콜백 설정 (초기화 상관없이)
+            self._engine.set_pivot_candidate_callback(self._on_pivot_candidate_event)
+            logger.info("[ChartViewer] _engine 콜백 설정 완료")
 
-        # predictor._adaptive_mgr 콜백 설정 (듀얼 모드 지원)
-        if self._predictor and hasattr(self._predictor, '_adaptive_mgr'):
-            try:
-                self._predictor._adaptive_mgr.set_pivot_candidate_callback(self._on_pivot_candidate_event)
-                logger.info("[ChartViewer] predictor._adaptive_mgr 콜백 설정 완료")
-            except Exception as e:
-                logger.warning("[ChartViewer] predictor._adaptive_mgr 콜백 설정 실패: %s", e)
-
-        # ZigZag 교체 가능성 확인 (CSV 모드 제외)
-        if not self._csv_mode:
-            self._prepare_refresh()
-
-        logger.info("[ChartViewer][RT] _get_df 호출 (data_fetcher=%s)", self._data_fetcher is not None)
-        _gdf_t0 = _time.perf_counter()
-        df_raw = self._get_df()
-        _gdf_elapsed = _time.perf_counter() - _gdf_t0
-        if df_raw is None or (hasattr(df_raw, "empty") and df_raw.empty):
-            logger.warning("[ChartViewer][RT] _get_df 결과: None/빈 DataFrame — elapsed=%.3fs", _gdf_elapsed)
-        else:
-            logger.info(
-                "[ChartViewer][RT] _get_df 결과: bars=%d range=[%s ~ %s] elapsed=%.3fs",
-                len(df_raw),
-                df_raw.index[0] if len(df_raw) else "N/A",
-                df_raw.index[-1] if len(df_raw) else "N/A",
-                _gdf_elapsed,
-            )
-        
-        # 데이터 수신 로그 및 플래그 확인
-        if df_raw is not None and not df_raw.empty:
-            current_count = len(df_raw)
-            current_timestamp = df_raw.index[-1].timestamp() if hasattr(df_raw.index[-1], 'timestamp') else time.time()
-            
-            # 새로운 데이터 수신 확인
-            if self._last_data_count == 0:
-                self._new_data_received = True
-                logger.info("[ChartViewer] 초기 데이터 수신: %d 봉, 마지막 타임스탬프: %s", current_count, df_raw.index[-1])
-            elif current_count != self._last_data_count or current_timestamp != self._last_data_timestamp:
-                self._new_data_received = True
-                logger.info("[ChartViewer] 새로운 데이터 수신: 이전 %d 봉 -> 현재 %d 봉, 타임스탬프: %s", 
-                           self._last_data_count, current_count, df_raw.index[-1])
-            else:
-                # 실시간 모드에서는 데이터가 있으면 항상 갱신 (틱 추가로 인한 갱신 필요)
-                if not self._csv_mode:
-                    self._new_data_received = True
-                    logger.debug("[ChartViewer] 실시간 모드 - 데이터 갱신 (틱 추가로 인한 갱신): %d 봉", current_count)
-                else:
-                    self._new_data_received = False
-                    logger.debug("[ChartViewer] 데이터 변경 없음: %d 봉", current_count)
-            
-            self._last_data_count = current_count
-            self._last_data_timestamp = current_timestamp
-        else:
-            self._new_data_received = False
-            logger.warning("[ChartViewer] 데이터 수신 실패 또는 빈 데이터")
-        
-        logger.info("[ChartViewer][refresh] _get_df 완료 rows=%d, new_data=%s", len(df_raw) if df_raw is not None else 0, self._new_data_received)
-
-        # CSV 모드에서는 캐시 강제 초기화
-        csv_force_recompute = False
-        if self._csv_mode and hasattr(self, '_engine') and self._engine is not None:
-            logger.info("[ChartViewer] CSV 모드 - Engine 캐시 강제 초기화")
-            self._engine._last_sig = None
-            self._engine._replay_signature = None
-            self._engine._zz_state_cache = {}
-            self._engine._confirmed_pivots_cache = []
-            self._engine._last_completed_ts = None
-            self._engine._anchor_ts = None
-            # CSV 모드에서 ZigZag 인스턴스도 삭제하여 데이터 소스 분리 강화
-            self._engine._zz = None
-            logger.info("[ChartViewer] CSV 모드 - ZigZag 인스턴스 삭제 (데이터 소스 분리)")
-            # CSV 모드에서 Adaptive 모드 비활성화
-            self._adaptive_enabled = False  # 내부 상태도 비활성화
-            self._engine.set_adaptive_enabled(False)
-            # 체크박스 상태도 비활성화
-            if self._control_bar and hasattr(self._control_bar, '_adaptive_cb'):
-                self._control_bar._adaptive_cb.blockSignals(True)
-                self._control_bar._adaptive_cb.setChecked(False)
-                self._control_bar._adaptive_cb.blockSignals(False)
-            # 레짐 라벨 숨김
-            if self._regime_label_callback:
+            # predictor._adaptive_mgr 콜백 설정 (듀얼 모드 지원)
+            if self._predictor and hasattr(self._predictor, '_adaptive_mgr'):
                 try:
-                    self._regime_label_callback("Regime: -", visible=False)
+                    self._predictor._adaptive_mgr.set_pivot_candidate_callback(self._on_pivot_candidate_event)
+                    logger.info("[ChartViewer] predictor._adaptive_mgr 콜백 설정 완료")
                 except Exception as e:
-                    logger.warning("[ChartViewer] 레짐 라벨 숨김 실패: %s", e)
-            logger.info("[ChartViewer] CSV 모드 - Adaptive 모드 비활성화")
-            # _zz 재초기화 (데이터 소스 변경으로 간주)
-            self._engine._current_data_source = None  # 데이터 소스 변경 강제
-            self._csv_mode = False  # 초기화 후 플래그 리셋
-            csv_force_recompute = True  # CSV 모드 강제 재계산 플래그 저장
-        else:
-            # CSV 모드가 아닐 때는 config의 adaptive_mode 사용
-            if self._config and hasattr(self._config, 'adaptive_mode'):
-                adaptive_enabled = self._config.adaptive_mode
-                self._adaptive_enabled = adaptive_enabled  # 내부 상태도 동기화
-                self._engine.set_adaptive_enabled(adaptive_enabled)
-                # 체크박스 상태도 동기화 (config 변경 시 UI 반영)
-                if self._control_bar and hasattr(self._control_bar, '_adaptive_cb'):
-                    self._control_bar._adaptive_cb.blockSignals(True)  # 신호 차단하여 무한 루프 방지
-                    self._control_bar._adaptive_cb.setChecked(adaptive_enabled)
-                    self._control_bar._adaptive_cb.blockSignals(False)
-                logger.info("[ChartViewer] Adaptive 모드 설정: %s (config.adaptive_mode)", adaptive_enabled)
+                    logger.warning("[ChartViewer] predictor._adaptive_mgr 콜백 설정 실패: %s", e)
 
-        # 범위 변경 감지 (플래그 확인)
-        force_recompute = self._minutes_changed or csv_force_recompute  # 범위 변경 또는 CSV 모드 시 강제 재계산
-
-        # [BUG-FIX] 데이터소스 변경 감지를 compute()에 위임
-        # 기존: _engine._current_data_source를 여기서 사전 세팅 → compute() 내부의
-        #        변경 감지 조건(current != data_source)이 항상 False가 되어 캐시 초기화 안 됨
-        # 수정: 사전 세팅 제거, compute(data_source=selected_plot)에 그대로 전달
-        #        compute() 내부에서 변경 감지 후 _zz, 캐시 초기화 수행
-        source_changed = (self._engine._current_data_source != self._selected_plot)
-        if source_changed:
-            logger.info("[ChartViewer] 데이터 소스 변경: %s → %s",
-                        self._engine._current_data_source, self._selected_plot)
-            # 데이터 소스 변경 시 Predictor ZigZag 인스턴스 재주입
-            # 기존: _zz=None으로 삭제하여 재초기화 유도
-            # 수정: _prepare_refresh()를 호출하여 Predictor의 적절한 ZigZag 인스턴스 주입
-            try:
+            # ZigZag 교체 가능성 확인 (CSV 모드 제외)
+            if not self._csv_mode:
                 self._prepare_refresh()
-                logger.info("[ChartViewer] 데이터 소스 변경 - Predictor ZigZag 인스턴스 재주입 완료")
-            except Exception as e:
-                logger.error("[ChartViewer] 데이터 소스 변경 시 _prepare_refresh 실패: %s", e)
-                import traceback
-                logger.error(traceback.format_exc())
-            # 데이터 소스 변경 시 MA 체크박스 OFF 유지
-            try:
-                self._control_bar._ma_cb.setChecked(False)
-            except Exception as e:
-                logger.warning("[ChartViewer] MA 체크박스 OFF 실패: %s", e)
-            # 데이터 소스 변경 시 강제 재계산 (SuperTrend 캐시 초기화)
-            force_recompute = True
-            # 피봇 조정은 여기서 수행 (compute 전), 단 _current_data_source 세팅은 하지 않음
-            if self._adaptive_enabled and not self._adaptive_adjusting:
-                logger.info("[ChartViewer] 데이터 소스 변경 시 피벗 조정 수행 (데이터 계산 전)")
-                self._adaptive_adjusting = True
+
+            logger.info("[ChartViewer][RT] _get_df 호출 (data_fetcher=%s)", self._data_fetcher is not None)
+            _gdf_t0 = _time.perf_counter()
+            df_raw = self._get_df()
+            _gdf_elapsed = _time.perf_counter() - _gdf_t0
+            if df_raw is None or (hasattr(df_raw, "empty") and df_raw.empty):
+                logger.warning("[ChartViewer][RT] _get_df 결과: None/빈 DataFrame — elapsed=%.3fs", _gdf_elapsed)
+            else:
+                logger.info(
+                    "[ChartViewer][RT] _get_df 결과: bars=%d range=[%s ~ %s] elapsed=%.3fs",
+                    len(df_raw),
+                    df_raw.index[0] if len(df_raw) else "N/A",
+                    df_raw.index[-1] if len(df_raw) else "N/A",
+                    _gdf_elapsed,
+                )
+            
+            # 데이터 수신 로그 및 플래그 확인
+            if df_raw is not None and not df_raw.empty:
+                current_count = len(df_raw)
+                current_timestamp = df_raw.index[-1].timestamp() if hasattr(df_raw.index[-1], 'timestamp') else time.time()
+                
+                # 새로운 데이터 수신 확인
+                if self._last_data_count == 0:
+                    self._new_data_received = True
+                    logger.info("[ChartViewer] 초기 데이터 수신: %d 봉, 마지막 타임스탬프: %s", current_count, df_raw.index[-1])
+                elif current_count != self._last_data_count or current_timestamp != self._last_data_timestamp:
+                    self._new_data_received = True
+                    logger.info("[ChartViewer] 새로운 데이터 수신: 이전 %d 봉 -> 현재 %d 봉, 타임스탬프: %s", 
+                               self._last_data_count, current_count, df_raw.index[-1])
+                else:
+                    # 실시간 모드에서는 데이터가 있으면 항상 갱신 (틱 추가로 인한 갱신 필요)
+                    if not self._csv_mode:
+                        self._new_data_received = True
+                        logger.debug("[ChartViewer] 실시간 모드 - 데이터 갱신 (틱 추가로 인한 갱신): %d 봉", current_count)
+                    else:
+                        self._new_data_received = False
+                        logger.debug("[ChartViewer] 데이터 변경 없음: %d 봉", current_count)
+                
+                self._last_data_count = current_count
+                self._last_data_timestamp = current_timestamp
+            else:
+                self._new_data_received = False
+                logger.warning("[ChartViewer] 데이터 수신 실패 또는 빈 데이터")
+            
+            logger.info("[ChartViewer][refresh] _get_df 완료 rows=%d, new_data=%s", len(df_raw) if df_raw is not None else 0, self._new_data_received)
+
+            # CSV 모드에서는 캐시 강제 초기화
+            csv_force_recompute = False
+            if self._csv_mode and hasattr(self, '_engine') and self._engine is not None:
+                logger.info("[ChartViewer] CSV 모드 - Engine 캐시 강제 초기화")
+                self._engine._last_sig = None
+                self._engine._replay_signature = None
+                self._engine._zz_state_cache = {}
+                self._engine._confirmed_pivots_cache = []
+                self._engine._last_completed_ts = None
+                self._engine._anchor_ts = None
+                # CSV 모드에서 ZigZag 인스턴스도 삭제하여 데이터 소스 분리 강화
+                self._engine._zz = None
+                logger.info("[ChartViewer] CSV 모드 - ZigZag 인스턴스 삭제 (데이터 소스 분리)")
+                # CSV 모드에서 Adaptive 모드 비활성화
+                self._adaptive_enabled = False  # 내부 상태도 비활성화
+                self._engine.set_adaptive_enabled(False)
+                # 체크박스 상태도 비활성화
+                if self._control_bar and hasattr(self._control_bar, '_adaptive_cb'):
+                    self._control_bar._adaptive_cb.blockSignals(True)
+                    self._control_bar._adaptive_cb.setChecked(False)
+                    self._control_bar._adaptive_cb.blockSignals(False)
+                # 레짐 라벨 숨김
+                if self._regime_label_callback:
+                    try:
+                        self._regime_label_callback("Regime: -", visible=False)
+                    except Exception as e:
+                        logger.warning("[ChartViewer] 레짐 라벨 숨김 실패: %s", e)
+                logger.info("[ChartViewer] CSV 모드 - Adaptive 모드 비활성화")
+                # _zz 재초기화 (데이터 소스 변경으로 간주)
+                self._engine._current_data_source = None  # 데이터 소스 변경 강제
+                self._csv_mode = False  # 초기화 후 플래그 리셋
+                csv_force_recompute = True  # CSV 모드 강제 재계산 플래그 저장
+            else:
+                # CSV 모드가 아닐 때는 config의 adaptive_mode 사용
+                if self._config and hasattr(self._config, 'adaptive_mode'):
+                    adaptive_enabled = self._config.adaptive_mode
+                    self._adaptive_enabled = adaptive_enabled  # 내부 상태도 동기화
+                    self._engine.set_adaptive_enabled(adaptive_enabled)
+                    # 체크박스 상태도 동기화 (config 변경 시 UI 반영)
+                    if self._control_bar and hasattr(self._control_bar, '_adaptive_cb'):
+                        self._control_bar._adaptive_cb.blockSignals(True)  # 신호 차단하여 무한 루프 방지
+                        self._control_bar._adaptive_cb.setChecked(adaptive_enabled)
+                        self._control_bar._adaptive_cb.blockSignals(False)
+                    logger.info("[ChartViewer] Adaptive 모드 설정: %s (config.adaptive_mode)", adaptive_enabled)
+
+            # 범위 변경 감지 (플래그 확인)
+            force_recompute = self._minutes_changed or csv_force_recompute  # 범위 변경 또는 CSV 모드 시 강제 재계산
+
+            # [BUG-FIX] 데이터소스 변경 감지를 compute()에 위임
+            # 기존: _engine._current_data_source를 여기서 사전 세팅 → compute() 내부의
+            #        변경 감지 조건(current != data_source)이 항상 False가 되어 캐시 초기화 안 됨
+            # 수정: 사전 세팅 제거, compute(data_source=selected_plot)에 그대로 전달
+            #        compute() 내부에서 변경 감지 후 _zz, 캐시 초기화 수행
+            source_changed = (self._engine._current_data_source != self._selected_plot)
+            if source_changed:
+                logger.info("[ChartViewer] 데이터 소스 변경: %s → %s",
+                            self._engine._current_data_source, self._selected_plot)
+                # 데이터 소스 변경 시 Predictor ZigZag 인스턴스 재주입
+                # 기존: _zz=None으로 삭제하여 재초기화 유도
+                # 수정: _prepare_refresh()를 호출하여 Predictor의 적절한 ZigZag 인스턴스 주입
                 try:
-                    self._apply_pivot_count_target(target=10)
+                    self._prepare_refresh()
+                    logger.info("[ChartViewer] 데이터 소스 변경 - Predictor ZigZag 인스턴스 재주입 완료")
                 except Exception as e:
-                    logger.warning("[ChartViewer] 데이터 소스 변경 시 피벗 조정 실패: %s", e)
-                self._adaptive_adjusting = False
+                    logger.error("[ChartViewer] 데이터 소스 변경 시 _prepare_refresh 실패: %s", e)
+                    import traceback
+                    logger.error(traceback.format_exc())
+                # 데이터 소스 변경 시 MA 체크박스 OFF 유지
+                try:
+                    self._control_bar._ma_cb.setChecked(False)
+                except Exception as e:
+                    logger.warning("[ChartViewer] MA 체크박스 OFF 실패: %s", e)
+                # 데이터 소스 변경 시 강제 재계산 (SuperTrend 캐시 초기화)
+                force_recompute = True
+                # 피봇 조정은 여기서 수행 (compute 전), 단 _current_data_source 세팅은 하지 않음
+                if self._adaptive_enabled and not self._adaptive_adjusting:
+                    logger.info("[ChartViewer] 데이터 소스 변경 시 피벗 조정 수행 (데이터 계산 전)")
+                    self._adaptive_adjusting = True
+                    try:
+                        self._apply_pivot_count_target(target=10)
+                    except Exception as e:
+                        logger.warning("[ChartViewer] 데이터 소스 변경 시 피벗 조정 실패: %s", e)
+                    self._adaptive_adjusting = False
 
-        df, pm = self._engine.compute(df_raw, self._config, self._selected_plot, force_recompute=force_recompute)
-        _eng_elapsed = _time.perf_counter() - _cd_t0
-        if df is None or (hasattr(df, "empty") and df.empty):
-            logger.error("[ChartViewer][RT] engine.compute 결과: 빈 df — elapsed=%.3fs", _eng_elapsed)
-        else:
-            _pm_conf  = len(pm.get("confirmed",  {}).get("idx", [])) if pm else 0
-            _pm_unconf= len(pm.get("unconfirmed",{}).get("idx", [])) if pm else 0
-            logger.info(
-                "[ChartViewer][RT] engine.compute 완료: bars=%d pivot(확정=%d 미확정=%d) elapsed=%.3fs",
-                len(df), _pm_conf, _pm_unconf, _eng_elapsed,
-            )
-
-        # 플래그 초기화
-        self._minutes_changed = False
-
-        logger.debug("[ChartViewer][refresh] engine.compute 완료 bars=%d", len(df))
-
-        # ── 마지막 분봉 Close를 현재가로 실시간 동기화 ──────────────────
-        if not df.empty:
-            current_price = self._get_current_price()
-            if current_price > 0:
-                # 마지막 봉의 High/Low도 현재가에 맞게 확장
-                df.loc[df.index[-1], "Close"] = current_price
-                df.loc[df.index[-1], "High"] = max(
-                    float(df["High"].iloc[-1]), current_price
+            df, pm = self._engine.compute(df_raw, self._config, self._selected_plot, force_recompute=force_recompute)
+            _eng_elapsed = _time.perf_counter() - _cd_t0
+            if df is None or (hasattr(df, "empty") and df.empty):
+                logger.error("[ChartViewer][RT] engine.compute 결과: 빈 df — elapsed=%.3fs", _eng_elapsed)
+            else:
+                _pm_conf  = len(pm.get("confirmed",  {}).get("idx", [])) if pm else 0
+                _pm_unconf= len(pm.get("unconfirmed",{}).get("idx", [])) if pm else 0
+                logger.info(
+                    "[ChartViewer][RT] engine.compute 완료: bars=%d pivot(확정=%d 미확정=%d) elapsed=%.3fs",
+                    len(df), _pm_conf, _pm_unconf, _eng_elapsed,
                 )
-                df.loc[df.index[-1], "Low"] = min(
-                    float(df["Low"].iloc[-1]), current_price
-                )
-        # ────────────────────────────────────────────────────────────────
 
-        return df, pm
+            # 플래그 초기화
+            self._minutes_changed = False
+
+            logger.debug("[ChartViewer][refresh] engine.compute 완료 bars=%d", len(df))
+
+            # ── 마지막 분봉 Close를 현재가로 실시간 동기화 ──────────────────
+            if not df.empty:
+                current_price = self._get_current_price()
+                if current_price > 0:
+                    # 마지막 봉의 High/Low도 현재가에 맞게 확장
+                    df.loc[df.index[-1], "Close"] = current_price
+                    df.loc[df.index[-1], "High"] = max(
+                        float(df["High"].iloc[-1]), current_price
+                    )
+                    df.loc[df.index[-1], "Low"] = min(
+                        float(df["Low"].iloc[-1]), current_price
+                    )
+            # ────────────────────────────────────────────────────────────────
+
+            return df, pm
+        except Exception as e:
+            logger.error("[ChartViewer] _compute_data 실패: %s", e)
+            import traceback
+            logger.error(traceback.format_exc())
+            # 빈 DataFrame 반환하여 렌더링 실패 방지
+            return pd.DataFrame(), {}
 
     def _render_chart(self, df: pd.DataFrame, pm: Dict, force_clear: bool) -> bool:
         """차트 렌더링
@@ -2386,32 +2402,41 @@ class ChartViewerWidget:
     def _do_refresh_after_clear(self, force_clear: bool) -> None:
         """clear_all 후 실제 refresh 로직 수행."""
         logger.info("[ChartViewer] _do_refresh_after_clear 호출 (force_clear=%s)", force_clear)
-        # 백그라운드 스레드에서 데이터 컴퓨팅 실행
-        if not QT_AVAILABLE:
-            # Qt 없으면 기존 방식 (동기)
-            self._do_refresh_sync(force_clear)
-            return
+        try:
+            # 백그라운드 스레드에서 데이터 컴퓨팅 실행
+            if not QT_AVAILABLE:
+                # Qt 없으면 기존 방식 (동기)
+                self._do_refresh_sync(force_clear)
+                return
 
-        # 이미 실행 중인 스레드가 있으면 취소 요청 후 지연 재시도
-        if self._compute_thread is not None and self._compute_thread.isRunning():
-            logger.debug("[ChartViewer] 이전 컴퓨팅 스레드 취소 요청 (논블로킹)")
-            self._compute_thread.request_stop()
-            # [BUG-5] 취소 후 지연 재시도로 갱신 누락 방지
-            from PySide6.QtCore import QTimer
-            QTimer.singleShot(100, lambda: self._do_refresh_after_clear(force_clear))
-            return
+            # 이미 실행 중인 스레드가 있으면 취소 요청 후 지연 재시도
+            if self._compute_thread is not None and self._compute_thread.isRunning():
+                logger.debug("[ChartViewer] 이전 컴퓨팅 스레드 취소 요청 (논블로킹)")
+                self._compute_thread.request_stop()
+                # [BUG-5] 취소 후 지연 재시도로 갱신 누락 방지
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(100, lambda: self._do_refresh_after_clear(force_clear))
+                return
 
-        # 백그라운드 컴퓨팅 스레드 생성
-        # ── [보완-3] 요청 토큰 및 설정값 캡처 (멀티스레드 데이터 경합 방지) ──
-        self._current_request_token = time.time()
-        self._last_request_plot = self._selected_plot
-        self._last_request_minutes = self._minutes
-        # ────────────────────────────────────────────────────────────────────────────
-        self._compute_thread = DataComputeThread(self._compute_data, force_clear)
-        self._compute_thread.finished.connect(self._on_compute_finished)
-        self._compute_thread.error.connect(self._on_compute_error)
-        self._compute_thread.start()
-        logger.info("[ChartViewer] 백그라운드 컴퓨팅 스레드 시작 (force_clear=%s)", force_clear)
+            # 백그라운드 컴퓨팅 스레드 생성
+            # ── [보완-3] 요청 토큰 및 설정값 캡처 (멀티스레드 데이터 경합 방지) ──
+            self._current_request_token = time.time()
+            self._last_request_plot = self._selected_plot
+            self._last_request_minutes = self._minutes
+            # ────────────────────────────────────────────────────────────────────────────
+            self._compute_thread = DataComputeThread(self._compute_data, force_clear)
+            self._compute_thread.finished.connect(self._on_compute_finished)
+            self._compute_thread.error.connect(self._on_compute_error)
+            self._compute_thread.start()
+            logger.info("[ChartViewer] 백그라운드 컴퓨팅 스레드 시작 (force_clear=%s)", force_clear)
+        except Exception as e:
+            logger.error("[ChartViewer] _do_refresh_after_clear 실패: %s", e)
+            import traceback
+            logger.error(traceback.format_exc())
+            # 로딩 상태 숨김
+            if self._loading_enabled:
+                self._loading_lbl.setVisible(False)
+            self._set_status(f"데이터 갱신 실패: {e}")
     
     def _do_refresh_sync(self, force_clear: bool) -> None:
         """동기 방식 refresh (Qt 없을 때 폴백)."""
