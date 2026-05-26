@@ -1780,17 +1780,28 @@ class ChartViewerWidget:
             # 데이터 소스 변경 시 Predictor ZigZag 인스턴스 재주입
             # 기존: _zz=None으로 삭제하여 재초기화 유도
             # 수정: _prepare_refresh()를 호출하여 Predictor의 적절한 ZigZag 인스턴스 주입
-            self._prepare_refresh()
-            logger.info("[ChartViewer] 데이터 소스 변경 - Predictor ZigZag 인스턴스 재주입 완료")
+            try:
+                self._prepare_refresh()
+                logger.info("[ChartViewer] 데이터 소스 변경 - Predictor ZigZag 인스턴스 재주입 완료")
+            except Exception as e:
+                logger.error("[ChartViewer] 데이터 소스 변경 시 _prepare_refresh 실패: %s", e)
+                import traceback
+                logger.error(traceback.format_exc())
             # 데이터 소스 변경 시 MA 체크박스 OFF 유지
-            self._control_bar._ma_cb.setChecked(False)
+            try:
+                self._control_bar._ma_cb.setChecked(False)
+            except Exception as e:
+                logger.warning("[ChartViewer] MA 체크박스 OFF 실패: %s", e)
             # 데이터 소스 변경 시 강제 재계산 (SuperTrend 캐시 초기화)
             force_recompute = True
             # 피봇 조정은 여기서 수행 (compute 전), 단 _current_data_source 세팅은 하지 않음
             if self._adaptive_enabled and not self._adaptive_adjusting:
                 logger.info("[ChartViewer] 데이터 소스 변경 시 피벗 조정 수행 (데이터 계산 전)")
                 self._adaptive_adjusting = True
-                self._apply_pivot_count_target(target=10)
+                try:
+                    self._apply_pivot_count_target(target=10)
+                except Exception as e:
+                    logger.warning("[ChartViewer] 데이터 소스 변경 시 피벗 조정 실패: %s", e)
                 self._adaptive_adjusting = False
 
         df, pm = self._engine.compute(df_raw, self._config, self._selected_plot, force_recompute=force_recompute)
