@@ -1069,35 +1069,20 @@ async def _initialize_api(
     try:
         from .api import _ebest_fetch_kp200_ohlcv_t8415, _ebest_fetch_kospi_ohlcv_t8418
         import pandas as pd
-        # config에서 target_date 읽기
-        target_date = ebest_cfg.get("target_date")
+        # config에서 target_day 읽기 (prediction 섹션)
+        target_date = cfg_root.get("prediction", {}).get("target_day", "")
+        # 빈 문자열이면 None로 처리
+        if target_date == "" or target_date is None:
+            target_date = None
         today_date = datetime.now(tz=_KST).strftime("%Y%m%d")
         now_kst = datetime.now(tz=_KST)
 
-        # market_open_time 체크 (장 시작 전에는 전일 데이터 사용)
-        # ebest_cfg 또는 trade_gate 섹션에서 읽기
-        market_open_time_str = ebest_cfg.get("market_open_time")
-        if market_open_time_str is None:
-            market_open_time_str = cfg_root.get("trade_gate", {}).get("market_open_time", "08:45")
-        try:
-            market_open_time = datetime.strptime(market_open_time_str, "%H:%M").time()
-        except Exception:
-            market_open_time = datetime.strptime("08:45", "%H:%M").time()
-
-        current_time = now_kst.time()
-        # 장 시작 전에는 전일 날짜 사용, 장 시작 후에는 오늘 날짜 사용
-        if current_time < market_open_time:
-            # 장 시작 전: 전일 날짜 사용 (target_date가 있으면 그것 사용, 없으면 계산)
-            if target_date:
-                # target_date가 있으면 그것 사용 (어제 날짜여야 함)
-                pass
-            else:
-                # target_date가 없으면 어제 날짜 계산
-                from datetime import timedelta
-                yesterday = (now_kst - timedelta(days=1)).strftime("%Y%m%d")
-                target_date = yesterday
+        # target_day가 설정되어 있으면 그 날짜 사용, 없으면 오늘 날짜 사용
+        if target_date:
+            # target_day가 설정되어 있으면 그 날짜 사용
+            pass
         else:
-            # 장 시작 후: 오늘 날짜 사용
+            # target_day가 없으면 오늘 날짜 사용
             target_date = today_date
 
         # KP200 분봉 요청 (t8415)
@@ -1162,63 +1147,42 @@ async def _initialize_api(
     # KOSPI 분봉 요청 (t8418 - KOSPI 지수는 t8418 사용)
     try:
         kospi_symbol = "001"  # KOSPI 지수 코드
-        # target_date가 오늘 날짜이고 장 시작 전이면 데이터 요청 건너뜀
-        if is_today and current_time < market_open_time:
-            _log("[t8418] 장 시작 전 (%s < %s) - 당일 데이터 요청 건너뜀",
-                 current_time.strftime("%H:%M:%S"), market_open_time.strftime("%H:%M:%S"))
+        _log("[t8418] KOSPI 분봉 데이터 요청 시작 (symbol=%s, date=%s, current_time=%s)",
+             kospi_symbol, target_date, now_kst.strftime("%H:%M:%S"))
+        kospi_ohlcv = await _ebest_fetch_kospi_ohlcv_t8418(api, symbol=kospi_symbol, yyyymmdd=target_date, ncnt=1)
+        if kospi_ohlcv:
+            _log("[t8418] KOSPI 분봉 데이터 수신 완료 (bars=%d)", len(kospi_ohlcv))
+            latest = kospi_ohlcv[-1]
+            _log("[t8418] KOSPI 최신 분봉: time=%s open=%.2f high=%.2f low=%.2f close=%.2f volume=%.0f",
+                 latest.get("time", ""), latest.get("open", 0), latest.get("high", 0),
+                 latest.get("low", 0), latest.get("close", 0), latest.get("volume", 0))
+
+            # DataFrame으로 변환하여 predictor에 전달
+            try:
+                df = pd.DataFrame(kospi_ohlcv)
+                # timestamp를 datetime으로 변환 (rename 전에 수행)
+                df["timestamp"] = pd.to_datetime(df["date"] + df["time"], format="%Y%m%d%H%M%S")
+                df = df.drop(columns=["date", "time"])
+                df = df.rename(columns={
+                    "open": "Open",
+                    "high": "High",
+                    "low": "Low",
+                    "close": "Close",
+                    "volume": "Volume"
+                })
+                df = df.set_index("timestamp").sort_index()
+
+                # predictor에 데이터 설정 (kospi 초기화)
+                try:
+                    if predictor and hasattr(predictor, "tick_processor"):
+                        predictor.tick_processor._kospi_minute_df = df
+                        _log("[t8418] KOSPI 분봉 데이터를 tick_processor에 설정 완료 (bars=%d)", len(df))
+                except Exception as e:
+                    _log("[t8418] tick_processor 설정 실패: %s", str(e))
+            except Exception as e:
+                _log("[t8418] DataFrame 변환 실패: %s", str(e))
         else:
-            _log("[t8418] KOSPI 분봉 데이터 요청 시작 (symbol=%s, date=%s, current_time=%s)",
-                 kospi_symbol, target_date, now_kst.strftime("%H:%M:%S"))
-            kospi_ohlcv = await _ebest_fetch_kospi_ohlcv_t8418(api, symbol=kospi_symbol, yyyymmdd=target_date, ncnt=1)
-            if kospi_ohlcv:
-                _log("[t8418] KOSPI 분봉 데이터 수신 완료 (bars=%d)", len(kospi_ohlcv))
-                if kospi_ohlcv:
-                    latest = kospi_ohlcv[-1]
-                    _log("[t8418] KOSPI 최신 분봉: time=%s open=%.2f high=%.2f low=%.2f close=%.2f volume=%.0f",
-                         latest.get("time", ""), latest.get("open", 0), latest.get("high", 0),
-                         latest.get("low", 0), latest.get("close", 0), latest.get("volume", 0))
-
-                    # DataFrame으로 변환하여 predictor에 전달
-                    try:
-                        df = pd.DataFrame(kospi_ohlcv)
-                        # timestamp를 datetime으로 변환 (rename 전에 수행)
-                        df["timestamp"] = pd.to_datetime(df["date"] + df["time"], format="%Y%m%d%H%M%S")
-                        df = df.drop(columns=["date", "time"])
-                        df = df.rename(columns={
-                            "open": "Open",
-                            "high": "High",
-                            "low": "Low",
-                            "close": "Close",
-                            "volume": "Volume"
-                        })
-                        df = df.set_index("timestamp").sort_index()
-
-                        # predictor에 데이터 설정 (kospi 초기화)
-                        try:
-                            if predictor and hasattr(predictor, "tick_processor"):
-                                predictor.tick_processor._kospi_minute_df = df
-                                _log("[t8418] KOSPI 분봉 데이터를 tick_processor에 설정 완료 (bars=%d)", len(df))
-                        except Exception as e:
-                            _log("[t8418] tick_processor 설정 실패: %s", str(e))
-                        
-                        # 장마감 이후 CSV 저장
-                        try:
-                            market_close_time_str = ebest_cfg.get("market_close_time", "15:46")
-                            market_close_time = datetime.strptime(market_close_time_str, "%H:%M").time()
-                            if current_time >= market_close_time:
-                                # 저장 디렉토리 생성
-                                save_dir = Path("data/minute_bars")
-                                save_dir.mkdir(parents=True, exist_ok=True)
-                                # 파일명: kospi_YYYYMMDD.csv
-                                csv_path = save_dir / f"kospi_{target_date}.csv"
-                                df.to_csv(csv_path)
-                                _log("[t8418] KOSPI 분봉 데이터 CSV 저장 완료: %s (bars=%d)", csv_path, len(df))
-                        except Exception as e:
-                            _log("[t8418] CSV 저장 실패: %s", str(e))
-                    except Exception as e:
-                        _log("[t8418] DataFrame 변환 실패: %s", str(e))
-            else:
-                _log("[t8418] KOSPI 분봉 데이터 없음 (장 마감 후이거나 데이터 없음)")
+            _log("[t8418] KOSPI 분봉 데이터 없음 (장 마감 후이거나 데이터 없음)")
     except Exception as e:
         _log("[t8418] KOSPI 분봉 요청 실패: %s", str(e))
 
