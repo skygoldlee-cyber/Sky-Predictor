@@ -32,7 +32,8 @@
     },
     "warmup_bars": 15
   },
-  "prediction": {"target_day": null,
+  "prediction": {
+    "target_day": "",
     "multiscale_5m": false,
     "multiscale_enabled": false,
     "multiscale_time_scales": [
