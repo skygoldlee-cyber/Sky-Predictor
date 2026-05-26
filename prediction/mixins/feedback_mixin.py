@@ -17,6 +17,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# TransformerQualityTracker — 지연 임포트로 순환 의존 방지
+try:
+    from prediction.transformer_quality_tracker import TransformerQualityTracker as _QT
+    _QT_AVAILABLE = True
+except Exception:
+    _QT_AVAILABLE = False
+
 
 class FeedbackMixin:
     """Mixin: FeedbackMixin methods extracted from PredictionPipeline."""
@@ -232,4 +239,40 @@ class FeedbackMixin:
                 self._metrics_inc("feedback_evaluations")
             except Exception:
                 pass
+
+            # ── TransformerQualityTracker 기록 ─────────────────────────────
+            try:
+                qt = getattr(self, "_quality_tracker", None)
+                if qt is not None:
+                    # 현재 앙상블 Transformer 가중치 조회
+                    _tw_fn = getattr(
+                        getattr(self, "numeric_predictor", None),
+                        "get_transformer_weight", None,
+                    )
+                    _tw = float(_tw_fn()) if callable(_tw_fn) else 0.5
+
+                    # LLM 개별 action (rec에 저장돼 있으면 사용)
+                    _llm_actions = rec.get("llm_actions") or {}
+
+                    # 신뢰도 등급 (rec에 없으면 확률 기반 추정)
+                    _conf = str(rec.get("confidence") or "")
+                    if not _conf:
+                        _margin = abs(float(rec.get("transformer_prob") or 0.5) - 0.5)
+                        if _margin >= 0.25:
+                            _conf = "HIGH"
+                        elif _margin >= 0.10:
+                            _conf = "MEDIUM"
+                        else:
+                            _conf = "LOW"
+
+                    qt.record_evaluation(
+                        correct=transformer_correct,
+                        prob=float(rec.get("transformer_prob") or 0.5),
+                        confidence=_conf,
+                        actual_direction=str(actual),
+                        llm_actions=_llm_actions if isinstance(_llm_actions, dict) else {},
+                        transformer_weight=_tw,
+                    )
+            except Exception as _qe:
+                logger.debug("[FeedbackMixin] quality_tracker 기록 오류(무시): %s", _qe)
 

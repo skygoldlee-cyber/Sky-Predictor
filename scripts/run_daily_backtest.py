@@ -3,6 +3,7 @@
 JIF 장마감 이벤트 수신 후 호출되어 당일 매매 백테스트를 실행합니다.
 """
 
+import json
 import logging
 import sys
 from datetime import datetime
@@ -18,7 +19,7 @@ sys.path.insert(0, str(project_root))
 
 from prediction.backtest.backtest_pivot_signals import PivotSignalBacktester, BacktestConfig
 from prediction.trade_logger import get_trade_logger
-from prediction.pivot_parameter_db import PivotParameterDB
+from prediction.pivot_parameter_db import PivotParameterDB, WalkForwardEvaluator
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -78,6 +79,15 @@ def run_daily_backtest(
             save_session_to_db_from_backtest(results, None, backtester.config, today)
         except Exception as e:
             logger.warning("[DAILY_BACKTEST] 세션 파라미터 DB 저장 실패: %s", e)
+
+        # 7) 트랜스포머 품질 요약 로그 출력
+        try:
+            from prediction.pipeline import PredictionPipeline as _PP
+            _pred = globals().get("_active_pipeline")
+            if _pred is not None and callable(getattr(_pred, "log_quality_summary", None)):
+                _pred.log_quality_summary()
+        except Exception as _qe:
+            logger.debug("[DAILY_BACKTEST] 품질 요약 출력 실패(무시): %s", _qe)
 
         return True
 
@@ -315,21 +325,127 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="장마감 후 당일 매매 백테스트 실행")
-    parser.add_argument("--with-ohlcv", action="store_true", help="OHLCV 데이터 포함 백테스팅")
-    parser.add_argument("--capital", type=float, default=10000000.0, help="초기 자본 (기본 1000만원)")
-    parser.add_argument("--output-dir", type=str, default="logs/backtest/results", help="결과 저장 디렉토리")
+    parser.add_argument("--with-ohlcv",    action="store_true", help="OHLCV 데이터 포함 백테스팅")
+    parser.add_argument("--capital",       type=float, default=10000000.0, help="초기 자본 (기본 1000만원)")
+    parser.add_argument("--output-dir",    type=str,   default="logs/backtest/results", help="결과 저장 디렉토리")
+    # ── Walk-forward 평가 옵션 (신규) ──────────────────────────────────────
+    parser.add_argument("--evaluate",      action="store_true", help="백테스트 후 Walk-forward 평가 실행")
+    parser.add_argument("--eval-lookback", type=int,   default=30, help="평가 훈련 윈도우 (일, 기본 30)")
+    parser.add_argument("--eval-test-days",type=int,   default=20, help="평가 슬라이딩 횟수 (기본 20)")
+    parser.add_argument("--eval-only",     action="store_true", help="백테스트 없이 평가만 실행")
 
     args = parser.parse_args()
-
     output_dir = Path(args.output_dir)
 
+    # 평가만 실행
+    if args.eval_only:
+        run_walk_forward_evaluation(
+            lookback_days=args.eval_lookback,
+            test_days=args.eval_test_days,
+        )
+        sys.exit(0)
+
+    # 백테스트 실행
     if args.with_ohlcv:
         success = run_daily_backtest_with_ohlcv(args.capital, output_dir)
     else:
         success = run_daily_backtest(args.capital, output_dir)
+
+    # 백테스트 성공 후 Walk-forward 평가
+    if success and args.evaluate:
+        logger.info("[DAILY_BACKTEST] Walk-forward 평가 시작")
+        run_walk_forward_evaluation(
+            lookback_days=args.eval_lookback,
+            test_days=args.eval_test_days,
+            output_dir=Path("logs/evaluation"),
+        )
 
     sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":
     main()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Walk-forward 평가 함수 (신규 추가)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_walk_forward_evaluation(
+    symbol: str = "KP200 선물",
+    db_path: str = "data/pivot_parameters.db",
+    lookback_days: int = 30,
+    test_days: int = 20,
+    output_dir: Optional[Path] = None,
+) -> dict:
+    """Walk-forward 평가를 실행하고 결과를 저장한다."""
+    if output_dir is None:
+        output_dir = Path("logs/evaluation")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    db = PivotParameterDB(db_path)
+    try:
+        evaluator = WalkForwardEvaluator(db, symbol)
+
+        logger.info("[EVALUATION] Walk-forward 검증 시작 (lookback=%d, test=%d일)", lookback_days, test_days)
+        wf_result = evaluator.run(lookback_days=lookback_days, test_days=test_days)
+
+        logger.info("[EVALUATION] 레짐별 커버리지 측정")
+        cov_result = evaluator.measure_coverage(lookback_days=lookback_days)
+
+        full_result = {
+            "timestamp":     datetime.now().isoformat(),
+            "symbol":        symbol,
+            "lookback_days": lookback_days,
+            "test_days":     test_days,
+            "walk_forward":  wf_result,
+            "coverage":      cov_result,
+        }
+
+        today = datetime.now().strftime("%Y%m%d")
+        json_path   = output_dir / f"walkforward_{today}.json"
+        latest_path = output_dir / "walkforward_latest.json"
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(full_result, f, ensure_ascii=False, indent=2)
+        with open(latest_path, "w", encoding="utf-8") as f:
+            json.dump(full_result, f, ensure_ascii=False, indent=2)
+
+        _print_evaluation_summary(full_result)
+        logger.info("[EVALUATION] 결과 저장: %s", json_path)
+        return full_result
+
+    finally:
+        db.close()
+
+
+def _print_evaluation_summary(result: dict) -> None:
+    """평가 결과 요약 로그 출력."""
+    wf  = result.get("walk_forward", {})
+    cov = result.get("coverage", {})
+
+    verdict     = wf.get("verdict", "N/A")
+    improvement = wf.get("avg_improvement_vs_fallback", 0.0)
+    win_rate    = wf.get("win_rate_vs_fallback", 0.0)
+    coverage    = cov.get("overall_coverage_rate", 0.0)
+    stability   = wf.get("stability_cv", 0.0)
+
+    lines = [
+        "",
+        "=" * 60,
+        "  Walk-forward 평가 결과 요약",
+        "=" * 60,
+        f"  판정:              {verdict}",
+        f"  평균 개선률:       {improvement:+.4f}  (목표 > +0.030)",
+        f"  폴백 대비 승률:    {win_rate:.1%}",
+        f"  레짐 커버리지:     {coverage:.1%}          (목표 >= 80%)",
+        f"  파라미터 안정성:   CV={stability:.3f}       (목표 < 0.200)",
+        "-" * 60,
+    ]
+    for regime, info in cov.get("regimes", {}).items():
+        mark  = "OK" if info["covered"] else "NG"
+        count = info["sample_count"]
+        lines.append(f"  [{mark}] {regime:<22} {count:>3}샘플")
+    lines += ["=" * 60, ""]
+    for line in lines:
+        logger.info(line)

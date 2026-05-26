@@ -1037,14 +1037,31 @@ def _make_realtime_callback(predictor: Any, state: Any, ticks_fh: Any) -> Any:
                                     if str(project_root) not in sys.path:
                                         sys.path.insert(0, str(project_root))
 
-                                    from scripts.run_daily_backtest import run_daily_backtest_with_ohlcv
+                                    from scripts.run_daily_backtest import (
+                                        run_daily_backtest_with_ohlcv,
+                                        run_walk_forward_evaluation,
+                                    )
 
+                                    # ── Step 1: 백테스트 + DB 저장 ──────────────
                                     logger.info("[JIF_CLOSE] 당일 매매 백테스트 시작 (비동기)")
                                     success = run_daily_backtest_with_ohlcv()
                                     if success:
                                         logger.info("[JIF_CLOSE] 당일 매매 백테스트 완료")
                                     else:
                                         logger.warning("[JIF_CLOSE] 당일 매매 백테스트 실패")
+
+                                    # ── Step 2: Walk-forward 평가 ────────────────
+                                    # 15일 이상 데이터가 쌓인 이후부터 자동 실행
+                                    # lookback=10, test=5 → 최소 11일 데이터 필요
+                                    try:
+                                        logger.info("[JIF_CLOSE] Walk-forward 평가 시작")
+                                        run_walk_forward_evaluation(
+                                            lookback_days=10,
+                                            test_days=5,
+                                        )
+                                    except Exception as eval_e:
+                                        # 데이터 부족 등 평가 실패는 경고만, 프로세스 중단 없음
+                                        logger.warning("[JIF_CLOSE] Walk-forward 평가 실패(무시): %s", eval_e)
                                 except Exception as e:
                                     logger.exception("[JIF_CLOSE] 백테스트 실행 예외: %s", e)
 

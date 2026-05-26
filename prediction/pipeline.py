@@ -922,6 +922,15 @@ class PredictionPipeline(
             "zz_confirm_skipped_interval": 0,
         }
 
+        # ── TransformerQualityTracker 초기화 ─────────────────────────────────
+        # Telegram notifier는 bridge 연결 후 set_quality_notifier()로 주입
+        try:
+            from prediction.transformer_quality_tracker import TransformerQualityTracker
+            self._quality_tracker = TransformerQualityTracker(notifier=None)
+        except Exception as _qt_err:
+            logger.warning("[Pipeline] TransformerQualityTracker 초기화 실패(무시): %s", _qt_err)
+            self._quality_tracker = None
+
         # 옵션 센티먼트 분석기 초기화
         try:
             self._init_option_sentiment_analyzer(config_path=str(self._config_path))
@@ -1153,7 +1162,36 @@ class PredictionPipeline(
                 out["feedback_tft_weight"] = float(1.0 - float(w_t))
         except Exception as _e:
             logger.debug("[get_metrics] 오류 무시: %s", _e)
+        # ── TransformerQualityTracker 메트릭 병합 ────────────────────────────
+        try:
+            qt = getattr(self, "_quality_tracker", None)
+            if qt is not None:
+                out.update(qt.get_metrics_dict())
+        except Exception as _qe:
+            logger.debug("[get_metrics] quality_tracker 병합 오류(무시): %s", _qe)
         return out
+
+    def set_quality_notifier(self, notifier: Any) -> None:
+        """Telegram notifier를 quality tracker에 주입한다.
+
+        PipelineTelegramBridge.start() 호출 후 한 번만 호출하면 된다.
+        """
+        try:
+            qt = getattr(self, "_quality_tracker", None)
+            if qt is not None:
+                qt._notifier = notifier
+                logger.info("[Pipeline] quality_tracker notifier 연결 완료")
+        except Exception as e:
+            logger.debug("[Pipeline] set_quality_notifier 오류(무시): %s", e)
+
+    def log_quality_summary(self) -> None:
+        """장마감 후 품질 요약을 로그로 출력한다 (run_daily_backtest에서 호출)."""
+        try:
+            qt = getattr(self, "_quality_tracker", None)
+            if qt is not None:
+                qt.log_daily_summary()
+        except Exception as e:
+            logger.debug("[Pipeline] log_quality_summary 오류(무시): %s", e)
 
     def reset_adaptive_weights(self) -> bool:
         fn = getattr(self.numeric_predictor, "reset_adaptive_weights", None)

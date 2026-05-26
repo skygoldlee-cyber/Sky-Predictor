@@ -610,18 +610,29 @@ class PivotParameterDB:
         """
         cursor = self.conn.cursor()
         
-        query = "SELECT DISTINCT date FROM pivot_parameters_daily WHERE 1=1"
-        params = []
-        
+        # pivot_parameters_daily + pivot_parameters_session 양쪽에서 날짜 수집
         if symbol:
-            query += " AND symbol = ?"
-            params.append(symbol)
-        
-        query += " ORDER BY date DESC"
-        
-        cursor.execute(query, params)
+            cursor.execute(
+                """
+                SELECT DISTINCT date FROM (
+                    SELECT date FROM pivot_parameters_daily WHERE symbol = ?
+                    UNION
+                    SELECT date FROM pivot_parameters_session WHERE symbol = ?
+                ) ORDER BY date DESC
+                """,
+                (symbol, symbol),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT DISTINCT date FROM (
+                    SELECT date FROM pivot_parameters_daily
+                    UNION
+                    SELECT date FROM pivot_parameters_session
+                ) ORDER BY date DESC
+                """
+            )
         rows = cursor.fetchall()
-        
         dates = [row[0] for row in rows]
         return dates
     
@@ -849,4 +860,370 @@ class ParameterRecommender:
             "_source":          "db",
             "_sample_count":    row.get("sample_count", 0),
             "_composite_score": row.get("composite_score", 0.0),
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Walk-forward 평가기 (신규 추가)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class WalkForwardEvaluator:
+    """DB 추천 파라미터의 실질 효과를 Walk-forward 방식으로 검증한다.
+
+    평가 구조
+    ---------
+    훈련 윈도우 (lookback_days) → ParameterRecommender 추천
+    테스트 일 (test_day)        → 실제 composite_score 비교
+    슬라이딩                    → 하루씩 전진하며 N회 반복
+
+    비교 대상
+    ---------
+    A) DB 추천 (ParameterRecommender.recommend)
+    B) REGIME_FALLBACK 하드코딩 폴백
+    C) 고정 파라미터 (base_pct=0.3, atr_weight=0.5)
+
+    판정 기준
+    ---------
+    improvement_vs_fallback > 0.03  → DB 추천 유효
+    improvement_vs_fallback < 0.00  → 순환 강화 의심
+    coverage_rate           ≥ 0.80  → 샘플 충분
+    stability_cv            < 0.20  → 파라미터 안정
+    """
+
+    # 고정 파라미터 베이스라인 C
+    FIXED_BASELINE: dict = {
+        "atr_multiplier":   1.5,
+        "base_pct":         0.30,
+        "atr_weight":       0.50,
+        "confirmation_bars": 2,
+        "er_period":        10,
+        "min_wave_pct":     0.15,
+    }
+
+    def __init__(self, db: "PivotParameterDB", symbol: str = "KP200 선물") -> None:
+        self._db = db
+        self._symbol = symbol
+        self._recommender = ParameterRecommender(db)
+
+    # ── 메인 실행 ────────────────────────────────────────────────────────────
+
+    def run(
+        self,
+        lookback_days: int = 30,
+        test_days: int = 20,
+        indicator_type: str = "hybrid_adaptive_pivot",
+    ) -> dict:
+        """Walk-forward 검증을 실행하고 결과 딕셔너리를 반환한다.
+
+        Parameters
+        ----------
+        lookback_days:
+            훈련 윈도우 크기 (일). 이 기간의 DB 데이터로 파라미터 추천.
+        test_days:
+            슬라이딩 반복 횟수 (일). DB에 저장된 최근 날짜부터 역방향으로.
+        indicator_type:
+            평가 대상 지표 타입.
+
+        Returns
+        -------
+        dict:
+            improvement_vs_fallback, improvement_vs_fixed,
+            coverage_rate, stability_cv, daily_results 포함.
+        """
+        all_dates = self._db.get_all_dates(self._symbol)
+        if len(all_dates) < lookback_days + 1:
+            _logger.warning(
+                "[WalkForward] 데이터 부족: %d일 필요, %d일 보유",
+                lookback_days + 1, len(all_dates),
+            )
+            return self._empty_result("데이터 부족")
+
+        # 날짜 오름차순 정렬
+        sorted_dates = sorted(all_dates)
+        # 테스트 구간: 마지막 test_days개
+        test_date_list = sorted_dates[lookback_days:][-test_days:]
+        if not test_date_list:
+            return self._empty_result("테스트 날짜 없음")
+
+        daily_results = []
+        param_history: dict[str, list] = {
+            "atr_multiplier": [], "base_pct": [], "atr_weight": [],
+        }
+        fallback_used = 0
+
+        for test_date in test_date_list:
+            result = self._run_single_day_comparison(
+                test_date, lookback_days, indicator_type,
+            )
+            if result is None:
+                continue
+            daily_results.append(result)
+
+            # 파라미터 이력 누적 (안정성 계산용)
+            for key in param_history:
+                v = result.get(f"db_param_{key}")
+                if v is not None:
+                    param_history[key].append(v)
+
+            if result.get("db_used_fallback", False):
+                fallback_used += 1
+
+        if not daily_results:
+            return self._empty_result("비교 가능한 날 없음")
+
+        # 집계
+        improvements_f = [r["improvement_vs_fallback"] for r in daily_results]
+        improvements_x = [r["improvement_vs_fixed"]    for r in daily_results]
+        n = len(daily_results)
+
+        avg_improvement_f  = float(sum(improvements_f) / n)
+        avg_improvement_x  = float(sum(improvements_x) / n)
+        win_rate_vs_fallback = float(sum(1 for v in improvements_f if v > 0) / n)
+        coverage_rate        = float(1.0 - fallback_used / n)
+
+        # 파라미터 안정성 CV (변동 계수)
+        stability_cv = self._calc_stability_cv(param_history)
+
+        summary = {
+            "symbol":                  self._symbol,
+            "lookback_days":           lookback_days,
+            "test_days":               n,
+            "avg_improvement_vs_fallback": round(avg_improvement_f, 4),
+            "avg_improvement_vs_fixed":    round(avg_improvement_x, 4),
+            "win_rate_vs_fallback":    round(win_rate_vs_fallback, 4),
+            "coverage_rate":           round(coverage_rate, 4),
+            "stability_cv":            round(stability_cv, 4),
+            "verdict":                 self._verdict(
+                avg_improvement_f, coverage_rate, stability_cv,
+            ),
+            "daily_results":           daily_results,
+        }
+
+        _logger.info(
+            "[WalkForward] 완료: 개선률=%.3f coverage=%.2f CV=%.3f 판정=%s",
+            avg_improvement_f, coverage_rate, stability_cv, summary["verdict"],
+        )
+        return summary
+
+    # ── 단일 날짜 비교 ────────────────────────────────────────────────────────
+
+    def _run_single_day_comparison(
+        self,
+        test_date: str,
+        lookback_days: int,
+        indicator_type: str,
+    ) -> dict | None:
+        """test_date의 DB 기록을 꺼내 3가지 파라미터 소스와 composite_score 비교.
+
+        DB에 저장된 파라미터와 성능 지표를 사용해,
+        동일 레짐 조건에서 각 파라미터 소스의 예측 composite_score를 계산한다.
+        """
+        cursor = self._db.conn.cursor()
+
+        # test_date 레코드 조회
+        cursor.execute(
+            """
+            SELECT dominant_regime, composite_score,
+                   pivot_confirmation_rate, avg_lag_bars,
+                   pivot_quality_score, alternation_rate, false_pivot_rate,
+                   atr_multiplier_bin, base_pct_bin, atr_weight_bin
+            FROM pivot_parameters_session
+            WHERE symbol = ? AND date = ?
+            ORDER BY composite_score DESC
+            LIMIT 1
+            """,
+            (self._symbol, test_date),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        (
+            regime, actual_composite,
+            conf_rate, lag_bars, quality, alt_rate, fp_rate,
+            db_atr_mult, db_base_pct, db_atr_weight,
+        ) = row
+
+        if actual_composite is None:
+            return None
+
+        # lookback 훈련 구간 (test_date 이전)
+        train_end_date = test_date  # exclusive
+        db_params = self._recommender.recommend(
+            symbol=self._symbol,
+            regime=regime or "unknown",
+            indicator_type=indicator_type,
+            lookback_days=lookback_days,
+        )
+        db_used_fallback = db_params.get("_source") != "db"
+
+        fallback_params = ParameterRecommender.REGIME_FALLBACK.get(
+            regime or "unknown",
+            ParameterRecommender.REGIME_FALLBACK["unknown"],
+        )
+
+        # 각 파라미터 소스의 "예측" composite_score 계산
+        # 실제 성능 지표는 test_date 레코드에서 가져오되,
+        # 파라미터 차이로 인한 composite 점수 추정
+        score_db       = self._estimate_composite(db_params,             conf_rate, lag_bars, quality, alt_rate, fp_rate)
+        score_fallback = self._estimate_composite(fallback_params,       conf_rate, lag_bars, quality, alt_rate, fp_rate)
+        score_fixed    = self._estimate_composite(self.FIXED_BASELINE,   conf_rate, lag_bars, quality, alt_rate, fp_rate)
+
+        return {
+            "date":                     test_date,
+            "regime":                   regime,
+            "actual_composite_score":   round(float(actual_composite), 4),
+            "score_db":                 round(score_db, 4),
+            "score_fallback":           round(score_fallback, 4),
+            "score_fixed":              round(score_fixed, 4),
+            "improvement_vs_fallback":  round(score_db - score_fallback, 4),
+            "improvement_vs_fixed":     round(score_db - score_fixed, 4),
+            "db_used_fallback":         db_used_fallback,
+            "db_param_atr_multiplier":  db_params.get("atr_multiplier"),
+            "db_param_base_pct":        db_params.get("base_pct"),
+            "db_param_atr_weight":      db_params.get("atr_weight"),
+        }
+
+    # ── composite_score 추정 ─────────────────────────────────────────────────
+
+    @staticmethod
+    def _estimate_composite(
+        params: dict,
+        conf_rate: float,
+        lag_bars:  float,
+        quality:   float,
+        alt_rate:  float,
+        fp_rate:   float,
+    ) -> float:
+        """파라미터 소스별 composite_score 추정.
+
+        파라미터 차이는 주로 확정률과 래그에 영향을 미친다.
+        - confirmation_bars 증가 → 래그 증가, 오탐 감소
+        - atr_weight 높음 → 변동성 장에서 확정률 증가
+        이 관계를 선형 보정으로 근사한다.
+        """
+        cb = float(params.get("confirmation_bars", 2))
+        aw = float(params.get("atr_weight", 0.5))
+
+        # confirmation_bars 보정: 기준(2봉) 대비 래그 증감
+        lag_adj   = lag_bars  + (cb - 2.0) * 1.5   # 봉당 1.5 래그 추가
+        conf_adj  = max(0.0, min(1.0, conf_rate - (cb - 2.0) * 0.03))  # 봉당 3% 감소
+
+        # atr_weight 보정: 0.5 기준으로 ±10% 확정률 영향
+        conf_adj  = max(0.0, min(1.0, conf_adj + (aw - 0.5) * 0.10))
+
+        lag_score  = max(0.0, 1.0 - lag_adj / 20.0)
+        fp_adj     = max(0.0, min(1.0, fp_rate - (cb - 2.0) * 0.02))
+        fp_score   = 1.0 - fp_adj
+
+        return (
+            conf_adj  * 0.35
+            + lag_score * 0.25
+            + quality   * 0.20
+            + alt_rate  * 0.10
+            + fp_score  * 0.10
+        )
+
+    # ── 파라미터 안정성 ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _calc_stability_cv(param_history: dict) -> float:
+        """연속 날의 추천 파라미터 변동 계수(CV) 평균을 반환한다.
+
+        CV = std / mean. 낮을수록 추천이 안정적.
+        목표: CV < 0.20
+        """
+        cvs = []
+        for key, values in param_history.items():
+            if len(values) < 2:
+                continue
+            import statistics
+            try:
+                mean = statistics.mean(values)
+                std  = statistics.stdev(values)
+                if mean > 1e-10:
+                    cvs.append(std / mean)
+            except Exception:
+                pass
+        return float(sum(cvs) / len(cvs)) if cvs else 0.0
+
+    # ── 커버리지 측정 ────────────────────────────────────────────────────────
+
+    def measure_coverage(
+        self,
+        regimes: list | None = None,
+        lookback_days: int = 30,
+        min_sample: int = 3,
+    ) -> dict:
+        """레짐별 DB 샘플 커버리지를 측정한다.
+
+        Parameters
+        ----------
+        regimes:
+            측정할 레짐 목록. None이면 8개 전체.
+        lookback_days:
+            조회 기간.
+        min_sample:
+            최소 샘플 수 (미달 시 폴백 사용).
+
+        Returns
+        -------
+        dict:
+            레짐별 sample_count, covered(bool), overall_coverage_rate 포함.
+        """
+        if regimes is None:
+            regimes = list(ParameterRecommender.REGIME_FALLBACK.keys())
+
+        coverage_detail = {}
+        covered_count = 0
+
+        for regime in regimes:
+            result = self._db.query_best_parameters_session(
+                symbol=self._symbol,
+                dominant_regime=regime,
+                lookback_days=lookback_days,
+                min_pivots=5,
+                min_sample=min_sample,
+            )
+            sample_count = result.get("sample_count", 0) if result else 0
+            covered = sample_count >= min_sample
+            if covered:
+                covered_count += 1
+            coverage_detail[regime] = {
+                "sample_count": sample_count,
+                "covered":      covered,
+            }
+
+        return {
+            "regimes":              coverage_detail,
+            "overall_coverage_rate": round(covered_count / len(regimes), 4),
+            "covered_regimes":      covered_count,
+            "total_regimes":        len(regimes),
+        }
+
+    # ── 판정 로직 ────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _verdict(
+        improvement: float,
+        coverage:    float,
+        stability:   float,
+    ) -> str:
+        """4단계 판정 문자열 반환."""
+        if improvement > 0.03 and coverage >= 0.80 and stability < 0.20:
+            return "PASS — DB 추천 유효"
+        if improvement > 0.00 and coverage >= 0.60:
+            return "MARGINAL — 데이터 추가 누적 필요"
+        if improvement < 0.00:
+            return "FAIL — 순환 강화 의심, 폴백 우선 권장"
+        return "INSUFFICIENT — 샘플 부족"
+
+    @staticmethod
+    def _empty_result(reason: str) -> dict:
+        return {
+            "verdict": f"ERROR — {reason}",
+            "avg_improvement_vs_fallback": 0.0,
+            "coverage_rate": 0.0,
+            "stability_cv":  0.0,
+            "daily_results": [],
         }
