@@ -1122,21 +1122,6 @@ async def _initialize_api(
                         _log("[t8415] KP200 분봉 데이터를 tick_processor에 설정 완료 (bars=%d)", len(df))
                 except Exception as e:
                     _log("[t8415] tick_processor 설정 실패: %s", str(e))
-
-                # 장마감 이후 CSV 저장
-                try:
-                    market_close_time_str = ebest_cfg.get("market_close_time", "15:46")
-                    market_close_time = datetime.strptime(market_close_time_str, "%H:%M").time()
-                    if current_time >= market_close_time:
-                        # 저장 디렉토리 생성
-                        save_dir = Path("data/minute_bars")
-                        save_dir.mkdir(parents=True, exist_ok=True)
-                        # 파일명: kp200_YYYYMMDD.csv
-                        csv_path = save_dir / f"kp200_{target_date}.csv"
-                        df.to_csv(csv_path)
-                        _log("[t8415] KP200 분봉 데이터 CSV 저장 완료: %s (bars=%d)", csv_path, len(df))
-                except Exception as e:
-                    _log("[t8415] CSV 저장 실패: %s", str(e))
             except Exception as e:
                 _log("[t8415] DataFrame 변환 실패: %s", str(e))
         else:
