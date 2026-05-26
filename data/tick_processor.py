@@ -169,6 +169,22 @@ class RealTimeTickProcessor:
         elif not bool(value) and prev:
             self.logger.info("[TickProcessor] 장 재개 — market_closed=False")
 
+    def clear_minute_cache(self) -> None:
+        """초기 데이터 캐시를 초기화한다.
+
+        _futures_minute_df, _kospi_minute_df 캐시를 삭제하여
+        다음 데이터 요청 시 새로운 데이터를 가져오도록 한다.
+        """
+        if hasattr(self, "_futures_minute_df"):
+            self._futures_minute_df = None
+        if hasattr(self, "_kospi_minute_df"):
+            self._kospi_minute_df = None
+        if hasattr(self, "_merged_futures_df"):
+            self._merged_futures_df = None
+        if hasattr(self, "_merged_spot_df"):
+            self._merged_spot_df = None
+        self.logger.info("[TickProcessor] 분봉 캐시 초기화 완료")
+
     def set_option_open_map(
         self,
         call_open_map: Dict[str, float],
@@ -925,6 +941,9 @@ class RealTimeTickProcessor:
             logger.warning("[TickProcessor] fetch_market_service가 설정되지 않음")
             return pd.DataFrame()
 
+        # 캐시 초기화 (target_day 변경 시 새로운 데이터 가져오기)
+        self.clear_minute_cache()
+
         # config에서 target_day 읽기
         config = load_config()
         target_day = config.get("prediction", {}).get("target_day", None)
@@ -1000,6 +1019,9 @@ class RealTimeTickProcessor:
         if self.fetch_market_service is None:
             logger.warning("[TickProcessor] fetch_market_service가 설정되지 않음")
             return pd.DataFrame()
+
+        # 캐시 초기화 (target_day 변경 시 새로운 데이터 가져오기)
+        self.clear_minute_cache()
 
         # config에서 target_day 읽기
         config = load_config()
