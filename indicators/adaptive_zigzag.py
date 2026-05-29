@@ -3455,6 +3455,9 @@ class AdaptiveZigZag:
         # Layer C: 적응형 엔진 (자기완결형)
         if self._adaptive_engine is not None:
             try:
+                # 시장 구조 정보 가져오기
+                structure = getattr(self._state, "structure", "unknown")
+                
                 adjusted = self._adaptive_engine.compute(
                     atr_values=list(self._atr_values),
                     all_swings=self._all_swings,
@@ -3463,6 +3466,7 @@ class AdaptiveZigZag:
                     der=float(self._calc_der()),
                     direction=self._current_direction,
                     last_confirmed_bar_idx=self._last_confirmed_bar_idx,
+                    structure=structure,
                 )
                 # 결합: config 수정 없이 런타임 dict로만
                 return {

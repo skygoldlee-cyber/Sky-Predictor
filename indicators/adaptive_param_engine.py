@@ -172,6 +172,7 @@ class AdaptiveParamEngine:
         der:                    float,
         direction:              int,
         last_confirmed_bar_idx: int,
+        structure:              str = "unknown",
     ) -> AdaptiveAdjustment:
         """매 봉마다 호출. 조정된 파라미터 배율을 반환한다.
 
@@ -183,6 +184,7 @@ class AdaptiveParamEngine:
             der:                    _calc_der() 결과 (-1~1)
             direction:              _current_direction (-1/0/1)
             last_confirmed_bar_idx: ZigZag._last_confirmed_bar_idx
+            structure:              시장 구조 (uptrend/downtrend/ranging/unknown)
         """
         try:
             # ① ATR 백분위 계산
@@ -191,8 +193,8 @@ class AdaptiveParamEngine:
             # ② 피봇 밀도 계산
             density, density_signal = self._calc_density(all_swings, bar_idx)
 
-            # ③ 레짐 라벨 결정
-            regime = self._classify_regime(er, der, atr_pct, direction)
+            # ③ 레짐 라벨 결정 (시장 구조 정보 추가)
+            regime = self._classify_regime(er, der, atr_pct, direction, structure)
 
             # ④ 기준 배율 조회
             base_mult, base_wave, base_thr, base_cb = self.REGIME_TABLE[regime]
@@ -294,8 +296,9 @@ class AdaptiveParamEngine:
         der:       float,
         atr_pct:   float,
         direction: int,
+        structure: str = "unknown",
     ) -> str:
-        """ER + DER + ATR 백분위 → 레짐 라벨 결정.
+        """ER + DER + ATR 백분위 + 시장 구조 → 레짐 라벨 결정.
 
         레짐 결정 트리:
           ATR 백분위 > 75% + ER < 0.35  → volatile (급변동)
@@ -303,11 +306,29 @@ class AdaptiveParamEngine:
           ER > 0.35                     → trend_weak_*
           ER ≤ 0.35 + ATR > 75%        → chop_high_vol
           ER ≤ 0.35 + ATR ≤ 75%        → chop_low_vol
+          
+        [개선] 시장 구조 보정:
+          structure="uptrend" + ER ≥ 0.35 → 강한 상승 추세로 강화
+          structure="downtrend" + ER ≥ 0.35 → 강한 하락 추세로 강화
         """
         # 급변동 우선 (ATR 급등 + ER 낮음 = 방향 없는 폭발적 변동)
         if atr_pct > self.ATR_HIGH_THRESH and er < self.ER_WEAK:
             return "volatile"
 
+        # 시장 구조 보정: 명확한 추세 구조인 경우 레짐 강화
+        if structure == "uptrend" and er >= self.ER_WEAK:
+            # 상승 구조 + 추세 ER → 강한 상승 추세로 강화
+            if er >= self.ER_STRONG:
+                return "trend_strong_up"
+            return "trend_weak_up"
+        
+        if structure == "downtrend" and er >= self.ER_WEAK:
+            # 하락 구조 + 추세 ER → 강한 하락 추세로 강화
+            if er >= self.ER_STRONG:
+                return "trend_strong_dn"
+            return "trend_weak_dn"
+
+        # 기존 ER 기반 분류
         if er >= self.ER_STRONG:
             # DER 부호로 방향 보정 (DER 양수=상승추세, 음수=하락추세)
             if der >= 0.0:

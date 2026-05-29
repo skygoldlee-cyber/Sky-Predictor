@@ -390,6 +390,7 @@ class HybridAdaptivePivot:
                 der=0.0,
                 direction=self._direction,
                 last_confirmed_bar_idx=self._last_confirmed_bar,
+                structure=self._state.structure,
             )
             table = self.config.regime_atr_weight_table
             effective_atr_weight = table.get(adj.regime_label, self.config.atr_weight)

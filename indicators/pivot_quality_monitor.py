@@ -68,6 +68,12 @@ class PivotQualityMetrics:
     # 파동 크기
     avg_wave_pct: float    = 0.0
 
+    # [개선] 경제적 가치: 피봇 기반 수익성
+    avg_profit_pct: float  = 0.0  # 피봇 기반 평균 수익률 (%)
+    win_rate: float        = 0.0  # 승률 (0~1)
+    economic_grade: str    = "N/A"  # 경제적 가치 등급 (A/B/C/D)
+    economic_sample: int  = 0     # 경제적 가치 계산에 사용된 피봇 수
+
     # 현재 ZigZag 상태
     current_threshold_pct: float = 0.0
     current_atr: float           = 0.0
@@ -156,6 +162,12 @@ class PivotQualityAnalyzer:
             m.accuracy_score, m.accuracy_sample = self._calc_accuracy(
                 confirmed, zz, bar_idx, m.avg_wave_pct
             )
+
+            # ⑥-① 경제적 가치 (수익성/승률) ─────────────────────────
+            m.avg_profit_pct, m.win_rate, m.economic_sample = self._calc_profitability(
+                confirmed, zz, bar_idx
+            )
+            m.economic_grade = self._calc_economic_grade(m)
 
             # ⑦ ZigZag 상태 ────────────────────────────────────────
             state = getattr(zz, "_state", None)
@@ -282,6 +294,85 @@ class PivotQualityAnalyzer:
                     m.accuracy_score >= g["accuracy"]):
                 return grade, self.GRADE_COLORS[grade]
         return "D", self.GRADE_COLORS["D"]
+
+    def _calc_profitability(
+        self,
+        confirmed: List[Any],
+        zz: Any,
+        bar_idx: int,
+    ) -> tuple[float, float, int]:
+        """피봇 기반 수익성 계산 (HIGH-LOW 교번 쌍).
+        
+        Returns:
+            (avg_profit_pct, win_rate, sample_count)
+        """
+        if len(confirmed) < 3:
+            return 0.0, 0.0, 0
+        
+        highs = [s for s in confirmed if self._is_high(s)]
+        lows  = [s for s in confirmed if not self._is_high(s)]
+        
+        profits = []
+        
+        # HIGH-LOW 교번 쌍에서 수익 계산
+        for i, h in enumerate(highs[:-1]):
+            # 해당 HIGH 이후의 LOW 찾기
+            next_lows = [l for l in lows if getattr(l, "index", 0) > getattr(h, "index", 0)]
+            if not next_lows:
+                continue
+            
+            nl = next_lows[0]  # 가장 가까운 LOW
+            
+            # HIGH → LOW: 하락 수익
+            entry_price = h.price
+            exit_price = nl.price
+            if entry_price > 0:
+                profit = (entry_price - exit_price) / entry_price * 100.0
+                profits.append(profit)
+        
+        # LOW-HIGH 교번 쌍에서 수익 계산
+        for i, l in enumerate(lows[:-1]):
+            # 해당 LOW 이후의 HIGH 찾기
+            next_highs = [h for h in highs if getattr(h, "index", 0) > getattr(l, "index", 0)]
+            if not next_highs:
+                continue
+            
+            nh = next_highs[0]  # 가장 가까운 HIGH
+            
+            # LOW → HIGH: 상승 수익
+            entry_price = l.price
+            exit_price = nh.price
+            if entry_price > 0:
+                profit = (exit_price - entry_price) / entry_price * 100.0
+                profits.append(profit)
+        
+        if not profits:
+            return 0.0, 0.0, 0
+        
+        avg_profit = sum(profits) / len(profits)
+        win_rate = sum(1 for p in profits if p > 0) / len(profits)
+        
+        return avg_profit, win_rate, len(profits)
+
+    def _calc_economic_grade(self, m: PivotQualityMetrics) -> str:
+        """경제적 가치 기반 등급 부여.
+        
+        기준:
+          A: avg_profit > 1.0% AND win_rate > 0.6
+          B: avg_profit > 0.5% AND win_rate > 0.5
+          C: avg_profit > 0%   AND win_rate > 0.4
+          D: 그 외
+        """
+        if m.economic_sample < 3:
+            return "N/A"
+        
+        if m.avg_profit_pct > 1.0 and m.win_rate > 0.6:
+            return "A"
+        elif m.avg_profit_pct > 0.5 and m.win_rate > 0.5:
+            return "B"
+        elif m.avg_profit_pct > 0 and m.win_rate > 0.4:
+            return "C"
+        return "D"
 
     def _build_suggestion(
         self, m: PivotQualityMetrics, cfg: Any
@@ -413,6 +504,9 @@ class PivotQualityMonitor:
                 ("max_lag",     "최대지연"),
                 ("accuracy",    "방향정확"),
                 ("avg_wave",    "평균파동"),
+                ("profit",      "수익률"),
+                ("win_rate",    "승률"),
+                ("econ_grade",  "경제등급"),
             ]):
                 mg.addWidget(self._make_lbl(parent, label), row, 0)
                 v = QLabel("—", parent); v.setStyleSheet(self._VAL)
@@ -541,6 +635,23 @@ class PivotQualityMonitor:
                    if m.accuracy_sample >= 3 else "—(샘플부족)")
         self._ml_text("accuracy", acc_txt)
         self._ml_text("avg_wave", f"{m.avg_wave_pct:.2f}%")
+
+        # [개선] 경제적 가치
+        profit_txt = (f"{m.avg_profit_pct:.2f}%"
+                      if m.economic_sample >= 3 else "—(샘플부족)")
+        self._ml_text("profit", profit_txt)
+        
+        win_txt = (f"{m.win_rate:.0%}"
+                   if m.economic_sample >= 3 else "—(샘플부족)")
+        self._ml_text("win_rate", win_txt)
+        
+        # 경제 등급 색상
+        econ_grade_colors = {"A": "#4ec9b0", "B": "#dcdcaa", "C": "#f48771", "D": "#ff4444"}
+        econ_col = econ_grade_colors.get(m.economic_grade, "#888888")
+        self._ml_text("econ_grade", m.economic_grade)
+        self._ml_style("econ_grade",
+            f"font-size:11px;font-weight:bold;color:{econ_col};"
+            "font-family:'Consolas',monospace;")
 
         # 파라미터
         self._pl_text("threshold", f"{m.current_threshold_pct:.3f}%")
