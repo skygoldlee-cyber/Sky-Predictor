@@ -30,7 +30,8 @@
       "structure_lookback_swings": 30,
       "structure_points": 4
     },
-    "warmup_bars": 15
+    "warmup_bars": 15,
+    "supertrend_pivot_filter": false
   },
   "prediction": {
     "target_day": "",
