@@ -599,16 +599,14 @@ class AppConfig:
             raise
 
     @classmethod
-    def _from_dict(cls, data: Dict) -> "AppConfig":
-        """딕셔너리에서 설정 생성"""
-        
-        # AI 제공자 설정 (환경변수 우선)
+    def _parse_ai_providers(cls, data: Dict) -> AIProviderConfig:
+        """AI 제공자 설정 파싱"""
         ai_data = data.get("ai_providers", {})
         ai_data = ai_data if isinstance(ai_data, dict) else {}
         ad = ai_data.get("anthropic", {}) if isinstance(ai_data.get("anthropic"), dict) else {}
         od = ai_data.get("openai", {}) if isinstance(ai_data.get("openai"), dict) else {}
         gd = ai_data.get("gemini", {}) if isinstance(ai_data.get("gemini"), dict) else {}
-        ai_providers = AIProviderConfig(
+        return AIProviderConfig(
             anthropic_key=_strip_api_key(os.environ.get("ANTHROPIC_API_KEY"))
             or _strip_api_key(ad.get("api_key")),
             openai_key=_strip_api_key(os.environ.get("OPENAI_API_KEY"))
@@ -617,10 +615,12 @@ class AppConfig:
             or _strip_api_key(gd.get("api_key")),
         )
 
-        # eBest 인증 설정 (환경변수 우선)
+    @classmethod
+    def _parse_ebest_config(cls, data: Dict) -> EBestConfig:
+        """eBest 인증 설정 파싱"""
         ebest_data = data.get("ebest", {})
         ebest_data = ebest_data if isinstance(ebest_data, dict) else {}
-        ebest = EBestConfig(
+        return EBestConfig(
             appkey=os.environ.get("EBEST_APPKEY")
             or os.environ.get("EBEST_APP_KEY")
             or ebest_data.get("appkey"),
@@ -628,41 +628,49 @@ class AppConfig:
             or os.environ.get("EBEST_APP_SECRET")
             or ebest_data.get("appsecretkey"),
         )
-        
-        # 옵션 구독 설정
+
+    @classmethod
+    def _parse_option_subscription(cls, data: Dict) -> OptionSubscriptionConfig:
+        """옵션 구독 설정 파싱"""
         opt_data = data.get("options_subscription", {})
-        options_subscription = OptionSubscriptionConfig(
+        return OptionSubscriptionConfig(
             itm=cls._safe_int(opt_data.get("itm"), 6),
             otm_open_min=float(opt_data.get("otm_open_min", 0.30) or 0.30),
             max_otm_calls=cls._safe_int(opt_data.get("max_otm_calls"), 0),
             max_otm_puts=cls._safe_int(opt_data.get("max_otm_puts"), 0),
             wait_sec=cls._safe_int(opt_data.get("wait_sec"), 2),
-            # OI 지지저항 분석용 구독 창 (금일 추가)
             preopen_oh0_window=min(20, max(0, cls._safe_int(opt_data.get("preopen_oh0_window"), 10))),
             oi_itm_count=min(30, max(1, cls._safe_int(opt_data.get("oi_itm_count"), 10))),
             oi_otm_count=min(30, max(1, cls._safe_int(opt_data.get("oi_otm_count"), 10))),
             oi_rebalance_interval_sec=max(10.0, min(600.0, float(opt_data.get("oi_rebalance_interval_sec", 60.0) or 60.0))),
         )
 
-        # 옵션 분봉 OHLCV 집계 설정
+    @classmethod
+    def _parse_option_minute_ohlcv(cls, data: Dict) -> OptionMinuteOhlcvConfig:
+        """옵션 분봉 OHLCV 집계 설정 파싱"""
         om_data = data.get("option_minute_ohlcv")
         om_data = om_data if isinstance(om_data, dict) else {}
-        option_minute_ohlcv = OptionMinuteOhlcvConfig(
+        return OptionMinuteOhlcvConfig(
             enabled=bool(om_data.get("enabled", False)),
             atm_window=cls._safe_int(om_data.get("atm_window"), 2),
         )
 
-        # 피처 계산/LLM 컨텍스트용 분봉 lookback (warmup_bars와 분리)
+    @classmethod
+    def _parse_minute_lookback(cls, data: Dict) -> MinuteLookbackConfig:
+        """분봉 lookback 설정 파싱"""
         ml_data = data.get("minute_lookback")
         ml_data = ml_data if isinstance(ml_data, dict) else {}
-        minute_lookback = MinuteLookbackConfig(
+        return MinuteLookbackConfig(
             futures=cls._safe_int(ml_data.get("futures"), 60),
             options=cls._safe_int(ml_data.get("options"), 60),
         )
 
+    @classmethod
+    def _parse_telegram_config(cls, data: Dict) -> TelegramConfig:
+        """텔레그램 설정 파싱"""
         telegram_data = data.get("telegram")
         telegram_data = telegram_data if isinstance(telegram_data, dict) else {}
-        telegram = TelegramConfig(
+        return TelegramConfig(
             enabled=bool(telegram_data.get("enabled", False)),
             option_flow_status_enabled=bool(telegram_data.get("option_flow_status_enabled", True)),
             option_flow_status_cooldown_sec=max(
@@ -682,6 +690,16 @@ class AppConfig:
             option_flow_interp_pcr_oi_low=float(telegram_data.get("option_flow_interp_pcr_oi_low", 0.95) or 0.95),
             option_flow_interp_pcr_oi_high=float(telegram_data.get("option_flow_interp_pcr_oi_high", 1.05) or 1.05),
         )
+
+    @classmethod
+    def _from_dict(cls, data: Dict) -> "AppConfig":
+        """딕셔너리에서 설정 생성"""
+        ai_providers = cls._parse_ai_providers(data)
+        ebest = cls._parse_ebest_config(data)
+        options_subscription = cls._parse_option_subscription(data)
+        option_minute_ohlcv = cls._parse_option_minute_ohlcv(data)
+        minute_lookback = cls._parse_minute_lookback(data)
+        telegram = cls._parse_telegram_config(data)
         
         # 예측 설정
         pred_cfg = data.get("prediction")
@@ -1105,17 +1123,8 @@ class AppConfig:
                 logger.warning(f"[ATR-FILTER] session_min_wave_atr_ratio_table[{i}] parse failed: {e}")
         return result
 
-    def validate(self) -> bool:
-        """
-        설정 검증
-        
-        Returns:
-            True if valid
-            
-        Raises:
-            ValueError: 검증 실패시
-        """
-        # 적어도 하나의 API 키는 있어야 함
+    def _validate_ai_keys(self) -> None:
+        """AI API 키 검증"""
         if not any([
             self.ai_providers.anthropic_key,
             self.ai_providers.openai_key,
@@ -1123,8 +1132,9 @@ class AppConfig:
         ]):
             if self.prediction.use_llm:
                 logger.warning("No AI API keys configured, LLM features will be disabled")
-        
-        # 예측 시간 검증
+
+    def _validate_prediction_settings(self) -> None:
+        """예측 기본 설정 검증"""
         if self.prediction.minutes not in (5, 10, 30):
             raise ValueError(f"Invalid prediction_minutes: {self.prediction.minutes}")
 
@@ -1138,6 +1148,8 @@ class AppConfig:
                 f"Invalid dual_llm_primary_provider: {self.prediction.dual_llm_primary_provider!r}"
             )
 
+    def _validate_numeric_predictor(self) -> None:
+        """숫자형 예측기 설정 검증"""
         allowed_numeric_predictors = {"transformer", "tft", "combined", "ensemble", "rule_based"}
         n = str(getattr(self.prediction, "numeric_predictor", "transformer") or "transformer").strip().lower()
         if n == "combined":
@@ -1148,9 +1160,9 @@ class AppConfig:
                 f"(expected one of {sorted(allowed_numeric_predictors)})"
             )
 
+    def _validate_model_class(self) -> None:
+        """모델 클래스 검증"""
         allowed_model_classes = {"transformer", "patch_tst", "mamba"}
-        # 대소문자 정규화 후 검증 — _from_dict 에서 이미 lower() 적용되지만
-        # 직접 PredictionConfig 생성 시에도 안전하게 처리한다
         mc_raw = getattr(self.prediction, "model_class", None)
         mc = str(mc_raw).strip().lower() if mc_raw is not None else ""
         if not mc or mc not in allowed_model_classes:
@@ -1159,6 +1171,8 @@ class AppConfig:
                 f"(expected one of {sorted(allowed_model_classes)})"
             )
 
+    def _validate_patch_parameters(self) -> None:
+        """Patch 파라미터 검증"""
         try:
             pl = int(getattr(self.prediction, "patch_len", 8))
             st_p = int(getattr(self.prediction, "stride", 4))
@@ -1174,6 +1188,8 @@ class AppConfig:
                 f"({getattr(self.prediction, 'seq_len', 60)})"
             )
 
+    def _validate_mamba_parameters(self) -> None:
+        """Mamba 파라미터 검증"""
         try:
             mds = int(getattr(self.prediction, "mamba_d_state", 16))
             msl = int(getattr(self.prediction, "mamba_seq_len", 60))
@@ -1191,6 +1207,8 @@ class AppConfig:
         if not (0.0 < mw < 1.0):
             raise ValueError(f"prediction.mamba_weight must be in (0, 1), got {mw}")
 
+    def _validate_conformal_alpha(self) -> None:
+        """Conformal alpha 검증"""
         try:
             ca = float(getattr(self.prediction, "conformal_alpha", 0.1))
         except Exception:
@@ -1198,6 +1216,8 @@ class AppConfig:
         if not (0.01 <= ca <= 0.5):
             raise ValueError(f"prediction.conformal_alpha must be in [0.01, 0.5], got {ca}")
 
+    def _validate_option_features(self) -> None:
+        """옵션 피처 설정 검증"""
         opt_set = str(getattr(self.prediction, "option_feature_set", "v1") or "v1").strip().lower()
         if opt_set not in ("v1", "v2", "v3", "v4", "v5"):
             raise ValueError("prediction.option_feature_set must be 'v1', 'v2', 'v3', 'v4' or 'v5'")
@@ -1209,7 +1229,8 @@ class AppConfig:
         if not (0 <= _pcr_n <= 50):
             raise ValueError(f"prediction.pcr_atm_strikes_each_side must be in [0, 50], got {_pcr_n}")
 
-        # threshold 검증
+    def _validate_thresholds(self) -> None:
+        """매수/매도 임계값 검증"""
         try:
             bt = float(getattr(self.prediction, "buy_threshold", 0.62))
             st = float(getattr(self.prediction, "sell_threshold", 0.38))
@@ -1223,7 +1244,8 @@ class AppConfig:
         if bt <= st:
             raise ValueError(f"Invalid thresholds: buy_threshold({bt}) must be > sell_threshold({st})")
 
-        # TFT/Ensemble 파라미터 검증
+    def _validate_tft_parameters(self) -> None:
+        """TFT/Ensemble 파라미터 검증"""
         try:
             tw = float(getattr(self.prediction, "transformer_weight", 0.5))
         except Exception:
@@ -1238,12 +1260,15 @@ class AppConfig:
         if th <= 0:
             raise ValueError(f"Invalid tft_horizon: {th} (expected >0)")
 
+    def _validate_llm_parameters(self) -> None:
+        """LLM 파라미터 검증"""
         try:
             lmi = float(getattr(self.prediction, "llm_min_interval_sec", 30.0) or 0.0)
         except Exception:
             raise ValueError("Invalid llm_min_interval_sec (must be numeric)")
         if lmi < 0.0:
             raise ValueError(f"Invalid llm_min_interval_sec: {lmi} (expected >=0)")
+        
         try:
             _gto_raw = getattr(self.prediction, "gemini_timeout_sec", None)
             if _gto_raw is not None:
@@ -1256,6 +1281,7 @@ class AppConfig:
             raise
         except Exception:
             raise ValueError("Invalid gemini_timeout_sec (must be numeric or null)")
+        
         try:
             _pcd = float(
                 getattr(self.prediction, "llm_provider_cooldown_on_timeout_sec", 60.0) or 0.0
@@ -1267,6 +1293,8 @@ class AppConfig:
                 f"Invalid llm_provider_cooldown_on_timeout_sec: {_pcd} (expected >=0)"
             )
 
+    def _validate_tick_parameters(self) -> None:
+        """틱 관련 파라미터 검증"""
         try:
             tsz = float(getattr(self.prediction, "tick_size", 0.05) or 0.0)
         except Exception:
@@ -1292,6 +1320,8 @@ class AppConfig:
                 f"Invalid feedback_skip_hold_ticks: {fsh} (expected < feedback_threshold_ticks={ftt})"
             )
 
+    def _validate_feedback_weights(self) -> None:
+        """피드백 가중치 검증"""
         for k in ("feedback_weight_high", "feedback_weight_mid", "feedback_weight_low"):
             try:
                 wv = float(getattr(self.prediction, k, 0.0) or 0.0)
@@ -1319,6 +1349,8 @@ class AppConfig:
                 f"Invalid feedback_snapshot_tolerance_sec: {tol} (expected >=0)"
             )
 
+    def _validate_cooldown_parameters(self) -> None:
+        """쿨다운 파라미터 검증"""
         for k, default_v in (
             ("fc0_stale_threshold_sec", 10.0),
             ("fc0_stale_cooldown_sec", 60.0),
@@ -1331,6 +1363,34 @@ class AppConfig:
             if v < 0.0:
                 raise ValueError(f"Invalid {k}: {v} (expected >=0)")
 
+    def validate(self) -> bool:
+        """
+        설정 검증
+        
+        Returns:
+            True if valid
+            
+        Raises:
+            ValueError: 검증 실패시
+        """
+        self._validate_ai_keys()
+        self._validate_prediction_settings()
+        self._validate_numeric_predictor()
+        self._validate_model_class()
+        self._validate_patch_parameters()
+        self._validate_mamba_parameters()
+        self._validate_conformal_alpha()
+        self._validate_option_features()
+        self._validate_thresholds()
+        self._validate_tft_parameters()
+        self._validate_llm_parameters()
+        self._validate_tick_parameters()
+        self._validate_feedback_weights()
+        self._validate_cooldown_parameters()
+        self._validate_adaptive_indicator()
+
+    def _validate_adaptive_indicator(self) -> None:
+        """적응형 지표 설정 검증"""
         try:
             ad = getattr(self, "adaptive_indicator", None)
         except Exception:
