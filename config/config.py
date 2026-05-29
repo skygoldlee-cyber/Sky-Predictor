@@ -852,6 +852,14 @@ class AppConfig:
         rf_data = ad_data.get("ranging_filter")
         rf_data = rf_data if isinstance(rf_data, dict) else {}
 
+        # [DEBUG] supertrend_pivot_filter 파싱 로그
+        stpf_raw = ad_data.get("supertrend_pivot_filter")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("[CONFIG][DEBUG] supertrend_pivot_filter raw value: %s", stpf_raw)
+        stpf_value = bool(stpf_raw) if stpf_raw is not None else True
+        logger.info("[CONFIG][DEBUG] supertrend_pivot_filter parsed value: %s", stpf_value)
+
         adaptive_indicator = AdaptiveIndicatorSettings(
             enabled=bool(ad_data.get("enabled", True)),
             dual_mode=bool(ad_data.get("dual_mode", True)),
@@ -859,7 +867,7 @@ class AppConfig:
             futures_symbol=str(ad_data.get("futures_symbol") or "KP200 선물"),
             warmup_bars=cls._safe_int(ad_data.get("warmup_bars"), 15),
             min_swings_for_ready=cls._safe_int(ad_data.get("min_swings_for_ready"), 4),
-            supertrend_pivot_filter=bool(ad_data.get("supertrend_pivot_filter", True)),
+            supertrend_pivot_filter=stpf_value,
             min_pivot_interval_bars=cls._safe_int(ad_data.get("min_pivot_interval_bars") or 10, 10),
             session_min_pivot_interval_table=list(ad_data.get("session_min_pivot_interval_table") or []),
             # ── [SSOT] AdaptiveZigZagSettings 는 zigzag_settings_from_dict() 경유로 생성 ──
