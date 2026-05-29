@@ -78,8 +78,10 @@ def main() -> int:
         logger.info("[main] calling _run_gui()")
         return _run_gui()
     except Exception as e:
+        import traceback
         logger.error(f"[main] exception occurred: {e}")
-        print(json.dumps({"error": str(e)}, ensure_ascii=False, indent=2), file=sys.stderr)
+        logger.error(f"[main] traceback:\n{traceback.format_exc()}")
+        print(json.dumps({"error": str(e), "traceback": traceback.format_exc()}, ensure_ascii=False, indent=2), file=sys.stderr)
         return 1
 
 
