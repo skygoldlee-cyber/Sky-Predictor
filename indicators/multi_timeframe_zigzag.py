@@ -18,14 +18,25 @@ class MultiTimeframeZigZag:
     기존 AdaptiveZigZag에서 확정된 피봇에 대해
     다른 시간프레임에서도 피봇이 있는지 확인하여
     신뢰도를 평가합니다.
+    
+    [개선] 가중치 기반 결합: 상위 시간프레임에 더 높은 가중치 부여
     """
+    
+    # 기본 시간프레임 가중치 (상위 TF에 더 높은 가중치)
+    DEFAULT_TF_WEIGHTS: Dict[int, float] = {
+        1:  0.2,   # 1분봉 (기본)
+        5:  0.3,   # 5분봉
+        15: 0.5,   # 15분봉
+    }
     
     def __init__(
         self,
         scales: List[int] = [5, 15],
         consensus_threshold: int = 2,
         price_tolerance_pct: float = 1.0,
-        index_tolerance_multiplier: float = 2.0
+        index_tolerance_multiplier: float = 2.0,
+        use_weighted_consensus: bool = True,
+        tf_weights: Optional[Dict[int, float]] = None,
     ):
         """초기화.
         
@@ -34,11 +45,17 @@ class MultiTimeframeZigZag:
             consensus_threshold: 합의도 임계값 (이상일 때만 신호 통과)
             price_tolerance_pct: 가격 허용 오차 (%)
             index_tolerance_multiplier: 인덱스 허용 오차 배수 (시간프레임 × 배수)
+            use_weighted_consensus: 가중치 기반 합의도 사용 여부
+            tf_weights: 시간프레임별 가중치 (None 시 기본값 사용)
         """
         self.scales = scales
         self.consensus_threshold = consensus_threshold
         self.price_tolerance_pct = price_tolerance_pct
         self.index_tolerance_multiplier = index_tolerance_multiplier
+        self.use_weighted_consensus = use_weighted_consensus
+        
+        # 시간프레임 가중치 설정
+        self.tf_weights = tf_weights or self.DEFAULT_TF_WEIGHTS.copy()
         
         # 각 시간프레임별 피봇 캐시
         self.pivot_cache: Dict[int, List[Dict[str, Any]]] = {}
@@ -50,8 +67,10 @@ class MultiTimeframeZigZag:
         self._check_count = 0
         self._consensus_match_count = 0  # [FIX] 합의도 매칭 성공 횟수
         
-        _logger.info("[MultiTF] 초기화: scales=%s, threshold=%d, price_tol=%.2f%%, index_tol=%.1fx", 
-                    scales, consensus_threshold, price_tolerance_pct, index_tolerance_multiplier)
+        _logger.info(
+            "[MultiTF] 초기화: scales=%s, threshold=%d, price_tol=%.2f%%, index_tol=%.1fx, weighted=%s",
+            scales, consensus_threshold, price_tolerance_pct, index_tolerance_multiplier, use_weighted_consensus
+        )
     
     def update_pivot_cache(self, scale: int, pivots: List[Dict[str, Any]]):
         """시간프레임별 피봇 캐시 업데이트.
@@ -108,12 +127,14 @@ class MultiTimeframeZigZag:
                 'consensus': int,  # 합의도 (일치하는 시간프레임 수)
                 'total_scales': int,  # 전체 시간프레임 수
                 'consensus_ratio': float,  # 합의도 비율
+                'weighted_score': float,  # 가중치 기반 점수 (0~1)
                 'details': List[Dict],  # 각 시간프레임별 상세 정보
                 'passed': bool  # 합의도 임계값 통과 여부
             }
         """
         self._check_count += 1
         consensus = 0
+        weighted_score = 0.0
         details = []
         
         for scale in self.scales:
@@ -125,32 +146,50 @@ class MultiTimeframeZigZag:
             if matched:
                 consensus += 1
                 self._consensus_match_count += 1
+                
+                # 가중치 기반 점수 계산
+                weight = self.tf_weights.get(scale, 0.3)
+                weighted_score += weight
+                
                 details.append({
                     'scale': scale,
                     'matched': True,
-                    'pivot': matched
+                    'pivot': matched,
+                    'weight': weight,
                 })
             else:
                 details.append({
                     'scale': scale,
-                    'matched': False
+                    'matched': False,
+                    'weight': self.tf_weights.get(scale, 0.3),
                 })
         
         total_scales = len(self.scales)
         consensus_ratio = consensus / total_scales if total_scales > 0 else 0
+        
+        # 가중치 기반 합의도 점수 (0~1)
+        if self.use_weighted_consensus:
+            # 전체 가중치 합으로 정규화
+            total_weight = sum(self.tf_weights.get(s, 0.3) for s in self.scales)
+            weighted_score = weighted_score / total_weight if total_weight > 0 else 0.0
+        else:
+            # 단순 합의도 비율 사용
+            weighted_score = consensus_ratio
+        
         passed = consensus >= self.consensus_threshold
         
         result = {
             'consensus': consensus,
             'total_scales': total_scales,
             'consensus_ratio': consensus_ratio,
+            'weighted_score': weighted_score,
             'details': details,
             'passed': passed
         }
         
         _logger.info(
-            "[MultiTF] 피봇 확인: index=%d, price=%.2f, type=%s, consensus=%d/%d (%.1f%%), passed=%s",
-            pivot_index, pivot_price, pivot_type, consensus, total_scales, consensus_ratio * 100, passed
+            "[MultiTF] 피봇 확인: index=%d, price=%.2f, type=%s, consensus=%d/%d (%.1f%%), weighted=%.2f, passed=%s",
+            pivot_index, pivot_price, pivot_type, consensus, total_scales, consensus_ratio * 100, weighted_score, passed
         )
         
         return result
