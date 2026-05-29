@@ -23,7 +23,7 @@
       "major_swing_ratio": 2.0,
       "confirmation_bars": 1,
       "max_swings": 20,
-      "freeze_on_confirm": true,
+      "freeze_on_confirm": false,
       "min_wave_bars": 1,
       "min_wave_pct": 0.2,
       "cluster_tolerance_pct": 0.3,
