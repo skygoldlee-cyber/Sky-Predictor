@@ -119,6 +119,12 @@ class IntegratorConfig:
     decay_half_life:
         신호 강도 지수 감쇠 반감기 (봉 수).
         0 이면 감쇠 없음.
+    [개선] use_interaction_bonus:
+        레이어 간 상호작용 보너스 사용 여부.
+    [개선] interaction_threshold:
+        상호작용 보너스 적용 임계값 (두 레이어 모두 이 점수 이상일 때).
+    [개선] interaction_bonus:
+        상호작용 보너스 최대값 (0~1).
     """
     w_aap:             float = 0.20
     w_pap:             float = 0.20
@@ -131,6 +137,9 @@ class IntegratorConfig:
     regime_boost:      float = 1.15
     regime_suppress:   float = 0.85
     decay_half_life:   int   = 5    # 봉
+    use_interaction_bonus: bool = True
+    interaction_threshold: float = 0.6
+    interaction_bonus: float = 0.2
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -150,6 +159,9 @@ class IntegratorResult:
     # 통합 점수
     total_score:   float = 0.0   # 가중합 (레짐 부스트 적용 전)
     adjusted_score: float = 0.0  # 레짐 부스트/억제 적용 후
+
+    # [개선] 상호작용 보너스
+    interaction_bonus: float = 0.0  # 레이어 간 상호작용 보너스
 
     # 신호
     signal:        str   = "none"    # "long" | "short" | "none"
@@ -264,6 +276,14 @@ class PivotScoreIntegrator:
         else:
             adjusted = total
 
+        # ── [개선] 레이어 간 상호작용 보너스 ───────────────────────────────────
+        interaction_bonus = 0.0
+        if cfg.use_interaction_bonus:
+            interaction_bonus = self._calc_interaction_bonus(
+                active, cfg.interaction_threshold, cfg.interaction_bonus
+            )
+            adjusted = float(np.clip(adjusted + interaction_bonus, 0.0, 1.0))
+
         # ── 방향 투표 ────────────────────────────────────────────────────────
         votes: Dict[str, str] = {}
 
@@ -337,6 +357,7 @@ class PivotScoreIntegrator:
             kalman_score   = float(kalman_score) if kalman_score is not None else 0.0,
             total_score    = total,
             adjusted_score = adjusted,
+            interaction_bonus = interaction_bonus,
             signal         = signal,
             signal_strength= strength,
             direction_votes= votes,
@@ -359,6 +380,7 @@ class PivotScoreIntegrator:
         return {
             "ps_total_score":    float(r.total_score),
             "ps_adjusted_score": float(r.adjusted_score),
+            "ps_interaction_bonus": float(r.interaction_bonus),
             "ps_signal":         signal_map.get(r.signal, 0.0),
             "ps_strength":       strength_map.get(r.signal_strength, 0.0),
             "ps_aap_score":      float(r.aap_score),
@@ -416,3 +438,52 @@ class PivotScoreIntegrator:
         if score >= cfg.entry_threshold * 0.7:
             return "WEAK"
         return "none"
+
+    @staticmethod
+    def _calc_interaction_bonus(
+        active: List[Tuple[str, float, float]],
+        threshold: float,
+        max_bonus: float,
+    ) -> float:
+        """레이어 간 상호작용 보너스 계산.
+        
+        두 레이어 모두 threshold 이상일 때 보너스 부여.
+        상호작용 쌍:
+        - AAP + MSB (ATR 피봇 + 시장 구조)
+        - HAP + KF (하이브리드 + 칼만)
+        - MSB + KF (시장 구조 + 칼만)
+        
+        Args:
+            active: 활성 레이어 목록 [(name, score, weight), ...]
+            threshold: 상호작용 임계값
+            max_bonus: 최대 보너스
+            
+        Returns:
+            상호작용 보너스 (0~max_bonus)
+        """
+        # 레이어 점수 딕셔너리
+        scores = {name: sc for name, sc, _ in active}
+        
+        # 상호작용 쌍 정의
+        interaction_pairs = [
+            ("aap", "msb"),  # ATR 피봇 + 시장 구조
+            ("hap", "kf"),   # 하이브리드 + 칼만
+            ("msb", "kf"),   # 시장 구조 + 칼만
+            ("aap", "kf"),   # ATR 피봇 + 칼만
+            ("hap", "msb"),  # 하이브리드 + 시장 구조
+        ]
+        
+        bonus = 0.0
+        matched_pairs = 0
+        
+        for l1, l2 in interaction_pairs:
+            if l1 in scores and l2 in scores:
+                if scores[l1] >= threshold and scores[l2] >= threshold:
+                    matched_pairs += 1
+        
+        # 매칭된 쌍 수에 비례하여 보너스 부여
+        if matched_pairs > 0:
+            # 최대 3쌍 매칭 시 max_bonus
+            bonus = min(matched_pairs / 3.0, 1.0) * max_bonus
+        
+        return float(bonus)
