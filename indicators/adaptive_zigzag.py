@@ -2425,14 +2425,11 @@ class AdaptiveZigZag:
 
         마지막 확정 피봇과 동일 타입이면 True(위반).
         확정 피봇이 없으면 False(위반 없음).
-        
-        [TEMP-DISABLE] 교번 규칙 비활성화하여 피봇 수 증가
         """
-        return False  # 교번 규칙 비활성화
-        # last_type = self._last_confirmed_swing_type()
-        # if last_type is None:
-        #     return False
-        # return last_type == candidate_type
+        last_type = self._last_confirmed_swing_type()
+        if last_type is None:
+            return False
+        return last_type == candidate_type
 
     # ────────────────────────────────────────────────────────────────────────
 
