@@ -71,7 +71,11 @@ class DataComputeThread(QThread):
 
             self._result_df = df
             self._result_pm = pm
-            self.finished.emit(df, pm, self._force_clear)
+            # 데이터 복사하여 스레드 안전성 확보
+            df_copy = df.copy() if df is not None and hasattr(df, 'copy') else df
+            pm_copy = pm.copy() if pm is not None and hasattr(pm, 'copy') else pm
+            logger.debug("[DataComputeThread] 시그널 전달 전 데이터 복사 완료")
+            self.finished.emit(df_copy, pm_copy, self._force_clear)
         except Exception as e:
             compute_elapsed = time.time() - compute_start_time
             logger.error(
