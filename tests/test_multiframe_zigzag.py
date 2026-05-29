@@ -4,7 +4,6 @@ import sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, List
 
 # 프로젝트 루트 경로 추가
 project_root = Path(__file__).parent.parent
@@ -133,14 +132,14 @@ def test_multiframe_basic():
             pivot_price=test_pivot.price,
             pivot_type=pivot_type
         )
-        print(f"\n합의도 확인 결과:")
+        print("\n합의도 확인 결과:")
         print(f"  합의도: {result['consensus']}/{result['total_scales']}")
         print(f"  비율: {result['consensus_ratio']:.1%}")
         print(f"  통과: {result['passed']}")
         
         # 성능 통계
         stats = mtf_zz.get_performance_stats()
-        print(f"\n성능 통계:")
+        print("\n성능 통계:")
         print(f"  확인 횟수: {stats['check_count']}")
         print(f"  합의도 매칭: {stats['consensus_match_count']}")
         print(f"  합의도 성공률: {stats['consensus_rate']:.1f}%")
@@ -165,12 +164,12 @@ def test_multiframe_config():
             kospi_zz_config = config.get('adaptive_indicator', {}).get('kospi_zigzag', {})
             futures_zz_config = config.get('adaptive_indicator', {}).get('futures_zigzag', {})
             
-            print(f"\nKOSPI ZigZag 설정:")
+            print("\nKOSPI ZigZag 설정:")
             print(f"  multi_timeframe_enabled: {kospi_zz_config.get('multi_timeframe_enabled', False)}")
             print(f"  multi_timeframe_scales: {kospi_zz_config.get('multi_timeframe_scales', [])}")
             print(f"  consensus_threshold: {kospi_zz_config.get('multi_timeframe_consensus_threshold', 0)}")
             
-            print(f"\nFutures ZigZag 설정:")
+            print("\nFutures ZigZag 설정:")
             print(f"  multi_timeframe_enabled: {futures_zz_config.get('multi_timeframe_enabled', False)}")
             print(f"  multi_timeframe_scales: {futures_zz_config.get('multi_timeframe_scales', [])}")
             print(f"  consensus_threshold: {futures_zz_config.get('multi_timeframe_consensus_threshold', 0)}")

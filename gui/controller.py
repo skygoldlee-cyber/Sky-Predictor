@@ -14,14 +14,13 @@ import logging
 import os
 import sys
 import threading
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from config import load_config, AppConfig, log_ai_provider_keys_loaded, VERSION, APP_NAME, DEFAULT_LOG_FILE
+from config import load_config, log_ai_provider_keys_loaded, VERSION, APP_NAME, DEFAULT_LOG_FILE
 from core.logging_utils import setup_logging, get_logger
-from core.utils import get_expiry_week_info, get_second_thursday_date
+from core.utils import get_expiry_week_info
 from app.pipeline_builder import _build_pipeline
 from app.app_setup import _make_args_from_gui, display_startup_info, load_recommended_params
 from app.run_modes import run_replay_mode_with_predictor, run_live_mode, run_simple_prediction
@@ -50,7 +49,6 @@ from .controller_rt_helpers import (
     open_replay_ticks_file_dialog,
     predictor_metrics_summary_strings,
 )
-from ebestapi.callbacks import get_gui_tick_stats
 from .controller_config_reload import merge_prediction_effective_from_loaded_config
 
 
@@ -189,8 +187,7 @@ class GuiController:
     def _on_load_layout(self):
         """레이아웃 로드 버튼 핸들러."""
         try:
-            from PySide6.QtWidgets import QInputDialog, QComboBox, QDialog, QVBoxLayout, QPushButton
-            from PySide6.QtCore import Qt
+            from PySide6.QtWidgets import QComboBox, QDialog, QVBoxLayout, QPushButton
             
             layouts = self.list_layouts()
             if not layouts:
@@ -251,7 +248,6 @@ class GuiController:
                 QLineEdit,
                 QCheckBox,
                 QTextEdit,
-                QSpinBox,
                 QComboBox,
                 QLabel,
                 QStyle,

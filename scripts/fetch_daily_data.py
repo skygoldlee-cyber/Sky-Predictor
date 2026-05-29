@@ -38,7 +38,6 @@ config.json 예시:
 
 import asyncio
 import json
-import os
 import sys
 import warnings
 from datetime import datetime
@@ -173,7 +172,7 @@ async def fetch_and_save_daily_data():
             kp200_df.to_csv(kp200_file, index=False)
             logger.info(f"KOSPI200 선물 데이터 저장 완료: {kp200_file} ({len(kp200_df)} rows)")
         else:
-            logger.warning(f"KOSPI200 선물 데이터 수집 실패")
+            logger.warning("KOSPI200 선물 데이터 수집 실패")
         
         # t8418: KOSPI 지수 분봉 데이터 수집 (1분봉)
         logger.info(f"t8418 요청: {kospi_upcode} ({target_date})")
@@ -201,7 +200,7 @@ async def fetch_and_save_daily_data():
             kospi_df.to_csv(kospi_file, index=False)
             logger.info(f"KOSPI 지수 데이터 저장 완료: {kospi_file} ({len(kospi_df)} rows)")
         else:
-            logger.warning(f"KOSPI 지수 데이터 수집 실패")
+            logger.warning("KOSPI 지수 데이터 수집 실패")
         
         logger.info("데이터 수집 완료")
         
@@ -232,7 +231,7 @@ def main():
     
     if now < market_close:
         logger.warning(f"현재 시간: {now.strftime('%H:%M:%S')}")
-        logger.warning(f"장마감 시간: 15:30")
+        logger.warning("장마감 시간: 15:30")
         logger.warning("장마감 이후에 실행해야 합니다.")
         logger.warning("강제 실행하려면 --force 옵션을 사용하세요.")
         

@@ -4,8 +4,6 @@
 
 import json
 import pytest
-from pathlib import Path
-from datetime import datetime
 from scripts.parameter_tuner import ParameterSpace, ParameterTuner, TuningResult
 
 

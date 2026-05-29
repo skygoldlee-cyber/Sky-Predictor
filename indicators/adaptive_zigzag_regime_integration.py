@@ -21,7 +21,6 @@ from __future__ import annotations
 import logging
 from typing import Dict, Optional, Tuple
 
-from datetime import datetime
 import numpy as np
 import pandas as pd
 
@@ -39,7 +38,6 @@ except ImportError:
     except ImportError:
         from adaptive_zigzag import AdaptiveZigZag, AdaptiveZigZagConfig
         from market_regime_classifier import MarketRegimeClassifier
-        from adaptive_parameter_adjuster import AdaptiveParams
         from regime_param_mapper import RegimeParamMapper, patch_zigzag_with_regime
 
 logger = logging.getLogger(__name__)

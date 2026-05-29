@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
-from gui.utils.pivot_probability import HistoricalPivot
 
 logger = logging.getLogger(__name__)
 
@@ -509,7 +508,6 @@ class ChartEngine:
 
         DataFrame 길이와 무관하게, 동일한 봉 데이터면 동일 서명 반환.
         """
-        import hashlib
 
         # ── 오늘 장중 완결봉만 추출 (09:00 ~ 마지막 완결봉) ──────────────
         try:

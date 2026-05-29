@@ -573,7 +573,7 @@ class TradeLogger:
         try:
             if self._notifier:
                 # 알림 전송 (구현 필요)
-                message = f"⚠️ 거래 로그 기록 실패\n"
+                message = "⚠️ 거래 로그 기록 실패\n"
                 message += f"이벤트: {event.event_type} {event.action}\n"
                 message += f"에러: {type(error).__name__}: {error}"
                 # self._notifier.send_alert(message)

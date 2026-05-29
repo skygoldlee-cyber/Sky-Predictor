@@ -5,7 +5,6 @@ Skew, Volume PCR, OI PCR을 조합하여 장의 방향성을 진단하는 로직
 
 from __future__ import annotations
 
-import pytest
 from typing import Dict, Any
 
 

@@ -15,7 +15,6 @@ import logging
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 _logger = logging.getLogger(__name__)
@@ -126,7 +125,7 @@ class TradeNotifier:
         emoji = "📈" if action == "BUY" else "📉"
         
         message = f"{emoji} 진입 알림\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"방향: {action}\n"
         message += f"가격: {price:.2f}\n"
         message += f"사이즈: {size:.2f}\n"
@@ -134,7 +133,7 @@ class TradeNotifier:
         message += f"신호: {signal_reason}\n"
         message += f"손절: {stop_loss:.2f}\n"
         message += f"이익실현: {take_profit:.2f}\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message
@@ -148,12 +147,12 @@ class TradeNotifier:
         emoji = "✅" if pnl > 0 else "❌"
         
         message = f"{emoji} 청산 알림\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"방향: {action}\n"
         message += f"가격: {price:.2f}\n"
         message += f"사유: {reason}\n"
         message += f"손익: {pnl:,.0f}원 ({pnl/abs(pnl)*100:.2f}%)\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message
@@ -169,12 +168,12 @@ class TradeNotifier:
         emoji = "⚠️" if unrealized_pnl_pct < 0 else "💰"
         
         message = f"{emoji} 리스크 알림\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"포지션: {position_id}\n"
         message += f"현재가: {current_price:.2f}\n"
         message += f"미실현 손익: {unrealized_pnl_pct:.2f}%\n"
         message += f"사유: {reason}\n"
-        message += f"━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━━\n"
         message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message

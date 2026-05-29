@@ -26,11 +26,9 @@ ALERT_COOLDOWN_SEC 이내 중복 알림 억제.
 from __future__ import annotations
 
 import logging
-import math
-import statistics
 import threading
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
+from collections import deque
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Tuple
 

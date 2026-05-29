@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import math
 import numpy as np
 
-from ..option_core import _find_atm_strike, _bs_gamma_proxy, _get_atm_option_price
+from ..option_core import _find_atm_strike, _get_atm_option_price
 
 def calc_parity_divergence(
     calls: Dict[str, Dict[str, Any]],

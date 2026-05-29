@@ -4,8 +4,7 @@ DTW 거리, Rolling correlation, Beta/R² 등을 이용해
 선물 가격과 ATM 콜 옵션 가격의 구조적 유사도를 측정한다.
 """
 from __future__ import annotations
-from typing import Any, Dict, Optional
-import math
+from typing import Dict
 import numpy as np
 
 class FuturesCallSimilarity:

@@ -5,9 +5,8 @@ core/utils.py 단위 테스트
 import pytest
 import json
 import tempfile
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
 
 
 @pytest.mark.unit

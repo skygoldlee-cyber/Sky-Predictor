@@ -12,7 +12,7 @@
 
 import numpy as np
 import pandas as pd
-from typing import Optional, Tuple, Dict, Literal, Any
+from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 import logging

@@ -9,22 +9,12 @@
     gui/controller.py   : GuiController (_run_gui 분리)
 """
 
-import argparse
-import asyncio
-import io
 import json
 import logging
 import os
-import re
 import sys
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Optional
 
-from config import load_config, AppConfig, get_config_with_reload
 from core.logging_utils import setup_logging
-from telegram.notifier import create_notifier_from_config, PipelineTelegramBridge
 from importlib.metadata import version, PackageNotFoundError
 
 try:
@@ -36,15 +26,6 @@ APP_NAME = "SkyPredictor"
 
 # ── 분리된 모듈 import ─────────────────────────────────────────────────────
 from core.cli_args import parse_arguments
-from app.app_setup import display_startup_info
-from app.pipeline_builder import _build_pipeline
-from app.run_modes import (
-    run_test_mode,
-    run_replay_mode,
-    run_replay_mode_with_predictor,
-    run_live_mode,
-    run_simple_prediction,
-)
 
 
 # ── ZZ 로그 필터 ──────────────────────────────────────────────────────────

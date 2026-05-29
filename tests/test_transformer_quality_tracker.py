@@ -3,16 +3,14 @@ TransformerQualityTracker 단위 테스트
 """
 
 import pytest
-import time
-from datetime import date, datetime
-from unittest.mock import Mock, MagicMock
+from datetime import date
+from unittest.mock import Mock
 
 from prediction.transformer_quality_tracker import (
     TransformerQualityTracker,
     DailyAccuracy,
     ConfidenceBucket,
     LLMAccuracy,
-    QualitySnapshot,
     ALERT_ACCURACY_THRESHOLD,
     ALERT_ECE_THRESHOLD,
     ALERT_COOLDOWN_SEC,

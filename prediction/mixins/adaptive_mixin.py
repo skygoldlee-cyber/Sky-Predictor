@@ -6,12 +6,10 @@
 from __future__ import annotations
 
 import logging
-import math
 import re
-import threading
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -1020,7 +1018,7 @@ class AdaptiveMixin:
                                         if a == "BUY":
                                             if higher_structure == "downtrend":
                                                 a = "HOLD"
-                                                reason = reason.rstrip() + f" HOLD:higher_tf_downtrend_filter"
+                                                reason = reason.rstrip() + " HOLD:higher_tf_downtrend_filter"
                                                 _conf = "LOW"
                                                 logger.info(
                                                     "[HEURISTIC] 상위 타임프레임 downtrend → BUY 억제 (symbol=%s)",
@@ -1031,7 +1029,7 @@ class AdaptiveMixin:
                                         elif a == "SELL":
                                             if higher_structure == "uptrend":
                                                 a = "HOLD"
-                                                reason = reason.rstrip() + f" HOLD:higher_tf_uptrend_filter"
+                                                reason = reason.rstrip() + " HOLD:higher_tf_uptrend_filter"
                                                 _conf = "LOW"
                                                 logger.info(
                                                     "[HEURISTIC] 상위 타임프레임 uptrend → SELL 억제 (symbol=%s)",

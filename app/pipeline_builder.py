@@ -6,7 +6,6 @@ config / args 를 받아 PredictionPipeline 인스턴스를 생성한다.
 from __future__ import annotations
 
 import argparse
-import logging
 from dataclasses import asdict
 from typing import Optional
 

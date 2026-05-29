@@ -43,8 +43,7 @@ from prediction.features import ADAPT_KEYS, CD_KEYS, MS5_KEYS, OB_KEYS, calc_can
 from prediction.option_features import build_option_snapshot
 from prediction.time_features import build_time_features
 from data.tick_processor import RealTimeTickProcessor
-from core.interfaces import TickDataProvider
-from core.utils import normalize_adaptive_indicator_symbol, parse_chetime, safe_float, safe_int
+from core.utils import normalize_adaptive_indicator_symbol, parse_chetime, safe_float
 
 logger = logging.getLogger(__name__)
 

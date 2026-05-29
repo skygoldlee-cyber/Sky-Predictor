@@ -26,9 +26,8 @@ Usage:
 
 import logging
 import threading
-from typing import Callable, Dict, List, Type, Any
+from typing import Callable, Dict, List, Type
 from datetime import datetime
-from dataclasses import dataclass
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)

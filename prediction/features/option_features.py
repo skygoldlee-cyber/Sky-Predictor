@@ -14,16 +14,13 @@
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
-import math
+from typing import Any, Dict, Optional
 import numpy as np
 
 # ── 공통 헬퍼 (re-export) ────────────────────────────────────────────────────
 from ..option_core import (
     _find_atm_strike,
     _bs_gamma_proxy,
-    _get_atm_option_price as _get_atm_option_price_core,
-    calc_iv_peak_range as _calc_iv_peak_range_core,
 )
 
 # ── 패리티/블리드 (re-export) ─────────────────────────────────────────────────
@@ -31,13 +28,11 @@ from .parity_features import calc_parity_divergence, calc_premium_bleed
 
 # ── OI/진폭/OTM (re-export) ───────────────────────────────────────────────────
 from .oi_features import (
-    calc_expected_amplitude,
     calc_oi_levels,
     calc_otm_premium_change,
 )
 
 # ── 선물-콜 유사도 (re-export) ────────────────────────────────────────────────
-from .similarity_features import FuturesCallSimilarity
 
 # ── 이 파일에 직접 구현된 함수들 ─────────────────────────────────────────────
 # calc_iv_peak_range, calc_pcr, calc_iv_skew, calc_gex,

@@ -52,7 +52,6 @@ TradeExecutionGate 통합 예시
 from __future__ import annotations
 
 import logging
-import math
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum

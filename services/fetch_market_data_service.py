@@ -4,9 +4,7 @@ eBest OpenAPI t8415/t8418 분봉 데이터 수집 서비스
 t8415: 선물/옵션 분봉 OHLCV 데이터 조회
 t8418: KOSPI 지수 분봉 데이터 조회
 """
-import asyncio
 import pandas as pd
-import numpy as np
 from typing import Optional, Dict, Any, Tuple
 from datetime import datetime, time
 import logging

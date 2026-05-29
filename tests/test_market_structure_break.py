@@ -28,9 +28,7 @@ from __future__ import annotations
 
 import datetime
 import math
-from typing import List
 
-import pytest
 
 from indicators import (
     ATRAdaptivePivot,

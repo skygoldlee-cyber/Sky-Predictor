@@ -1,7 +1,5 @@
 """PivotParameterDB 테스트."""
 
-import pytest
-import sqlite3
 import tempfile
 import os
 from datetime import datetime, timedelta

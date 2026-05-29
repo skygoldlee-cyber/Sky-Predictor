@@ -54,9 +54,8 @@ AdaptiveZigZag 내부 버퍼(_highs/_lows/_atr_values/_all_swings 등)만으로
 from __future__ import annotations
 
 import logging
-from collections import deque
-from dataclasses import dataclass, field
-from typing import Any, Deque, List, Optional
+from dataclasses import dataclass
+from typing import Any, List, Optional
 
 import numpy as np
 

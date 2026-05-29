@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # ──────────────────────────────────────────────
 _TG_MAX_LEN = 4096
@@ -205,17 +205,17 @@ def format_prediction_message(
                 if _status == "취소":
                     # 취소 메시지
                     lines.append("")
-                    lines.append(f"❌ *피봇 후보 취소*")
+                    lines.append("❌ *피봇 후보 취소*")
                     lines.append("")
                     lines.append(f"{'필드':<8}  {'값':}")
-                    lines.append(f"```")
-                    lines.append(f"상태      취소")
+                    lines.append("```")
+                    lines.append("상태      취소")
                     lines.append(f"유형      {'고점' if _ctype == 'high' else '저점'}({'H' if _ctype == 'high' else 'L'})")
                     if _ctime:
                         lines.append(f"후보봉    {_ctime}")
                     if _cprice > 0:
                         lines.append(f"후보가    {_cprice:.2f}")
-                    lines.append(f"```")
+                    lines.append("```")
                 else:
                     # 등록/갱신 메시지
                     _pt_kor = "고점" if _ctype == "high" else "저점"
@@ -226,7 +226,7 @@ def format_prediction_message(
                     lines.append(f"{_pt_emoji} {_status_emoji} *피봇 후보 {_status}*")
                     lines.append("")
                     lines.append(f"{'필드':<8}  {'값':}")
-                    lines.append(f"```")
+                    lines.append("```")
                     lines.append(f"상태      {_status}")
                     lines.append(f"유형      {_pt_kor}({'H' if _ctype == 'high' else 'L'})")
                     if _ctime:
@@ -234,7 +234,7 @@ def format_prediction_message(
                     if _cprice > 0:
                         lines.append(f"후보가    {_cprice:.2f}")
                     lines.append(f"대기봉    {_crem}봉")
-                    lines.append(f"```")
+                    lines.append("```")
         except Exception:
             pass
 
@@ -279,7 +279,7 @@ def format_prediction_message(
                     lines.append(f"{_pt_emoji} *{_pivot_confirm_title}*")
                     lines.append("")
                     lines.append(f"{'필드':<8}  {'값':}")
-                    lines.append(f"```")
+                    lines.append("```")
                     lines.append(f"피봇봉      {_pivot_t}")
                     lines.append(f"유형        {_pt_kor}({'H' if _is_high else 'L'})")
                     lines.append(f"피봇가      {_pivot_str}")
@@ -290,7 +290,7 @@ def format_prediction_message(
                     if _wave_size != 0:
                         _sign = '+' if not _is_high else '-'
                         lines.append(f"파동크기    {_sign}{abs(_wave_size):.2f}pt ({abs(_wave_pct):.2f}%)")
-                    lines.append(f"```")
+                    lines.append("```")
                     lines.append(f"   {_dir_txt}{_lag_warn}")
 
                     # ── 추가 지표 확인 섹션 ─────────────────────────────────

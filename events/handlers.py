@@ -6,7 +6,6 @@
 
 import logging
 from typing import Dict, Any
-from datetime import datetime
 from events.event_bus import EventBus
 from events.events import (
     TradeEntryEvent,

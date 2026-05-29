@@ -13,7 +13,6 @@ import json
 def test_config_load_and_pipeline_build():
     """설정 로드 후 파이프라인 빌드가 성공하는지 통합 테스트."""
     from config import AppConfig
-    from prediction.pipeline import PredictionPipeline
 
     # 최소 설정 생성
     config_data = {

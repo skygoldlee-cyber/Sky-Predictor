@@ -7,19 +7,15 @@ from __future__ import annotations
 
 import logging
 import math
-import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 # TransformerQualityTracker — 지연 임포트로 순환 의존 방지
 try:
-    from prediction.transformer_quality_tracker import TransformerQualityTracker as _QT
     _QT_AVAILABLE = True
 except Exception:
     _QT_AVAILABLE = False

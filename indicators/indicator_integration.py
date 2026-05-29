@@ -862,14 +862,14 @@ class AdaptiveIndicatorManager:
                         close, symbol=self.config.kospi_symbol or "KOSPI 지수"
                     )
                 except Exception:
-                    kospi_st_ctx = f"[KOSPI SuperTrend] (컨텍스트 생성 실패)"
+                    kospi_st_ctx = "[KOSPI SuperTrend] (컨텍스트 생성 실패)"
             if self.futures_supertrend is not None:
                 try:
                     futures_st_ctx = self.futures_supertrend.get_llm_context(
                         close, symbol=self.config.futures_symbol or "KP200 선물"
                     )
                 except Exception:
-                    futures_st_ctx = f"[KP200 SuperTrend] (컨텍스트 생성 실패)"
+                    futures_st_ctx = "[KP200 SuperTrend] (컨텍스트 생성 실패)"
             
             if kospi_st_ctx or futures_st_ctx:
                 dual_ctx = f"\n\n{'='*60}\n[DUAL SUPER-TREND]\n{'='*60}\n"

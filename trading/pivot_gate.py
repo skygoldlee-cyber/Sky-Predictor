@@ -46,7 +46,7 @@ from .state import (
     TradeSlot,
     TradeStateManager,
 )
-from .position_sizing import PositionSizer, SizingConfig, SizingMethod
+from .position_sizing import PositionSizer, SizingConfig
 
 logger = logging.getLogger(__name__)
 

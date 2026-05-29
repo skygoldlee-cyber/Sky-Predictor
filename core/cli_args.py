@@ -5,9 +5,8 @@ main.py에서 분리된 parse_arguments() 단독 모듈.
 from __future__ import annotations
 
 import argparse
-from typing import Optional
 
-from config import load_config, HORIZON_SEC, DEFAULT_LOG_FILE
+from config import HORIZON_SEC, DEFAULT_LOG_FILE
 from importlib.metadata import version, PackageNotFoundError
 
 try:

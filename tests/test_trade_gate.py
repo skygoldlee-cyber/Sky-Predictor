@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest

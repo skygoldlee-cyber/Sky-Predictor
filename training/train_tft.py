@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import random
 from pathlib import Path
 from datetime import datetime
 import shutil
@@ -60,7 +59,6 @@ def load_data(path: str):
 def run(args: argparse.Namespace) -> None:
     try:
         import torch
-        import torch.nn as nn
         from torch.utils.data import DataLoader, TensorDataset
 
         from prediction.tft_model import TemporalFusionTransformer

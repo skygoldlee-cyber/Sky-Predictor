@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 import sys
-import traceback
 from typing import TYPE_CHECKING, Optional, Callable
 
 if TYPE_CHECKING:
@@ -60,8 +59,7 @@ class _StderrFilter:
 
 # Qt 스레드 예외 핸들러 (PySide6)
 try:
-    from PySide6.QtCore import QCoreApplication, qInstallMessageHandler
-    from PySide6.QtCore import QtMsgType, QMessageLogContext
+    from PySide6.QtCore import QtMsgType
 
     def qt_message_handler(mode, context, message):
         # paintEvent 관련 오류 무시

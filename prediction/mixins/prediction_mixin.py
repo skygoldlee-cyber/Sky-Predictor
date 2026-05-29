@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-import math
-import threading
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -21,7 +19,7 @@ logger = logging.getLogger(__name__)
 from config import FUTURE_KNOWN_DIM, HORIZON_SEC
 from core.utils import adaptive_uses_kospi_spot_index_minute_bars
 from ..predictor import ModelInput
-from ..features.features import MS5_KEYS, MS15_KEYS, build_sequence, calc_multiscale_features, calc_multiscale_features_15m
+from ..features.features import build_sequence, calc_multiscale_features, calc_multiscale_features_15m
 from ..features.time_features import build_time_features
 from ..context_builder import build_llm_context, build_llm_prompt
 

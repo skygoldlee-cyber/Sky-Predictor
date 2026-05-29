@@ -10,8 +10,7 @@ Usage:
 
 import argparse
 import logging
-from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import torch
 import numpy as np

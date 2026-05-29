@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from config import TRCode  # NW-QUA-02: TR 코드 매직 문자열 → enum
 from core.utils import safe_float, safe_int

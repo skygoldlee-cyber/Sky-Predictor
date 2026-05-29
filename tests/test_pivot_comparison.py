@@ -1,7 +1,5 @@
 """세 가지 피봇 클래스 비교 테스트."""
 
-import pytest
-import numpy as np
 from indicators.percent_adaptive_pivot import PercentAdaptivePivot, PercentAdaptivePivotConfig
 from indicators.atr_adaptive_pivot import ATRAdaptivePivot, ATRAdaptivePivotConfig
 from indicators.hybrid_adaptive_pivot import HybridAdaptivePivot, HybridAdaptivePivotConfig
@@ -79,7 +77,7 @@ class TestPivotComparison:
             state_hyb = pivot_hyb.update(h, l, c, bar_time=t)
         
         # 피봇 개수 비교
-        print(f"\n=== 피봇 개수 비교 ===")
+        print("\n=== 피봇 개수 비교 ===")
         print(f"PercentAdaptivePivot: {len(pivot_pct.confirmed_pivots)}")
         print(f"ATRAdaptivePivot: {len(pivot_atr.confirmed_pivots)}")
         print(f"HybridAdaptivePivot: {len(pivot_hyb.confirmed_pivots)}")
@@ -90,17 +88,17 @@ class TestPivotComparison:
         assert len(pivot_hyb.confirmed_pivots) > 0
         
         # 최종 상태 비교
-        print(f"\n=== 최종 상태 비교 ===")
+        print("\n=== 최종 상태 비교 ===")
         print(f"Percent: structure={state_pct.structure}, direction={state_pct.direction}")
         print(f"ATR: structure={state_atr.structure}, direction={state_atr.direction}")
         print(f"Hybrid: structure={state_hyb.structure}, direction={state_hyb.direction}")
         
-        print(f"\n=== 임계값 비교 ===")
+        print("\n=== 임계값 비교 ===")
         print(f"Percent: threshold_pct={state_pct.threshold_pct:.4f}%")
         print(f"ATR: threshold_abs={state_atr.threshold_abs:.4f}, threshold_pct={state_atr.threshold_pct:.4f}%")
         print(f"Hybrid: threshold_abs={state_hyb.threshold_abs:.4f}, threshold_pct={state_hyb.threshold_pct:.4f}%")
         
-        print(f"\n=== Pivot Score 비교 ===")
+        print("\n=== Pivot Score 비교 ===")
         print(f"Percent: pivot_score={state_pct.pivot_score:.4f}")
         print(f"ATR: pivot_score={state_atr.pivot_score:.4f}")
         print(f"Hybrid: pivot_score={state_hyb.pivot_score:.4f}")
@@ -129,7 +127,7 @@ class TestPivotComparison:
                 'pivot_score': state.pivot_score,
             }
         
-        print(f"\n=== atr_weight 영향 비교 ===")
+        print("\n=== atr_weight 영향 비교 ===")
         for weight, res in results.items():
             print(f"atr_weight={weight:.2f}: pivots={res['pivots']}, "
                   f"threshold_pct={res['threshold_pct']:.4f}%, "
@@ -161,12 +159,12 @@ class TestPivotComparison:
         for h, l, c, t in data:
             pivot_hyb.update(h, l, c, bar_time=t)
         
-        print(f"\n=== ATR 값 비교 ===")
-        print(f"Percent: ATR 사용 안함")
+        print("\n=== ATR 값 비교 ===")
+        print("Percent: ATR 사용 안함")
         print(f"ATR: ATR={pivot_atr.state.atr:.4f}")
         print(f"Hybrid: ATR={pivot_hyb.state.atr:.4f}")
         
-        print(f"\n=== 퍼센트 임계값 비교 (가격 110 기준) ===")
+        print("\n=== 퍼센트 임계값 비교 (가격 110 기준) ===")
         close = 110
         thr_pct_pct = close * 0.3 / 100.0
         print(f"Percent: {thr_pct_pct:.4f}pt ({0.3:.2f}%)")
@@ -198,7 +196,7 @@ class TestPivotComparison:
             pivot_hyb.update(h, l, c, bar_time=t)
         feats_hyb = pivot_hyb.get_transformer_features(110)
         
-        print(f"\n=== Feature 키 개수 비교 ===")
+        print("\n=== Feature 키 개수 비교 ===")
         print(f"Percent: {len(feats_pct)} keys")
         print(f"ATR: {len(feats_atr)} keys")
         print(f"Hybrid: {len(feats_hyb)} keys")
@@ -208,7 +206,7 @@ class TestPivotComparison:
         azz_atr = [k for k in feats_atr.keys() if k.startswith("azz_")]
         azz_hyb = [k for k in feats_hyb.keys() if k.startswith("azz_")]
         
-        print(f"\n=== azz_* 키 호환성 ===")
+        print("\n=== azz_* 키 호환성 ===")
         print(f"Percent: {len(azz_pct)} azz_* keys")
         print(f"ATR: {len(azz_atr)} azz_* keys")
         print(f"Hybrid: {len(azz_hyb)} azz_* keys")
@@ -221,7 +219,7 @@ class TestPivotComparison:
         aap_atr = [k for k in feats_atr.keys() if k.startswith("aap_")]
         hap_hyb = [k for k in feats_hyb.keys() if k.startswith("hap_")]
         
-        print(f"\n=== 고유 키 ===")
+        print("\n=== 고유 키 ===")
         print(f"Percent pap_*: {pap_pct}")
         print(f"ATR aap_*: {aap_atr}")
         print(f"Hybrid hap_*: {hap_hyb}")
@@ -257,7 +255,7 @@ class TestPivotComparison:
             if state.new_pivot_signal in ("new_high", "new_low"):
                 pivot_signals_hyb.append((i, state.new_pivot_signal, state.last_high if state.new_pivot_signal == "new_high" else state.last_low))
         
-        print(f"\n=== 피봇 감지 시점 비교 ===")
+        print("\n=== 피봇 감지 시점 비교 ===")
         print(f"PercentAdaptivePivot: {len(pivot_signals_pct)} signals")
         for idx, sig, price in pivot_signals_pct:
             print(f"  [{idx}] {sig} @ {price:.2f}")

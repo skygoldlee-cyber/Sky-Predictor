@@ -23,10 +23,8 @@ from typing import Dict, Optional, Any
 
 import torch
 
-from pivot_models import PivotConfirmationClassifier, PivotProbabilityRegressor, PivotLifespanPredictor
 from pivot_inference import PivotPredictor
 from pivot_lifespan_inference import LifespanPredictor as LifespanInference
-from features import ADAPT_KEYS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 _logger = logging.getLogger(__name__)

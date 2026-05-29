@@ -114,7 +114,6 @@ def _setup_logging(args: argparse.Namespace) -> logging.Logger:
 
     ARC-06: main()에서 로깅 초기화 책임을 분리.
     """
-    from core.logging_utils import setup_logging
     log_level_str = str(getattr(args, "log_level", "INFO") or "INFO").upper()
     level = getattr(logging, log_level_str, logging.INFO)
     log_file = str(getattr(args, "log_file", DEFAULT_LOG_FILE) or DEFAULT_LOG_FILE)
@@ -168,7 +167,6 @@ def display_startup_info(config: AppConfig, args: argparse.Namespace, logger: lo
         # Rollover reset marker (for training window reset)
         try:
             from pathlib import Path
-            from datetime import timedelta
 
             def _marker_for_expiry_cycle(expiry_dt: datetime) -> Path:
                 try:

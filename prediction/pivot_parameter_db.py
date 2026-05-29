@@ -46,7 +46,6 @@ import sqlite3
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
-import json
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 _logger = logging.getLogger(__name__)

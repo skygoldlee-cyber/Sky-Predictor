@@ -31,8 +31,8 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Deque, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -71,8 +71,6 @@ except ImportError:
             MarketRegime,
             MarketState,
             MarketRegimeClassifier,
-            VolatilityState,
-            TrendDirection,
         )
         from adaptive_parameter_adjuster import (
             AdaptiveParameterAdjuster,

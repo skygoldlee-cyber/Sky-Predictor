@@ -1,7 +1,7 @@
 """데이터 페처 모듈"""
 
 import logging
-from typing import Optional, Any, Dict, Tuple
+from typing import Optional, Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)

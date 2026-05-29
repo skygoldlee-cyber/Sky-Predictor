@@ -2,14 +2,12 @@
 이벤트 핸들러 단위 테스트
 """
 
-import pytest
 from datetime import datetime
 from events.event_bus import EventBus
 from events.events import (
     TradeEntryEvent,
     TradeExitEvent,
     SignalEvent,
-    RiskLimitEvent,
     AlertEvent
 )
 from events.handlers import LoggingHandler, MetricsHandler, TelegramNotifierHandler

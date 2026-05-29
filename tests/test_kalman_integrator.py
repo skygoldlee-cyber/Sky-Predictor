@@ -34,9 +34,7 @@ from __future__ import annotations
 import datetime
 import math
 import random
-from typing import List, Optional
 
-import pytest
 
 from indicators import (
     ATRAdaptivePivot,
@@ -47,7 +45,6 @@ from indicators import (
     KalmanConfig,
     PivotScoreIntegrator,
     IntegratorConfig,
-    IntegratorResult,
 )
 
 

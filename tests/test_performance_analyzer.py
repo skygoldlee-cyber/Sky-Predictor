@@ -3,8 +3,7 @@
 """
 
 import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
 from prediction.performance_analyzer import PerformanceAnalyzer, PerformanceReport
 from trading.state import TradeRecord, TradeSlot, PositionSide, CloseReason
 

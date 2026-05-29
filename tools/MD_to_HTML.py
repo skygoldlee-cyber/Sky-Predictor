@@ -3015,7 +3015,7 @@ def run_gui() -> int:
             QSpinBox,
             QComboBox,
         )
-        from PySide6.QtCore import Qt, QSettings, QUrl
+        from PySide6.QtCore import QSettings, QUrl
         from PySide6.QtGui import QDesktopServices
     except Exception as e:
         raise SystemExit(

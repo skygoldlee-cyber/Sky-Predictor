@@ -19,7 +19,6 @@ import gzip
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
@@ -28,7 +27,6 @@ from zoneinfo import ZoneInfo
 
 from .api import (
     _ebest_fetch_kp200_price_t8415,
-    _ebest_fetch_kp200_ohlcv_t8415,
     _ebest_fetch_kp200_symbol,
     _ebest_fetch_option_symbols,
     _ebest_fetch_front_month_and_all_option_symbols,
@@ -55,11 +53,9 @@ from .options import (
     select_oi_window_symbols,
 )
 from core.utils import (
-    adaptive_uses_kospi_spot_index_minute_bars,
     get_option_month_yyyymm,
     get_pipeline_adaptive_indicator_symbol,
     normalize_adaptive_indicator_symbol,
-    safe_float,
 )
 from config import TRCode  # QUA-07: 매직 문자열 TRCode.FUTURES.value/TRCode.OPTIONS.value 등 → TRCode enum
 

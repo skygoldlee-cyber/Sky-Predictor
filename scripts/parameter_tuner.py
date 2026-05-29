@@ -16,12 +16,11 @@ Usage:
 import argparse
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Any
 import pandas as pd
-import numpy as np
 from itertools import product
 import random
 
@@ -380,10 +379,10 @@ class ParameterTuner:
         for i, result in enumerate(self.results[:top_n], 1):
             print(f"\n#{i} (Score: {result.score:.4f})")
             print("-" * 80)
-            print(f"파라미터:")
+            print("파라미터:")
             for key, value in result.params.items():
                 print(f"  {key}: {value}")
-            print(f"\n성능:")
+            print("\n성능:")
             print(f"  총 거래: {result.total_trades}")
             print(f"  승률: {result.win_rate:.2%}")
             print(f"  총 수익: {result.total_profit_pct:.2f}%")

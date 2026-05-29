@@ -2,7 +2,6 @@
 이벤트 버스 단위 테스트
 """
 
-import pytest
 from datetime import datetime
 from events.event_bus import EventBus, Event, get_event_bus, set_event_bus
 from events.events import (

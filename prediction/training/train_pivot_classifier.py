@@ -15,7 +15,6 @@ import argparse
 import pickle
 import logging
 from pathlib import Path
-from datetime import datetime
 from typing import Dict, List, Tuple
 
 import torch
@@ -25,7 +24,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
-from pivot_models import PivotConfirmationClassifier, PivotProbabilityRegressor, PivotEnsemble
+from pivot_models import PivotConfirmationClassifier
 from features import ADAPT_KEYS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

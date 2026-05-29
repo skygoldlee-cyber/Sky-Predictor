@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -450,7 +450,7 @@ class PivotQualityMonitor:
         try:
             from PySide6.QtWidgets import (
                 QWidget, QHBoxLayout, QVBoxLayout, QGridLayout,
-                QLabel, QFrame, QSizePolicy,
+                QLabel, QSizePolicy,
             )
             from PySide6.QtCore import Qt
 
@@ -765,8 +765,7 @@ class PivotQualityMonitor:
         """
         try:
             from PySide6.QtWidgets import QWidget
-            from PySide6.QtGui import QPainter, QColor, QFont, QPen
-            from PySide6.QtCore import Qt
+            from PySide6.QtGui import QPainter, QColor, QFont
 
             class _BarWidget(QWidget):
                 def __init__(self, p: Any) -> None:

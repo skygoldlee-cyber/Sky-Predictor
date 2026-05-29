@@ -18,7 +18,6 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from prediction.backtest.backtest_pivot_signals import PivotSignalBacktester, BacktestConfig
-from prediction.trade_logger import get_trade_logger
 from prediction.pivot_parameter_db import PivotParameterDB, WalkForwardEvaluator
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -82,7 +81,6 @@ def run_daily_backtest(
 
         # 7) 트랜스포머 품질 요약 로그 출력
         try:
-            from prediction.pipeline import PredictionPipeline as _PP
             _pred = globals().get("_active_pipeline")
             if _pred is not None and callable(getattr(_pred, "log_quality_summary", None)):
                 _pred.log_quality_summary()

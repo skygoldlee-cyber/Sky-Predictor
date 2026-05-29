@@ -13,7 +13,6 @@ import argparse
 import pickle
 import logging
 from pathlib import Path
-from typing import Dict, List
 
 import torch
 import numpy as np

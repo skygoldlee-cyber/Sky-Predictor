@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
 
 from gui.controller_market import is_market_open, next_market_open
 

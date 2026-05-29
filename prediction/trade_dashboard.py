@@ -10,10 +10,8 @@ Usage:
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime, timedelta
-from pathlib import Path
-import json
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 _logger = logging.getLogger(__name__)
@@ -250,7 +248,7 @@ class TradeDashboard:
         print(f"  총 수익: {summary['daily_pnl'].get('total_profit', 0):,.0f}원")
         print(f"  평균 수익: {summary['daily_pnl'].get('avg_profit', 0):,.0f}원")
         
-        print(f"\n[리스크 메트릭]")
+        print("\n[리스크 메트릭]")
         print(f"  활성 포지션: {summary['risk_metrics'].get('active_positions', 0)}")
         print(f"  총 노출: {summary['risk_metrics'].get('total_exposure', 0):,.0f}원")
         print(f"  평균 손절 거리: {summary['risk_metrics'].get('avg_distance_to_stop', 0):.2f}")

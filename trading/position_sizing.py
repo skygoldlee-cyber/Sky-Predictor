@@ -10,7 +10,6 @@
 - Volatility-based: 변동성 기반 (ATR 활용)
 """
 
-import math
 import logging
 from dataclasses import dataclass
 from enum import Enum

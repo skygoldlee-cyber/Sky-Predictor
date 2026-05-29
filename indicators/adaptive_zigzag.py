@@ -2099,7 +2099,7 @@ class AdaptiveZigZag:
             f"[후보해석] {pending_note}\n"
             f"최근 스윙 고점: {s.last_swing_high:.2f}  저점: {s.last_swing_low:.2f}  파동: {s.wave_size_pct:.2f}%\n"
             f"스윙 목록:\n" + "\n".join(swings or ["  (데이터 부족)"]) + "\n"
-            f"피보나치:\n" + "\n".join(fib_txt or ["  (계산 중)"]) + "\n"
+            "피보나치:\n" + "\n".join(fib_txt or ["  (계산 중)"]) + "\n"
             f"지지: {s.nearest_support:.2f} ({s.support_dist_pct:.1f}% 아래)  "
             f"저항: {s.nearest_resistance:.2f} ({s.resistance_dist_pct:.1f}% 위)"
             + (f"  잠정지지: {s.pending_support:.2f}" if getattr(s, "pending_support", 0.0) > 0 else "")
@@ -3875,7 +3875,7 @@ class ATRMonitor:
                     message += f"변화율: {change_pct:+.1f}%\n"
                     message += f"이동평균: {ma:.2f}"
                     self._telegram_callback(message)
-                except (TypeError, AttributeError, RuntimeError) as e:
+                except (TypeError, AttributeError, RuntimeError):
                     pass
         
         # 일반 로깅 (INFO 레벨)

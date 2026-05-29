@@ -24,7 +24,6 @@ import logging
 import os
 import re
 import html
-from collections import deque
 import threading
 import time
 from datetime import datetime
@@ -60,12 +59,6 @@ except ImportError:
 # 하위 호환을 위해 이 모듈에서 re-export한다.
 from .formatters import (  # noqa: E402
     _esc_mdv2,
-    _SIGNAL_EMOJI,
-    _CONFIDENCE_EMOJI,
-    _RISK_EMOJI,
-    _REGIME_EMOJI,
-    _TG_MAX_LEN,
-    _TG_TRUNCATE_SUFFIX,
     format_prediction_message,
     format_premium_bleed_alert,
     format_futures_call_divergence_alert,

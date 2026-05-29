@@ -10,8 +10,7 @@ Models:
 
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Optional, Tuple, Dict, Any
+from typing import Tuple, Dict
 import logging
 
 _logger = logging.getLogger(__name__)

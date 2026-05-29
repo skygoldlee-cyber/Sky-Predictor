@@ -1,7 +1,5 @@
 """AdaptiveZigZag 하이브리드 모드 테스트."""
 
-import pytest
-import numpy as np
 from indicators.adaptive_zigzag import (
     AdaptiveZigZag,
     AdaptiveZigZagConfig,

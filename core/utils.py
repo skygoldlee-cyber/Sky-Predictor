@@ -14,7 +14,7 @@ import logging
 import math
 import re
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 

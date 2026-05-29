@@ -8,8 +8,8 @@ import logging
 import threading
 import time
 from collections import deque
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

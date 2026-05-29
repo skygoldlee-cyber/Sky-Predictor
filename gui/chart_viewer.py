@@ -42,8 +42,7 @@ import logging
 import os
 import time
 import json
-import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
@@ -56,10 +55,9 @@ import pandas as pd
 from gui.utils.pivot_probability import HistoricalPivot, PivotProbabilityCalculator
 from gui.utils.virtual_tick_generator import VirtualTickGenerator
 from gui.utils.threading import DataComputeThread, Slot, QT_AVAILABLE
-from gui.utils.error_handlers import FinplotTypeErrorHandler, _StderrFilter, _qt_message_handler_func
+from gui.utils.error_handlers import _StderrFilter, _qt_message_handler_func
 from gui.utils.cache_manager import CacheManager
 from gui.data.data_fetcher import DataFetcher
-from gui.components.trade_status_led import TradeStatusLED
 from gui.components.control_bar import ControlBar
 from gui.components.pivot_event_log import PivotEventLog
 from gui.components.trade_event_log import TradeEventLog
@@ -993,7 +991,6 @@ class ChartViewerWidget:
             return
         else:
             # 비율 계산을 더 보수적으로 수정 (최대 1.2 제한)
-            import math
             # 피봇 수가 목표보다 많을 때만 조정 (적으면 조정하지 않음)
             if current_count > target:
                 ratio = min(1.2, 1 + 0.05 * (current_count - target))  # ex) 19->10: 1 + 0.05*9 = 1.45 -> 1.2
@@ -1204,7 +1201,6 @@ class ChartViewerWidget:
     def _load_regime_stats(self) -> None:
         """레짐 변경 통계를 파일에서 로드."""
         try:
-            import os
             from pathlib import Path
 
             stats_path = Path(self._regime_stats_file)
@@ -1233,7 +1229,6 @@ class ChartViewerWidget:
     def _save_regime_stats(self) -> None:
         """레짐 변경 통계를 파일에 저장."""
         try:
-            import os
             from pathlib import Path
 
             stats_path = Path(self._regime_stats_file)
@@ -2159,7 +2154,7 @@ class ChartViewerWidget:
             self._renderer.set_cancel_check_callback(lambda: self._render_cancel_requested)
 
         # 렌더링 시간 모니터링 및 이벤트 루프 처리
-        from PySide6.QtCore import QCoreApplication, QEventLoop, QTimer
+        from PySide6.QtCore import QTimer
 
         # 렌더링 전 processEvents() 제거 (중첩 렌더링 방지)
 
@@ -2321,7 +2316,7 @@ class ChartViewerWidget:
             # 새로운 데이터 수신 확인
             if not self._new_data_received:
                 logger.debug("[ChartViewer][RT] 자동 갱신 스킵: 새 데이터 없음 (plot=%s)", self._selected_plot)
-                self._set_status(f"대기 중... (데이터 없음)")
+                self._set_status("대기 중... (데이터 없음)")
                 return
             
             logger.info("[ChartViewer] 새로운 데이터 수신됨 - refresh 호출")
@@ -2829,7 +2824,6 @@ class ChartViewerWidget:
             return
 
         from PySide6.QtCore import QTimer
-        import random
 
         logger.info("[ChartViewerWidget] 실시간 플롯 시뮬레이션 시작 (%d초, %dms 간격, 가상데이터=%s)",
                     duration_sec, interval_ms, use_virtual_data)

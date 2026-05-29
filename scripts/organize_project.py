@@ -5,7 +5,6 @@
 docs, prediction, tests 폴더를 자동으로 정리합니다.
 """
 
-import os
 import shutil
 from pathlib import Path
 

@@ -39,13 +39,13 @@ def print_data_summary(df: pd.DataFrame, symbol: str, atr_period: int = 14):
     print(f"{'='*80}")
 
     # 기본 정보
-    print(f"\n[기본 정보]")
+    print("\n[기본 정보]")
     print(f"  데이터 크기: {len(df):,} 봉")
     print(f"  기간: {df.index[0]} ~ {df.index[-1]}")
     print(f"  거래일 수: {len(df.index.date)}일")
 
     # 가격 통계
-    print(f"\n[가격 통계]")
+    print("\n[가격 통계]")
     print(f"  종가 범위: {df['Close'].min():.2f} ~ {df['Close'].max():.2f}")
     print(f"  종가 평균: {df['Close'].mean():.2f}")
     print(f"  종가 표준편차: {df['Close'].std():.2f}")
@@ -75,7 +75,7 @@ def print_data_summary(df: pd.DataFrame, symbol: str, atr_period: int = 14):
 
     # 거래량 통계
     if 'Volume' in df.columns:
-        print(f"\n[거래량 통계]")
+        print("\n[거래량 통계]")
         print(f"  평균 거래량: {df['Volume'].mean():,.0f}")
         print(f"  최대 거래량: {df['Volume'].max():,.0f}")
         print(f"  최소 거래량: {df['Volume'].min():,.0f}")
@@ -83,11 +83,11 @@ def print_data_summary(df: pd.DataFrame, symbol: str, atr_period: int = 14):
     # 결측치 확인
     missing = df.isnull().sum()
     if missing.sum() > 0:
-        print(f"\n[결측치]")
+        print("\n[결측치]")
         for col, count in missing[missing > 0].items():
             print(f"  {col}: {count}개 ({count/len(df)*100:.2f}%)")
     else:
-        print(f"\n[결측치] 없음")
+        print("\n[결측치] 없음")
 
     print(f"{'='*80}")
 
@@ -324,7 +324,7 @@ def evaluate_single(params: tuple, df: pd.DataFrame, zigzag_cfg: dict,
             result['freeze_on_confirm'] = bool(freeze_on_confirm)
         
         return result
-    except Exception as e:
+    except Exception:
         return None
 
 # ──────────────────────────────────────────────
@@ -559,7 +559,7 @@ def validate_on_test(df: pd.DataFrame, params: dict, config_type: str = None,
             'test_pivot_count': metrics['pivot_count'],
             'test_score': metrics['score']
         }
-    except Exception as e:
+    except Exception:
         return None
 
 # ──────────────────────────────────────────────
@@ -1166,7 +1166,7 @@ def extract_and_save_best_params(results: pd.DataFrame, symbol: str, config_type
     # 테스트 결과가 있으면 출력
     if test_results is not None and not test_results.empty:
         test_best = test_results.iloc[0]
-        print(f"\n[테스트 검증 결과]")
+        print("\n[테스트 검증 결과]")
         print(f"  테스트 평균 지연시간   : {test_best['test_avg_lag']:.2f} 봉")
         print(f"  테스트 피봇 수         : {test_best['test_pivot_count']}")
         print(f"  테스트 스코어         : {test_best['test_score']:.4f}")
@@ -1287,45 +1287,45 @@ if __name__ == '__main__':
 
     # 사용자 입력 받기
     print(f"\n{'='*80}")
-    print(f"최적화 파라미터 설정")
+    print("최적화 파라미터 설정")
     print(f"{'='*80}")
 
     # 피봇 수 범위 입력
-    print(f"\n피봇 수 범위 (기본값: 5~9개)")
-    pivot_min_input = input(f"  최소 피봇 수 (기본값 5): ").strip()
+    print("\n피봇 수 범위 (기본값: 5~9개)")
+    pivot_min_input = input("  최소 피봇 수 (기본값 5): ").strip()
     pivot_min = int(pivot_min_input) if pivot_min_input else 5
 
-    pivot_max_input = input(f"  최대 피봇 수 (기본값 9): ").strip()
+    pivot_max_input = input("  최대 피봇 수 (기본값 9): ").strip()
     pivot_max = int(pivot_max_input) if pivot_max_input else 9
 
     if pivot_min > pivot_max:
-        print(f"  경고: 최소 피봇 수가 최대보다 큽니다. 교환합니다.")
+        print("  경고: 최소 피봇 수가 최대보다 큽니다. 교환합니다.")
         pivot_min, pivot_max = pivot_max, pivot_min
 
     pivot_count_range = (pivot_min, pivot_max)
 
     # 최대 평균 지연시간 입력
-    print(f"\n최대 평균 지연시간 (기본값: 5.0 봉)")
-    max_lag_input = input(f"  최대 평균 지연시간 (기본값 5.0): ").strip()
+    print("\n최대 평균 지연시간 (기본값: 5.0 봉)")
+    max_lag_input = input("  최대 평균 지연시간 (기본값 5.0): ").strip()
     max_avg_lag = float(max_lag_input) if max_lag_input else 5.0
 
-    print(f"\n설정된 파라미터:")
+    print("\n설정된 파라미터:")
     print(f"  피봇 수 범위: {pivot_count_range[0]}~{pivot_count_range[1]}개")
     print(f"  최대 평균 지연: {max_avg_lag} 봉")
     print(f"{'='*80}")
 
     # Phase 4 모드 선택
-    print(f"\n최적화 모드 선택:")
-    print(f"  1. 기존 모드 (단일 데이터, 기본 평가지표)")
-    print(f"  2. Phase 1 모드 (학습/테스트 분리, 향상된 평가지표)")
-    print(f"  3. Phase 2 모드 (시장 레짐별 최적화, 확장 파라미터)")
-    print(f"  4. Phase 3 모드 (시계열 CV, 시간대별 최적화)")
-    print(f"  5. Phase 4 모드 (결과 분석, 병렬 최적화)")
-    mode_input = input(f"  모드 선택 (기본값: 5): ").strip()
+    print("\n최적화 모드 선택:")
+    print("  1. 기존 모드 (단일 데이터, 기본 평가지표)")
+    print("  2. Phase 1 모드 (학습/테스트 분리, 향상된 평가지표)")
+    print("  3. Phase 2 모드 (시장 레짐별 최적화, 확장 파라미터)")
+    print("  4. Phase 3 모드 (시계열 CV, 시간대별 최적화)")
+    print("  5. Phase 4 모드 (결과 분석, 병렬 최적화)")
+    mode_input = input("  모드 선택 (기본값: 5): ").strip()
     mode = int(mode_input) if mode_input else 5
 
     # Phase 5: 데이터 요약 출력 옵션 (2026-05-10)
-    summary_input = input(f"\n  데이터 요약 출력? (y/n, 기본값 y): ").strip().lower()
+    summary_input = input("\n  데이터 요약 출력? (y/n, 기본값 y): ").strip().lower()
     print_summary = summary_input != 'n'
 
     if print_summary:
@@ -1359,7 +1359,7 @@ if __name__ == '__main__':
                                                     max_avg_lag=max_avg_lag)
     elif mode == 2:
         # Phase 1 모드
-        test_ratio_input = input(f"  테스트 비율 (기본값 0.2): ").strip()
+        test_ratio_input = input("  테스트 비율 (기본값 0.2): ").strip()
         test_ratio = float(test_ratio_input) if test_ratio_input else 0.2
         
         kospi_train, kospi_test = train_test_split_optimize('kospi', 'kospi_zigzag',
@@ -1381,11 +1381,11 @@ if __name__ == '__main__':
                                                     max_avg_lag=max_avg_lag, test_results=kp200_test)
     elif mode == 3:
         # Phase 2 모드
-        test_ratio_input = input(f"  테스트 비율 (기본값 0.2): ").strip()
+        test_ratio_input = input("  테스트 비율 (기본값 0.2): ").strip()
         test_ratio = float(test_ratio_input) if test_ratio_input else 0.2
         
-        print(f"\nPhase 2 옵션:")
-        use_regime_input = input(f"  시장 레짐별 최적화 사용? (y/n, 기본값 y): ").strip().lower()
+        print("\nPhase 2 옵션:")
+        use_regime_input = input("  시장 레짐별 최적화 사용? (y/n, 기본값 y): ").strip().lower()
         use_regime = use_regime_input != 'n'
         
         if use_regime:
@@ -1406,7 +1406,7 @@ if __name__ == '__main__':
             
             # 레짐별 결과 출력
             print(f"\n{'='*80}")
-            print(f"[KOSPI 레짐별 최적화 결과]")
+            print("[KOSPI 레짐별 최적화 결과]")
             print(f"{'='*80}")
             for regime_name, candidates in kospi_regime_results.items():
                 if candidates:
@@ -1458,16 +1458,16 @@ if __name__ == '__main__':
                                                     max_avg_lag=max_avg_lag, test_results=kp200_test)
     elif mode == 4:
         # Phase 3 모드 (시계열 CV, 시간대별 최적화)
-        print(f"\nPhase 3 옵션:")
-        cv_input = input(f"  시계열 교차 검증 사용? (y/n, 기본값 n): ").strip().lower()
+        print("\nPhase 3 옵션:")
+        cv_input = input("  시계열 교차 검증 사용? (y/n, 기본값 n): ").strip().lower()
         use_cv = cv_input == 'y'
         
-        time_based_input = input(f"  시간대별 최적화 사용? (y/n, 기본값 n): ").strip().lower()
+        time_based_input = input("  시간대별 최적화 사용? (y/n, 기본값 n): ").strip().lower()
         use_time_based = time_based_input == 'y'
         
         if use_cv:
             # 시계열 교차 검증
-            n_splits_input = input(f"  CV 분할 수 (기본값 5): ").strip()
+            n_splits_input = input("  CV 분할 수 (기본값 5): ").strip()
             n_splits = int(n_splits_input) if n_splits_input else 5
             
             kospi_cv_results = time_series_cv_optimize('kospi', 'kospi_zigzag', n_jobs,
@@ -1492,7 +1492,7 @@ if __name__ == '__main__':
 
             # 시간대별 결과 출력
             print(f"\n{'='*80}")
-            print(f"[KOSPI 시간대별 최적화 결과]")
+            print("[KOSPI 시간대별 최적화 결과]")
             print(f"{'='*80}")
             for period, candidates in kospi_time_results.items():
                 if candidates:
@@ -1505,7 +1505,7 @@ if __name__ == '__main__':
             # Phase 5: session_min_wave_bars_table 변환 (2026-05-10)
             kospi_session_table = convert_time_based_to_session_table(kospi_time_results)
             print(f"\n{'='*80}")
-            print(f"[KOSPI session_min_wave_bars_table]")
+            print("[KOSPI session_min_wave_bars_table]")
             print(f"{'='*80}")
             print(f"  {kospi_session_table}")
 
@@ -1518,7 +1518,7 @@ if __name__ == '__main__':
             # Phase 5: session_min_wave_bars_table 변환 (2026-05-10)
             kp200_session_table = convert_time_based_to_session_table(kp200_time_results)
             print(f"\n{'='*80}")
-            print(f"[KP200 session_min_wave_bars_table]")
+            print("[KP200 session_min_wave_bars_table]")
             print(f"{'='*80}")
             print(f"  {kp200_session_table}")
 
@@ -1542,13 +1542,13 @@ if __name__ == '__main__':
                                                     max_avg_lag=max_avg_lag, test_results=kp200_test)
 
             # Phase 5: session_min_wave_bars_table 업데이트 옵션 (2026-05-10)
-            update_session_input = input(f"\n  session_min_wave_bars_table을 config.json에 업데이트하시겠습니까? (y/n, 기본값 n): ").strip().lower()
+            update_session_input = input("\n  session_min_wave_bars_table을 config.json에 업데이트하시겠습니까? (y/n, 기본값 n): ").strip().lower()
             if update_session_input == 'y':
                 update_config_with_session_table(kospi_session_table, 'kospi_zigzag')
                 update_config_with_session_table(kp200_session_table, 'futures_zigzag')
         else:
             # Phase 3 기본 (확장 파라미터 + 균형 샘플링)
-            test_ratio_input = input(f"  테스트 비율 (기본값 0.2): ").strip()
+            test_ratio_input = input("  테스트 비율 (기본값 0.2): ").strip()
             test_ratio = float(test_ratio_input) if test_ratio_input else 0.2
             
             kospi_train, kospi_test = train_test_split_optimize('kospi', 'kospi_zigzag',
@@ -1570,22 +1570,22 @@ if __name__ == '__main__':
                                                     max_avg_lag=max_avg_lag, test_results=kp200_test)
     elif mode == 5:
         # Phase 4 모드 (결과 분석 + 병렬 최적화)
-        print(f"\nPhase 4 옵션:")
-        cv_input = input(f"  시계열 교차 검증 사용? (y/n, 기본값 n): ").strip().lower()
+        print("\nPhase 4 옵션:")
+        cv_input = input("  시계열 교차 검증 사용? (y/n, 기본값 n): ").strip().lower()
         use_cv = cv_input == 'y'
         
-        time_based_input = input(f"  시간대별 최적화 사용? (y/n, 기본값 n): ").strip().lower()
+        time_based_input = input("  시간대별 최적화 사용? (y/n, 기본값 n): ").strip().lower()
         use_time_based = time_based_input == 'y'
         
-        report_input = input(f"  최적화 리포트 생성? (y/n, 기본값 y): ").strip().lower()
+        report_input = input("  최적화 리포트 생성? (y/n, 기본값 y): ").strip().lower()
         use_report = report_input != 'n'
         
-        batch_size_input = input(f"  배치 크기 (기본값 100): ").strip()
+        batch_size_input = input("  배치 크기 (기본값 100): ").strip()
         batch_size = int(batch_size_input) if batch_size_input else 100
         
         if use_cv:
             # 시계열 교차 검증
-            n_splits_input = input(f"  CV 분할 수 (기본값 5): ").strip()
+            n_splits_input = input("  CV 분할 수 (기본값 5): ").strip()
             n_splits = int(n_splits_input) if n_splits_input else 5
             
             kospi_cv_results = time_series_cv_optimize('kospi', 'kospi_zigzag', n_jobs,
@@ -1621,7 +1621,7 @@ if __name__ == '__main__':
             
             # 시간대별 결과 출력
             print(f"\n{'='*80}")
-            print(f"[KOSPI 시간대별 최적화 결과]")
+            print("[KOSPI 시간대별 최적화 결과]")
             print(f"{'='*80}")
             for period, candidates in kospi_time_results.items():
                 if candidates:
@@ -1662,7 +1662,7 @@ if __name__ == '__main__':
                 save_optimization_report(kp200_report, 'kp200', 'futures_zigzag')
         else:
             # Phase 4 기본 (확장 파라미터 + 배치 처리 + 리포트)
-            test_ratio_input = input(f"  테스트 비율 (기본값 0.2): ").strip()
+            test_ratio_input = input("  테스트 비율 (기본값 0.2): ").strip()
             test_ratio = float(test_ratio_input) if test_ratio_input else 0.2
             
             kospi_train, kospi_test = train_test_split_optimize('kospi', 'kospi_zigzag',
@@ -1696,11 +1696,11 @@ if __name__ == '__main__':
 
     # config.json 업데이트 (사용자 확인 후)
     print(f"\n{'='*80}")
-    print(f"최적 파라미터 요약")
+    print("최적 파라미터 요약")
     print(f"{'='*80}")
 
     if kospi_best:
-        print(f"\n[KOSPI]")
+        print("\n[KOSPI]")
         print(f"  atr_multiplier          : {kospi_best['atr_multiplier']:.4f}")
         print(f"  pivot_threshold_min_pct : {kospi_best['pivot_threshold_min_pct']:.4f}")
         print(f"  confirmation_bars       : {kospi_best['confirmation_bars']}")
@@ -1715,14 +1715,14 @@ if __name__ == '__main__':
             print(f"  atr_period             : {kospi_best['atr_period']}")
             print(f"  freeze_on_confirm      : {kospi_best['freeze_on_confirm']}")
     else:
-        print(f"\n[KOSPI]")
-        print(f"  ❌ 최적화 실패: 유효한 조합을 찾지 못했습니다.")
+        print("\n[KOSPI]")
+        print("  ❌ 최적화 실패: 유효한 조합을 찾지 못했습니다.")
         print(f"  피봇 수 범위: {pivot_count_range[0]}~{pivot_count_range[1]}개")
         print(f"  최대 평균 지연: {max_avg_lag} 봉")
-        print(f"  제안: 피봇 수 범위를 넓히거나 최대 평균 지연시간을 늘려보세요.")
+        print("  제안: 피봇 수 범위를 넓히거나 최대 평균 지연시간을 늘려보세요.")
 
     if kp200_best:
-        print(f"\n[KP200]")
+        print("\n[KP200]")
         print(f"  atr_multiplier          : {kp200_best['atr_multiplier']:.4f}")
         print(f"  pivot_threshold_min_pct : {kp200_best['pivot_threshold_min_pct']:.4f}")
         print(f"  confirmation_bars       : {kp200_best['confirmation_bars']}")
@@ -1737,24 +1737,24 @@ if __name__ == '__main__':
             print(f"  atr_period             : {kp200_best['atr_period']}")
             print(f"  freeze_on_confirm      : {kp200_best['freeze_on_confirm']}")
     else:
-        print(f"\n[KP200]")
-        print(f"  ❌ 최적화 실패: 유효한 조합을 찾지 못했습니다.")
+        print("\n[KP200]")
+        print("  ❌ 최적화 실패: 유효한 조합을 찾지 못했습니다.")
         print(f"  피봇 수 범위: {pivot_count_range[0]}~{pivot_count_range[1]}개")
         print(f"  최대 평균 지연: {max_avg_lag} 봉")
-        print(f"  제안: 피봇 수 범위를 넓히거나 최대 평균 지연시간을 늘려보세요.")
+        print("  제안: 피봇 수 범위를 넓히거나 최대 평균 지연시간을 늘려보세요.")
 
     print(f"\n{'='*80}")
-    print(f"config.json 업데이트 여부 확인")
+    print("config.json 업데이트 여부 확인")
     print(f"{'='*80}")
 
     if kospi_best:
-        print(f"\n[KOSPI] 최적 파라미터 적용하시겠습니까? (y/n)")
+        print("\n[KOSPI] 최적 파라미터 적용하시겠습니까? (y/n)")
         response = input().strip().lower()
         if response == 'y':
             update_config_json(kospi_best, 'kospi_zigzag')
 
     if kp200_best:
-        print(f"\n[KP200] 최적 파라미터 적용하시겠습니까? (y/n)")
+        print("\n[KP200] 최적 파라미터 적용하시겠습니까? (y/n)")
         response = input().strip().lower()
         if response == 'y':
             update_config_json(kp200_best, 'futures_zigzag')

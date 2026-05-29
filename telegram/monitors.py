@@ -5,10 +5,9 @@
 """
 from __future__ import annotations
 import logging
-import threading
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +134,6 @@ class MonitorsMixin:
           _prev_atm_call_price 를 사용하면 snapshot 재계산 없이 현재 ATM 콜가를 얻는다.
           없으면 _build_option_snapshot_safe(update_prev=False) fallback.
         """
-        from collections import deque as _deque
         from prediction.option_features import FuturesCallSimilarity
 
         sim = FuturesCallSimilarity(window=self._divergence_window)

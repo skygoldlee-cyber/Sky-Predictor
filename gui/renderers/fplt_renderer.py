@@ -9,14 +9,14 @@ import logging
 import time
 import zlib
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     pass
 
 import numpy as np
 import pandas as pd
-from gui.utils.pivot_probability import HistoricalPivot, PivotProbabilityCalculator
+from gui.utils.pivot_probability import HistoricalPivot
 
 logger = logging.getLogger(__name__)
 
@@ -537,7 +537,7 @@ class FpltRenderer:
         try:
             xa = np.asarray(x).ravel()
             ya = np.asarray(y, dtype=np.float64).ravel()
-        except Exception as e:
+        except Exception:
             xa = ya = np.array([])
 
         # 데이터 타입 변환 강화 (MA 업데이트 실패 해결)
@@ -618,7 +618,7 @@ class FpltRenderer:
                 except Exception:
                     pass
                 return
-            except Exception as e:
+            except Exception:
                 self._remove(name)
 
         try:
@@ -1193,9 +1193,9 @@ class FpltRenderer:
                                 pivot_status=pivot_status,
                                 pivot_info=pivot_info
                             )
-                        except Exception as e:
+                        except Exception:
                             pass
-            except Exception as e:
+            except Exception:
                 pass
 
     def _refresh_trade_markers(self) -> None:

@@ -2,7 +2,6 @@
 core/strike_utils.py 단위 테스트
 """
 
-import pytest
 from core.strike_utils import (
     strike_code_to_pt,
     extract_strike_pt,

@@ -15,7 +15,6 @@ import argparse
 import pickle
 import logging
 from pathlib import Path
-from datetime import datetime
 from typing import Dict, List, Tuple
 
 import torch
