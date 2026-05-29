@@ -90,8 +90,16 @@ class GuiController:
             QTimer.singleShot(0, lambda: center_widget_on_screen(window))
         except Exception:
             center_widget_on_screen(window)
-        with loop:
-            loop.run_forever()
+        try:
+            with loop:
+                loop.run_forever()
+        except Exception as e:
+            import traceback
+            logger = logging.getLogger(__name__)
+            logger.error(f"[GuiController] GUI loop exception: {e}")
+            logger.error(f"[GuiController] traceback:\n{traceback.format_exc()}")
+            print(f"[GuiController] GUI loop exception: {e}")
+            print(f"[GuiController] traceback:\n{traceback.format_exc()}")
     
     # ── 레이아웃 제어 메서드 ────────────────────────────────────────────────────
     
