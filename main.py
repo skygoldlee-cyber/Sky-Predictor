@@ -37,30 +37,16 @@ class ZZLogFilter(logging.Filter):
             return False
         return True
 
-# 모든 로거에 ZZ 필터 적용
+# 루트 로거에 ZZ 필터 적용 (전역 교체 대신)
 _apply_zz_filter = False
-def apply_zz_filter_to_all_loggers():
+def apply_zz_filter_to_root():
     global _apply_zz_filter
     if _apply_zz_filter:
         return
     _apply_zz_filter = True
     zz_filter = ZZLogFilter()
-    # 기존 로거에 필터 적용
-    for name in logging.root.manager.loggerDict.keys():
-        logger = logging.getLogger(name)
-        logger.addFilter(zz_filter)
-    # 루트 로거에도 필터 적용
-    logging.getLogger().addFilter(zz_filter)
-
-# 로거 생성 시 필터 자동 적용
-original_getLogger = logging.getLogger
-def getLogger_with_zz_filter(name=''):
-    logger = original_getLogger(name)
-    if not any(isinstance(f, ZZLogFilter) for f in logger.filters):
-        logger.addFilter(ZZLogFilter())
-    return logger
-
-logging.getLogger = getLogger_with_zz_filter
+    # 루트 로거에 필터 적용
+    logging.root.addFilter(zz_filter)
 
 
 
@@ -76,78 +62,8 @@ def main() -> int:
     logger = logging.getLogger(__name__)
     logger.info("[main] main() start")
 
-    def _startup_internet_time_sync(logger: logging.Logger) -> None:
-        try:
-            from utils.internet_time_sync import sync_best_effort
-
-            env_v = str(os.environ.get("INTERNET_TIME_SYNC") or "").strip().lower()
-            # Default ON. Set INTERNET_TIME_SYNC=0/false/off to disable.
-            do_sync = env_v not in ("0", "false", "no", "n", "off")
-
-            try:
-                logger.info(f"[TIME_SYNC] startup (enabled={str(bool(do_sync)).lower()} env={env_v!r})")
-            except Exception:
-                pass
-            r = sync_best_effort(
-                sync=bool(do_sync),
-                samples=2,
-                timeout=1.0,
-                min_abs_offset_ms_to_sync=500.0,
-            )
-            try:
-                best = r.get("best") if isinstance(r, dict) else None
-                best = best if isinstance(best, dict) else {}
-
-                ok = bool(r.get("ok")) if isinstance(r, dict) else False
-                reason = str(r.get("reason")) if isinstance(r, dict) else "unknown"
-                sync_attempted = bool(r.get("sync_attempted")) if isinstance(r, dict) else False
-
-                server = str(best.get("server") or "")
-                samples = best.get("samples")
-                offset_ms_avg = best.get("offset_ms_avg")
-                offset_ms_p95 = best.get("offset_ms_p95")
-
-                parts = []
-                if ok and sync_attempted:
-                    parts.append("Internet time sync success")
-                elif ok and not sync_attempted:
-                    if reason == "measured_only":
-                        parts.append("Internet time offset measured (sync not performed)")
-                    elif reason == "skip_small_offset":
-                        parts.append("Internet time offset too small, sync skipped")
-                    else:
-                        parts.append("Internet time processing complete (sync not performed)")
-                else:
-                    if sync_attempted:
-                        parts.append("Internet time sync failed")
-                    else:
-                        parts.append("Internet time offset measurement failed")
-
-                if server:
-                    parts.append(f"server={server}")
-                if samples is not None:
-                    parts.append(f"samples={samples}")
-                if offset_ms_avg is not None:
-                    try:
-                        parts.append(f"avg_offset={float(offset_ms_avg):.2f}ms(+ means system is slow)")
-                    except Exception:
-                        parts.append(f"avg_offset={offset_ms_avg}ms")
-                if offset_ms_p95 is not None:
-                    try:
-                        parts.append(f"P95_offset={float(offset_ms_p95):.2f}ms")
-                    except Exception:
-                        parts.append(f"P95_offset={offset_ms_p95}ms")
-                if (not ok) or (reason and reason not in ("measured_only", "skip_small_offset", "SetSystemTime_ok", "w32tm_resync_ok")):
-                    parts.append(f"reason={reason}")
-
-                logger.info(f"[TIME_SYNC] {' / '.join(parts)}")
-            except Exception:
-                logger.info(f"[TIME_SYNC] {r}")
-        except Exception as e:
-            try:
-                logger.warning(f"[TIME_SYNC] failed: {e}")
-            except Exception:
-                pass
+    # ZZ 필터 적용
+    apply_zz_filter_to_root()
 
     from gui.controller import GuiController
 
