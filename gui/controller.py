@@ -318,6 +318,17 @@ class GuiController:
         loop = QEventLoop(app)
         asyncio.set_event_loop(loop)
 
+        # Qt 전역 예외 처리
+        def handle_qt_exception(exctype, value, traceback_obj):
+            import traceback
+            logger = logging.getLogger(__name__)
+            logger.error(f"[Qt] Unhandled exception: {value}")
+            logger.error(f"[Qt] traceback:\n{''.join(traceback.format_exception(exctype, value, traceback_obj))}")
+            print(f"[Qt] Unhandled exception: {value}")
+            print(f"[Qt] traceback:\n{''.join(traceback.format_exception(exctype, value, traceback_obj))}")
+
+        sys.excepthook = handle_qt_exception
+
         emitter = QtLogEmitter()
         qt_handler = QtLogHandler(emitter)
         qt_handler.setLevel(logging.INFO)
