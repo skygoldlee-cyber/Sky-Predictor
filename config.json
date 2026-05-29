@@ -13,27 +13,27 @@
       "smooth_period": 3
     },
     "zigzag": {
-      "atr_multiplier": 0.5,
+      "atr_multiplier": 1.5,
       "atr_period": 14,
       "er_period": 10,
-      "atr_multiplier_min": 0.5,
-      "atr_multiplier_max": 2.0,
-      "pivot_threshold_min_pct": 0.05,
-      "pivot_threshold_max_pct": 2.0,
+      "atr_multiplier_min": 1.0,
+      "atr_multiplier_max": 4.0,
+      "pivot_threshold_min_pct": 0.3,
+      "pivot_threshold_max_pct": 3.0,
       "major_swing_ratio": 2.0,
-      "confirmation_bars": 0,
+      "confirmation_bars": 2,
       "max_swings": 20,
-      "freeze_on_confirm": false,
+      "freeze_on_confirm": true,
       "min_wave_bars": 1,
-      "min_wave_pct": 0.05,
+      "min_wave_pct": 0.4,
       "cluster_tolerance_pct": 0.3,
       "structure_lookback_swings": 30,
       "structure_points": 4
     },
-    "warmup_bars": 15,
+    "supertrend_pivot_filter": false,
+    "warmup_bars": 15
   },
   "prediction": {
-    "target_day": "",
     "multiscale_5m": false,
     "multiscale_enabled": false,
     "multiscale_time_scales": [
