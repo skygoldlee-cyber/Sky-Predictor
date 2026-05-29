@@ -22,7 +22,7 @@
       "pivot_threshold_max_pct": 3.0,
       "major_swing_ratio": 2.0,
       "confirmation_bars": 2,
-      "max_swings": 7,
+      "max_swings": 20,
       "freeze_on_confirm": true,
       "min_wave_bars": 1,
       "min_wave_pct": 0.4,
