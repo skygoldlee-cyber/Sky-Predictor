@@ -318,6 +318,10 @@ class GuiController:
         loop = QEventLoop(app)
         asyncio.set_event_loop(loop)
 
+        # Python faulthandler 추가 (세그멘테이션 폴트 등 추적)
+        import faulthandler
+        faulthandler.enable()
+
         # Qt 전역 예외 처리
         def handle_qt_exception(exctype, value, traceback_obj):
             import traceback
