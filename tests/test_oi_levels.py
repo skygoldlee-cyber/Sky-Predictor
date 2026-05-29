@@ -16,7 +16,7 @@ Coverage:
 """
 import math
 import pytest
-from prediction.option_features import calc_oi_levels, build_option_snapshot
+from prediction.features.option_features import calc_oi_levels, build_option_snapshot
 from prediction.context_builder import _describe_oi_levels
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────

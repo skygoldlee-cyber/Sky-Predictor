@@ -452,6 +452,11 @@ def build_dataset(
             zz = zz.__dict__ if hasattr(zz, "__dict__") else {}
         except Exception:
             zz = {}
+        try:
+            adaptive_dict = getattr(cfg, "adaptive_indicator", None)
+            adaptive_dict = adaptive_dict.__dict__ if hasattr(adaptive_dict, "__dict__") else {}
+        except Exception:
+            adaptive_dict = {}
 
         try:
             # ── [SSOT] AdaptiveZigZagConfig 는 AdaptiveZigZagSettings.to_zigzag_config() 경유 ──

@@ -784,19 +784,19 @@ def format_prediction_message(
                 if _c_chg is not None and _c_cnt > 0:
                     _c_arrow = "▲" if _c_chg > 0 else ("▼" if _c_chg < 0 else "◆")
                     lines.append(
-                        f"  {_c_arrow} 콜: `{esc(f"{_c_chg:+.1%}")}` "
+                        f"  {_c_arrow} 콜: `{esc(f'{_c_chg:+.1%}')}` "
                         f"\\({esc(str(_c_cnt))}종목\\)"
                     )
                 else:
-                    lines.append(f"  ◆ 콜: 집계 중 \\({esc("open_price")} 미주입\\)")
+                    lines.append(f"  ◆ 콜: 집계 중 \\({esc('open_price')} 미주입\\)")
                 if _p_chg is not None and _p_cnt > 0:
                     _p_arrow = "▲" if _p_chg > 0 else ("▼" if _p_chg < 0 else "◆")
                     lines.append(
-                        f"  {_p_arrow} 풋: `{esc(f"{_p_chg:+.1%}")}` "
+                        f"  {_p_arrow} 풋: `{esc(f'{_p_chg:+.1%}')}` "
                         f"\\({esc(str(_p_cnt))}종목\\)"
                     )
                 else:
-                    lines.append(f"  ◆ 풋: 집계 중 \\({esc("open_price")} 미주입\\)")
+                    lines.append(f"  ◆ 풋: 집계 중 \\({esc('open_price')} 미주입\\)")
     except Exception:
         pass
 

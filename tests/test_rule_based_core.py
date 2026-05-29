@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prediction.adaptive_mixin import _parse_adaptive_heuristic_features
+from prediction.mixins.adaptive_mixin import _parse_adaptive_heuristic_features
 from prediction.predictor import _merge_rule_based_weights, compute_rule_based_probability
 
 
