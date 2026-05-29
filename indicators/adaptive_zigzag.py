@@ -1242,131 +1242,70 @@ class AdaptiveZigZag:
         return new_swing_signal
 
 
-    def update(self, high: float, low: float, close: float, bar_time: Any = None, open: float = 0.0, volume: float = 1.0) -> ZigZagState:
-        # ── [다중 시간프레임] 상위 시간프레임 데이터 업데이트 ─────────
+    def _update_multi_timeframe(self, high: float, low: float, close: float, bar_time: Any, open: float, volume: float) -> None:
+        """다중 시간프레임 데이터 업데이트"""
         # [OPT-4 FIX] multi_tf_zz 비활성화 시(기본값) 함수 호출 자체를 생략
         if self._multi_tf_zz is not None:
             self._update_upper_timeframe_data(high, low, close, bar_time, open, volume)
-        
-        # [FIX v2-4] _bar_idx는 이 메서드 전체에서 현재 처리 중인 봉 번호를 나타냄
-        # _remember_bar_time()이 _bar_hhmm_map에 현재 봉 시각을 저장한 후
-        # 내부 메서드들(_calc_threshold_pct 등)이 _bar_hhmm(_bar_idx)로 조회 가능
-        self._highs.append(high)
-        self._lows.append(low)
-        self._closes.append(close)
-        self._opens.append(float(open) if open else 0.0)  # [REGIME-INTEGRATION] 시가 버퍼에 추가
-        self._volumes.append(volume)  # [REGIME-INTEGRATION] 거래량 버퍼에 추가
-        self._remember_bar_time(bar_time)
-        # 완결봉 OHLC 보관 (피봇 확정 시 State에 기록)
-        self._last_bar_open  = float(open) if open else 0.0
-        self._last_bar_high  = high
-        self._last_bar_low   = low
-        self._last_bar_close = close
-        n = len(self._closes)
-        cfg = self.config
 
-        # [FIX] 첫 번째, 두 번째 봉에서 피봇 생성 방지 - 시가 anchor를 3번째 봉에서 심도록 수정
-        # 초기 데이터 누적 후 anchor 심도록 하여 장 초반 잘못된 피봇 방지
-        if n <= 2:
-            self._bar_idx += 1
-            return self.state
-
-        # [FIX] 장 시작 전 시간 피봇 생성 방지 - 심볼별 장 시작 시간 적용
-        # KP200: 08:45부터, KOSPI: 09:00부터 피봇 생성 허용
-        if bar_time:
-            try:
-                # [OPT-2 FIX] 모듈 레벨 datetime 사용 (매 봉 import 제거)
-                if isinstance(bar_time, str):
-                    bar_dt = datetime.datetime.strptime(bar_time, "%H:%M")
-                elif isinstance(bar_time, datetime.datetime):
-                    bar_dt = bar_time
-                else:
-                    bar_dt = None
-                
-                if bar_dt:
-                    bar_hour = bar_dt.hour
-                    bar_minute = bar_dt.minute
-                    # 심볼별 장 시작 시간 결정
-                    market_start_hour = 9
-                    market_start_minute = 0
-                    if "KP200" in self._symbol_name or "선물" in self._symbol_name:
-                        market_start_hour = 8
-                        market_start_minute = 45
-                    
-                    # 장 시작 시간 이전이면 피봇 생성 차단
-                    if bar_hour < market_start_hour or (bar_hour == market_start_hour and bar_minute < market_start_minute):
-                        _logger.debug("[ZZ][UPDATE] 장 시작 전 시간 차단: %s (장 시작: %02d:%02d)", bar_time, market_start_hour, market_start_minute)
-                        self._bar_idx += 1
-                        return self.state
-            except Exception:
-                pass  # 시간 파싱 실패 시 무시
-
-        # [DEBUG] 피봇 생성 추적
-        if n == 3 or n % 50 == 0:
-            _logger.debug("[ZZ][DEBUG] update: n=%d, h=%.2f, l=%.2f, c=%.2f, _current_direction=%s, _pending_high=%.2f, _pending_low=%.2f, _all_swings=%d",
-                        n, high, low, close, self._current_direction, self._pending_high, self._pending_low, len(self._all_swings))
-
-        # [DATA-CONSISTENCY] 시가 앵커 설정은 indicator_integration에서 seed_anchor로 직접 호출
-        # update 메서드 내부에서는 시가 앵커 설정 제거 - 중복 방지
-
-        # 1. True Range & ATR
-        if n >= 2:
-            pc = self._closes[-2]
-            tr = max(high - low, abs(high - pc), abs(low - pc))
-        else:
-            tr = high - low
-        self._tr.append(tr)
-        try:
-            atr = self._atr_rma.update(tr)
-        except (ValueError, TypeError, AttributeError):
-            atr = np.mean(list(self._tr)) if self._tr else tr
-        self._atr_values.append(atr)
-        self._prev_atr = atr
-
-        # [DATA-CONSISTENCY] ATR 값 저장 (세션 간 연속성 보존)
-        if atr > 0:
-            self._saved_atr = atr
-
-        # ── [Layer A × Layer B] 런타임 파라미터 계산 ───────────────────────
-        # [MAINT-1 FIX] 같은 시간 구간이면 재계산 생략 (매 봉 dict 재생성 방지)
+    def _update_runtime_params(self, bar_time: Any) -> None:
+        """런타임 파라미터 계산 (시간대별 캐싱 포함)"""
         _cur_hhmm = self._format_hhmm(bar_time) or ""
         _cached_hhmm = getattr(self, '_runtime_params_hhmm', None)
         if _cur_hhmm != _cached_hhmm or not self._runtime_params:
             self._runtime_params = self._get_runtime_params(bar_time)
             self._runtime_params_hhmm = _cur_hhmm
 
-        # ── [ATR-MONITOR] ATR 변화 추적 ─────────────────────────
-        atr_monitor_result = self._atr_monitor.update(atr)
-        self._state.atr = atr
-        self._state.atr_change_pct = atr_monitor_result['change_pct']
-        self._state.atr_trend = atr_monitor_result['trend']
-        self._state.atr_spike_detected = atr_monitor_result['spike_detected']
-        self._state.atr_ma = atr_monitor_result['ma']
+    def _finalize_update(self, close: float, atr: float, thr_pct: float, new_swing_signal: str) -> ZigZagState:
+        """파동 크기, 피보나치, S/R, 구조 분석 및 상태 갱신"""
+        # 4. 파동 크기
+        wave_size, wave_pct = self._calculate_wave_size(close)
 
-        # ── [ATR-MONITOR] 급격 변동 시 동적 비율 조정 ─────────────────
-        # ATR 급변 시 배율 저장 (시간대 테이블 값에 적용됨)
-        # [REVIEW-FIX-2] 논리적 일관성 복구: 변동성 증가 시 임계값 높여 노이즈 억제
-        self._dynamic_atr_ratio = 0.0  # 0이면 급변 없음
-        spike_detected = atr_monitor_result['spike_detected']
-        change_pct = atr_monitor_result['change_pct']
-        if spike_detected:
-            # ATR 급증 시: 변동성 증가 → 임계값 높여 노이즈 억제
-            if change_pct > 0:
-                self._dynamic_atr_ratio = 1.3
-            # ATR 급락 시: 변동성 감소 → 임계값 낮춰 민감도 회복
-            else:
-                self._dynamic_atr_ratio = 0.7
+        # 5-7. 피보나치, S/R, 구조
+        fib_levels = self._calc_fibonacci()
+        support, resistance = self._find_nearest_sr(close)
+        # [DESIGN-4 FIX] _enforce_hl_alternation을 매 봉 O(N log N) 대신
+        # 피봇 변경이 실제로 발생한 경우에만 호출 (new_swing_signal != "none")
+        # 이미 _add_swing()이 교번을 1차 방어하므로 사후 보정은 변경 시에만 충분
+        if new_swing_signal != "none":
+            self._enforce_hl_alternation()
+        structure, hh, ll, micro_structure, structure_confidence = self._analyze_market_structure(new_swing_signal)
 
-        # 2. 적응형 임계값  [FIX-1: ER 방향 역전 수정]
-        # [FIX v3-5] 명시적 bar_idx 전달로 암묵적 의존성 제거
-        thr_pct = self._calc_threshold_pct(atr, close, self._bar_idx)
-        thr_abs = close * thr_pct / 100.0
+        # 8. 상태 갱신
+        self._update_state(close, wave_size, wave_pct, thr_pct, atr, new_swing_signal,
+                           fib_levels, support, resistance, structure, hh, ll,
+                           micro_structure, structure_confidence)
 
-        # 3. ZigZag 로직
+        # Collector 통지 (매 봉마다)
+        self._notify_collector_bar_update(float(close))
+
+        # _bar_idx 증가: 다음 봉을 위한 카운터 증가
+        # 세션 리셋 시에도 계속 증가하여 인덱스 충돌 방지
+        self._bar_idx += 1
+        return self._state
+
+    def _process_direction_based_pivots(self, high: float, low: float, close: float, atr: float, thr_abs: float, thr_pct: float, new_swing_signal: str) -> str:
+        """방향 기반 피봇 처리 (direction=0, 1, -1)"""
+        # [P-FIX-B] 이번 봉에서 3-a 확정이 발생했으면 3-b 진입 차단
+        # → 확정과 신규 후보등록이 같은 봉에 혼재되는 것을 방지
+        # [BUG-INIT-DIR0] 수정: direction=0 초기범위 확정도 같은 봉 재진입 차단에 포함.
+        #   new_swing_signal != "none" 조건이 초기범위 확정 경우도 커버하므로
+        #   아래 direction==1/-1 블록의 P-FIX-B(_bar_idx <= _last_confirmed_bar_idx)와
+        #   이중 방어를 구성한다. 초기범위 확정 즉시 _last_confirmed_bar_idx=self._bar_idx
+        #   를 세팅하므로 다음 봉에서도 동일 봉 차단이 올바르게 동작한다.
+        if new_swing_signal != "none":
+            pass  # 다음 봉부터 탐색 재개 (3-a pending_confirm 확정 및 초기범위 확정 모두 포함)
+        elif self._current_direction == 0:
+            new_swing_signal = self._process_direction_zero(high, low, close, atr, thr_abs, thr_pct)
+        elif self._current_direction == 1:
+            new_swing_signal = self._process_direction_one(high, low, close, atr, thr_abs, thr_pct)
+        elif self._current_direction == -1:
+            new_swing_signal = self._process_direction_minus_one(high, low, close, atr, thr_abs, thr_pct)
+        return new_swing_signal
+
+    def _process_pending_confirmation_with_error_handling(self, high: float, low: float, close: float, atr: float, thr_pct: float) -> str:
+        """pending confirmation 처리 및 예외 핸들링"""
         new_swing_signal = "none"
-
-        # 3-a. Pending confirmation window
-        # [REFACTOR] _process_pending_confirmation()로 로직 분리 및 _MaxWaitCancel 예외 제거
         try:
             new_swing_signal = self._process_pending_confirmation(high, low, close, atr, thr_pct)
         except Exception as exc:
@@ -1396,393 +1335,68 @@ class AdaptiveZigZag:
             _logger.warning("ZigZag pending_confirm error at bar %d: %s", self._bar_idx, exc)
             self._pending_confirm = None
             self._pending_confirm_registered_bar = -1
+        return new_swing_signal
 
-        # 3-b. 방향 결정 / 전환
-        # [P-FIX-B] 이번 봉에서 3-a 확정이 발생했으면 3-b 진입 차단
-        # → 확정과 신규 후보등록이 같은 봉에 혼재되는 것을 방지
-        # [BUG-INIT-DIR0] 수정: direction=0 초기범위 확정도 같은 봉 재진입 차단에 포함.
-        #   new_swing_signal != "none" 조건이 초기범위 확정 경우도 커버하므로
-        #   아래 direction==1/-1 블록의 P-FIX-B(_bar_idx <= _last_confirmed_bar_idx)와
-        #   이중 방어를 구성한다. 초기범위 확정 즉시 _last_confirmed_bar_idx=self._bar_idx
-        #   를 세팅하므로 다음 봉에서도 동일 봉 차단이 올바르게 동작한다.
-        if new_swing_signal != "none":
-            pass  # 다음 봉부터 탐색 재개 (3-a pending_confirm 확정 및 초기범위 확정 모두 포함)
-        elif self._current_direction == 0:
-            if len(self._highs) >= 2:
-                if high > self._pending_high:
-                    self._pending_high     = high
-                    self._pending_high_idx = self._bar_idx
-                if low < self._pending_low:
-                    self._pending_low     = low
-                    self._pending_low_idx = self._bar_idx
-                # [DEBUG] direction=0 상태 로깅
-                _logger.debug(
-                    "[ZZ][DIR0] bar=%d high=%.2f low=%.2f pending_high=%.2f(idx=%d) pending_low=%.2f(idx=%d) thr_abs=%.2f",
-                    self._bar_idx, high, low, self._pending_high, self._pending_high_idx,
-                    self._pending_low, self._pending_low_idx, thr_abs
-                )
-                if self._pending_high > 0 and self._pending_low < float("inf"):
-                    if (self._pending_high - self._pending_low) >= thr_abs:
-                        # [FIX] 초기범위 확정 조건부 허용 - seed_anchor가 없는 경우에만 허용
-                        # seed_anchor가 이미 심어진 경우 초기범위 확정 차단
-                        if len(self._all_swings) > 0:
-                            _logger.debug(
-                                "[ZZ][DIR0] 초기범위 확정 차단: seed_anchor 이미 존재 (swings=%d)",
-                                len(self._all_swings)
-                            )
-                            pass  # seed_anchor가 있으면 초기범위 확정 차단
-                        else:
-                            # seed_anchor가 없는 경우 초기범위 확정 허용
-                            # [FIX] 최소 봉 수 조건 추가 - 장 초반 잘못된 피봇 방지
-                            min_wave_bars = int(getattr(cfg, "min_wave_bars", 5) or 5)
-                            if self._bar_idx < min_wave_bars:
-                                _logger.debug(
-                                    "[ZZ][DIR0] 초기범위 확정 차단: 봉 수 부족 (bar_idx=%d < min_wave_bars=%d)",
-                                    self._bar_idx, min_wave_bars
-                                )
-                                pass  # 봉 수 부족 시 초기범위 확정 차단
-                            else:
-                                _logger.debug(
-                                    "[ZZ][DIR0] 초기범위 조건 충족: pending_high_idx=%d pending_low_idx=%d diff=%.2f",
-                                    self._pending_high_idx, self._pending_low_idx,
-                                    self._pending_high - self._pending_low
-                                )
-                                # [EDGE-CASE-1] 동일 봉 내 발생 시 시가 기준 방향 결정
-                                # 시가가 저점에 가까우면 LOW 우선, 고점에 가까우면 HIGH 우선
-                                prefer_low_first = False  # 기본: HIGH 우선
-                                if self._pending_high_idx == self._pending_low_idx:
-                                    open_price = self._last_bar_open if self._last_bar_open > 0 else (high + low) / 2
-                                    dist_to_high = abs(high - open_price)
-                                    dist_to_low = abs(low - open_price)
-                                    _logger.debug(
-                                        "[ZZ][DIR0] 동일 봉 내 발생: open=%.2f dist_to_high=%.2f dist_to_low=%.2f",
-                                        open_price, dist_to_high, dist_to_low
-                                    )
-                                    # 시가에서 더 먼 쪽을 먼저 확정 (더 큰 움직임)
-                                    prefer_low_first = (dist_to_low > dist_to_high)
+    def _calculate_atr_and_threshold(self, high: float, low: float, close: float, bar_time: Any) -> tuple:
+        """ATR 계산 및 적응형 임계값 계산"""
+        # 1. True Range & ATR
+        atr = self._update_atr(high, low, close)
 
-                                # 인덱스 비교 대신 플래그 사용 (동일 봉 처리 시 미래 인덱스 방지)
-                                if self._pending_high_idx > self._pending_low_idx or (self._pending_high_idx == self._pending_low_idx and prefer_low_first):
-                                    # [FIX v3-3] 초기범위 확정 시 deque 상대 인덱스 변환
-                                    base_offset = self._bar_idx - len(self._lows)
-                                    relative_low_idx = self._pending_low_idx - base_offset
-                                    if 0 <= relative_low_idx < len(self._lows):
-                                        actual_low = self._lows[relative_low_idx]
-                                    else:
-                                        actual_low = self._pending_low
+        # ── [Layer A × Layer B] 런타임 파라미터 계산 ───────────────────────
+        self._update_runtime_params(bar_time)
 
-                                    self._current_direction = 1
-                                    self._state.last_swing_low     = actual_low
-                                    self._state.last_swing_low_idx = self._pending_low_idx
-                                    # [버그 C 수정] 초기범위 확정 전 교번 검사
-                                    _swing_added = False
-                                    _log_low_idx = _log_low_price = _lag = None
-                                    if not self._would_violate_alternation(SwingType.LOW):
-                                        _logger.debug("[ZZ][DIR0] LOW 확정: actual_low=%.2f", actual_low)
-                                        self._add_swing(
-                                            self._pending_low_idx,
-                                            actual_low,
-                                            SwingType.LOW,
-                                            atr,
-                                            confirmed_at_idx=self._bar_idx,
-                                            confirmed_close=self._last_bar_close,
-                                        )
-                                        self._last_confirmed_bar_idx = self._bar_idx
-                                        new_swing_signal = "new_low"
-                                        _swing_added = True
-                                        # 완결봉: 초기범위 확정은 현재 봉 기준
-                                        self._state.last_swing_low_time         = self._bar_hhmm(self._pending_low_idx) or self._bar_hhmm(self._bar_idx)
-                                        self._state.last_swing_low_confirm_time = self._bar_hhmm(self._bar_idx)
-                                        self._state.last_swing_low_lag_bars     = max(0, self._bar_idx - self._pending_low_idx)
-                                        self._state.last_swing_low_open         = self._last_bar_open
-                                        self._state.last_swing_low_close        = self._last_bar_close
-                                        # 로그용 값을 리셋 전에 캡처
-                                        _log_low_idx   = self._pending_low_idx
-                                        _log_low_price = actual_low
-                                        # lag 미리 계산 (순서 의존성 방지)
-                                        _lag = max(0, self._bar_idx - _log_low_idx)
-                                    else:
-                                        _logger.debug("[ZZ][DIR0] LOW 확정 차단: 교번 위반")
-                                    # [P-FIX-C] 초기 방향 확정 후 반대 방향 pending 초기화
-                                    self._pending_high     = high
-                                    self._pending_high_idx = self._bar_idx
-                                    self._pending_low      = float("inf")
-                                    self._pending_low_idx  = -1
-                                    if _swing_added:
-                                        self._pivot_event_emit(
-                                            "확정",
-                                            close=close,
-                                            mode="초기범위",
-                                            signal=new_swing_signal,
-                                            swing_type="low",
-                                            swing_time=self._bar_hhmm(_log_low_idx),
-                                            swing_price=round(_log_low_price, 4),
-                                            thr_pct=round(thr_pct, 4),
-                                            lag=_lag,
-                                        )
-                                else:
-                                    # [FIX v3-3] 초기범위 확정 시 deque 상대 인덱스 변환
-                                    base_offset = self._bar_idx - len(self._highs)
-                                    relative_high_idx = self._pending_high_idx - base_offset
-                                    if 0 <= relative_high_idx < len(self._highs):
-                                        actual_high = self._highs[relative_high_idx]
-                                    else:
-                                        actual_high = self._pending_high
+        # ── [ATR-MONITOR] ATR 변화 추적 ─────────────────────────
+        atr_monitor_result = self._update_atr_monitor(atr)
 
-                                    self._current_direction = -1
-                                    self._state.last_swing_high     = actual_high
-                                    self._state.last_swing_high_idx = self._pending_high_idx
-                                    # [버그 C 수정] 초기범위 확정 전 교번 검사
-                                    _swing_added = False
-                                    _log_high_idx = _log_high_price = _lag = None
-                                    if not self._would_violate_alternation(SwingType.HIGH):
-                                        _logger.debug("[ZZ][DIR0] HIGH 확정: actual_high=%.2f", actual_high)
-                                        self._add_swing(
-                                            self._pending_high_idx,
-                                            actual_high,
-                                            SwingType.HIGH,
-                                            atr,
-                                            confirmed_at_idx=self._bar_idx,
-                                            confirmed_close=self._last_bar_close,
-                                        )
-                                        self._last_confirmed_bar_idx = self._bar_idx
-                                        new_swing_signal = "new_high"
-                                        _swing_added = True
-                                        # 완결봉: 초기범위 확정은 현재 봉 기준
-                                        self._state.last_swing_high_time         = self._bar_hhmm(self._pending_high_idx) or self._bar_hhmm(self._bar_idx)
-                                        self._state.last_swing_high_confirm_time = self._bar_hhmm(self._bar_idx)
-                                        self._state.last_swing_high_lag_bars     = max(0, self._bar_idx - self._pending_high_idx)
-                                        self._state.last_swing_high_open         = self._last_bar_open
-                                        self._state.last_swing_high_close        = self._last_bar_close
-                                        # 로그용 값을 리셋 전에 캡처
-                                        _log_high_idx   = self._pending_high_idx
-                                        _log_high_price = actual_high
-                                        # lag 미리 계산 (순서 의존성 방지)
-                                        _lag = max(0, self._bar_idx - _log_high_idx)
-                                    else:
-                                        _logger.debug("[ZZ][DIR0] HIGH 확정 차단: 교번 위반")
-                                    # [P-FIX-C] 초기 방향 확정 후 반대 방향 pending 초기화
-                                    self._pending_low      = low
-                                    self._pending_low_idx  = self._bar_idx
-                                    self._pending_high     = 0.0
-                                    self._pending_high_idx = -1
-                                    if _swing_added:
-                                        self._pivot_event_emit(
-                                            "확정",
-                                            close=close,
-                                            mode="초기범위",
-                                            signal=new_swing_signal,
-                                            swing_type="high",
-                                            swing_time=self._bar_hhmm(_log_high_idx),
-                                            swing_price=round(_log_high_price, 4),
-                                            thr_pct=round(thr_pct, 4),
-                                            lag=_lag,
-                                        )
+        # ── [ATR-MONITOR] 급격 변동 시 동적 비율 조정 ─────────────────
+        # ATR 급변 시 배율 저장 (시간대 테이블 값에 적용됨)
+        # [REVIEW-FIX-2] 논리적 일관성 복구: 변동성 증가 시 임계값 높여 노이즈 억제
+        self._update_dynamic_atr_ratio(atr_monitor_result)
 
-        elif self._current_direction == 1:
-            if high > self._pending_high:
-                self._pending_high = high; self._pending_high_idx = self._bar_idx
-            if self._pending_high - low >= thr_abs:
-                if self._is_wave_length_ok(thr_abs, close,
-                                           candidate_idx=self._pending_high_idx):
-                    # [FIX-2] 반대 타입인 경우 교체 허용
-                    if self._bar_idx <= self._last_confirmed_bar_idx and self._last_confirmed_bar_idx >= 0:
-                        # 피봇 확정 봉과 동일하거나 이전 봉이면 후보 등록 차단
-                        pass
-                    else:
-                        if self._pending_confirm is None or self._pending_confirm.get("type") != "high":
-                            if self._would_violate_alternation(SwingType.HIGH):
-                                pass  # 등록 차단 — _add_swing() FIX-ALT-1이 2차 방어
-                            else:
-                                old_pc = self._pending_confirm
-                                if isinstance(old_pc, dict) and old_pc.get("type") == "low":
-                                    try:
-                                        cancelled_info = {
-                                            "type": "low",
-                                            "time": self._bar_hhmm(old_pc.get("idx")),
-                                            "price": round(float(old_pc.get("price") or 0.0), 4),
-                                            "cancel_time": self._bar_hhmm(self._bar_idx),
-                                            "cancel_price": round(float(close), 4),
-                                            "reason": "반대후보교체",
-                                        }
-                                        self._state.cancelled_candidates.append(cancelled_info)
-                                    except Exception:
-                                        pass
-                                    self._state.pending_candidate_status = "취소"
-                                    self._pivot_event_emit(
-                                        "취소",
-                                        close=float(close),
-                                        reason="반대후보교체",
-                                        cancelled_type="low",
-                                        cancelled_time=self._bar_hhmm(old_pc.get("idx")),
-                                        cancelled_price=round(float(old_pc.get("price") or 0.0), 4),
-                                    )
-                                    self._candidate_cancelled_count += 1
-                                    self._notify_collector_cancelled(
-                                        cancelled_bar=self._bar_idx,
-                                        cancelled_close=float(close),
-                                        reason="반대후보교체",
-                                    )
-                                if self._pending_high_idx != -1:
-                                    swing_time_high = self._bar_hhmm(self._pending_high_idx)
-                                    self._pending_confirm = dict(
-                                        type="high",
-                                        idx=self._pending_high_idx,
-                                        price=self._pending_high,
-                                        atr=atr,
-                                        remaining=self._calc_confirmation_bars(),
-                                    )
-                                    self._pending_confirm_registered_bar = self._bar_idx
-                                    self._candidate_registered_count += 1
-                                    self._state.pending_candidate_type = "high"
-                                    self._state.pending_candidate_time = swing_time_high
-                                    self._state.pending_candidate_price = round(
-                                        float(self._pending_high), 4)
-                                    self._state.pending_candidate_remaining = \
-                                        self._calc_confirmation_bars()
-                                    self._state.pending_candidate_status = "등록"
-                                    self._pivot_event_emit(
-                                        "후보등록",
-                                        close=float(close),
-                                        candidate="high",
-                                        swing_time=swing_time_high,
-                                        swing_price=round(float(self._pending_high), 4),
-                                        remaining=self._calc_confirmation_bars(),
-                                        thr_abs=round(float(thr_abs), 4),
-                                        thr_pct=round(float(thr_pct), 4),
-                                        prob=round(
-                                            self.get_pending_confirmation_probability(
-                                                float(close)), 3),
-                                    )
-                                    self._notify_collector_candidate_registered(
-                                        candidate_type="high",
-                                        candidate_price=float(self._pending_high),
-                                        bar_idx=self._pending_high_idx,
-                                        close=float(close),
-                                    )
-                        else:
-                            self._pivot_event_emit(
-                                "후보등록",
-                                close=close,
-                                candidate="high",
-                                swing_time=self._bar_hhmm(self._pending_high_idx),
-                                swing_price=round(float(self._pending_confirm.get("price") or 0.0), 4),
-                                remaining=int(self._pending_confirm.get("remaining") or 0),
-                                reason="same_type_retrigger",
-                                prob=round(self.get_pending_confirmation_probability(float(close)), 3),
-                            )
+        # 2. 적응형 임계값  [FIX-1: ER 방향 역전 수정]
+        # [FIX v3-5] 명시적 bar_idx 전달로 암묵적 의존성 제거
+        thr_pct = self._calc_threshold_pct(atr, close, self._bar_idx)
+        thr_abs = close * thr_pct / 100.0
 
-        elif self._current_direction == -1:
-            if low < self._pending_low:
-                self._pending_low = low; self._pending_low_idx = self._bar_idx
-            if high - self._pending_low >= thr_abs:
-                if self._is_wave_length_ok(thr_abs, close,
-                                           candidate_idx=self._pending_low_idx):
-                    # [FIX-2] 반대 타입인 경우 교체 허용
-                    # [P-FIX-B] 피봇 확정 봉과 동일 봉에서 후보 등록 차단
-                    if self._bar_idx <= self._last_confirmed_bar_idx and self._last_confirmed_bar_idx >= 0:
-                        # 피봇 확정 봉과 동일하거나 이전 봉이면 후보 등록 차단
-                        pass
-                    else:
-                        if self._pending_confirm is None or self._pending_confirm.get("type") != "low":
-                            # [BUG-REMAIN-1] 교번 사전 검증
-                            if self._would_violate_alternation(SwingType.LOW):
-                                pass  # 등록 차단 — _add_swing() FIX-ALT-1이 2차 방어
-                            else:
-                                # ── 이하 전체가 else 블록 내부 ──────────────────
-                                old_pc = self._pending_confirm
-                                if isinstance(old_pc, dict) and old_pc.get("type") == "high":
-                                    try:
-                                        cancelled_info = {
-                                            "type": "high",
-                                            "time": self._bar_hhmm(old_pc.get("idx")),
-                                            "price": round(old_pc.get("price") or 0.0, 4),
-                                            "cancel_time": self._bar_hhmm(self._bar_idx),
-                                            "cancel_price": round(close, 4),
-                                            "reason": "반대후보교체",
-                                        }
-                                        self._state.cancelled_candidates.append(cancelled_info)
-                                    except Exception:
-                                        pass
-                                    self._state.pending_candidate_status = "취소"
-                                    self._pivot_event_emit(
-                                        "취소",
-                                        close=close,
-                                        reason="반대후보교체",
-                                        cancelled_type="high",
-                                        cancelled_time=self._bar_hhmm(old_pc.get("idx")),
-                                        cancelled_price=round(old_pc.get("price") or 0.0, 4),
-                                    )
-                                    self._candidate_cancelled_count += 1
-                                    self._notify_collector_cancelled(
-                                        cancelled_bar=self._bar_idx,
-                                        cancelled_close=close,
-                                        reason="반대후보교체",
-                                    )
-                                if self._pending_low_idx != -1:
-                                    swing_time_low = self._bar_hhmm(self._pending_low_idx)
-                                    self._pending_confirm = dict(
-                                        type="low",
-                                        idx=self._pending_low_idx,
-                                        price=self._pending_low,
-                                        atr=atr,
-                                        remaining=self._calc_confirmation_bars(),
-                                    )
-                                    self._pending_confirm_registered_bar = self._bar_idx
-                                    self._candidate_registered_count += 1
-                                    self._state.pending_candidate_type = "low"
-                                    self._state.pending_candidate_time = swing_time_low
-                                    self._state.pending_candidate_price = round(float(self._pending_low), 4)
-                                    self._state.pending_candidate_remaining = self._calc_confirmation_bars()
-                                    self._state.pending_candidate_status = "등록"
-                                    self._pivot_event_emit(
-                                        "후보등록",
-                                        close=float(close),
-                                        candidate="low",
-                                        swing_time=swing_time_low,
-                                        swing_price=round(float(self._pending_low), 4),
-                                        remaining=self._calc_confirmation_bars(),
-                                        thr_abs=round(float(thr_abs), 4),
-                                        thr_pct=round(float(thr_pct), 4),
-                                        prob=round(self.get_pending_confirmation_probability(float(close)), 3),
-                                    )
-                                    self._notify_collector_candidate_registered(
-                                        candidate_type="low",
-                                        candidate_price=float(self._pending_low),
-                                        bar_idx=self._pending_low_idx,
-                                        close=float(close),
-                                    )
+        return atr, thr_abs, thr_pct
 
-        # 4. 파동 크기
-        if self._state.last_swing_high > 0 and self._state.last_swing_low > 0:
-            wave_size = self._state.last_swing_high - self._state.last_swing_low
-            mid = (self._state.last_swing_high + self._state.last_swing_low) / 2.0
-            wave_pct = wave_size / mid * 100.0 if mid > 0 else 0.0
-        else:
-            wave_size = wave_pct = 0.0
+    def _buffer_and_check_initial_bars(self, high: float, low: float, close: float, open: float, volume: float, bar_time: Any) -> bool:
+        """데이터 버퍼링 및 초기 봉 체크 - False 반환 시 update 중단"""
+        self._highs.append(high)
+        self._lows.append(low)
+        self._closes.append(close)
+        self._opens.append(float(open) if open else 0.0)  # [REGIME-INTEGRATION] 시가 버퍼에 추가
+        self._volumes.append(volume)  # [REGIME-INTEGRATION] 거래량 버퍼에 추가
+        self._remember_bar_time(bar_time)
+        # 완결봉 OHLC 보관 (피봇 확정 시 State에 기록)
+        self._last_bar_open  = float(open) if open else 0.0
+        self._last_bar_high  = high
+        self._last_bar_low   = low
+        self._last_bar_close = close
+        n = len(self._closes)
 
-        # 5-7. 피보나치, S/R, 구조
-        fib_levels = self._calc_fibonacci()
-        support, resistance = self._find_nearest_sr(close)
-        # [DESIGN-4 FIX] _enforce_hl_alternation을 매 봉 O(N log N) 대신
-        # 피봇 변경이 실제로 발생한 경우에만 호출 (new_swing_signal != "none")
-        # 이미 _add_swing()이 교번을 1차 방어하므로 사후 보정은 변경 시에만 충분
-        if new_swing_signal != "none":
-            self._enforce_hl_alternation()
-        if new_swing_signal != "none":
-            structure = self._analyze_structure()
-            hh = self._is_higher_highs()
-            ll = self._is_lower_lows()
-            micro_structure      = self._analyze_micro_structure()   # [보완-3]
-            structure_confidence = self._calc_structure_confidence()  # [보완-3]
-        else:
-            structure            = str(self._state.structure)
-            hh = bool(self._state.is_making_higher_highs)
-            ll = bool(self._state.is_making_lower_lows)
-            micro_structure      = str(self._state.micro_structure)         # [보완-3]
-            structure_confidence = float(self._state.structure_confidence)  # [보완-3]
+        # [FIX] 첫 번째, 두 번째 봉에서 피봇 생성 방지 - 시가 anchor를 3번째 봉에서 심도록 수정
+        # 초기 데이터 누적 후 anchor 심도록 하여 장 초반 잘못된 피봇 방지
+        if n <= 2:
+            self._bar_idx += 1
+            return False
 
-        # 8. 상태 갱신
+        # [FIX] 장 시작 전 시간 피봇 생성 방지 - 심볼별 장 시작 시간 적용
+        if not self._check_market_open_time(bar_time):
+            self._bar_idx += 1
+            return False
+
+        # [DEBUG] 피봇 생성 추적
+        if n == 3 or n % 50 == 0:
+            _logger.debug("[ZZ][DEBUG] update: n=%d, h=%.2f, l=%.2f, c=%.2f, _current_direction=%s, _pending_high=%.2f, _pending_low=%.2f, _all_swings=%d",
+                        n, high, low, close, self._current_direction, self._pending_high, self._pending_low, len(self._all_swings))
+
+        return True
+
+    def _update_state(self, close: float, wave_size: float, wave_pct: float, thr_pct: float, atr: float,
+                      new_swing_signal: str, fib_levels, support, resistance,
+                      structure, hh, ll, micro_structure, structure_confidence) -> None:
+        """ZigZagState 상태 갱신"""
         s = self._state
         s.current_direction      = self._current_direction
         s.wave_size              = wave_size
@@ -1806,6 +1420,7 @@ class AdaptiveZigZag:
         # [BUG-CLUSTER-1] recent_swings deepcopy: _add_swing()에서 in-place 갱신 시
         # 외부 참조 오염 방지를 위해 deepcopy 사용
         # [PERF-OPT] 백테스트 모드에서는 얕은 복사 사용으로 성능 최적화
+        cfg = self.config
         if self._backtest_mode:
             # 백테스트 모드: 읽기 전용 접근이므로 얕은 복사 사용
             s.recent_swings = list(self._all_swings[-cfg.max_swings:]) if self._all_swings else []
@@ -1829,13 +1444,493 @@ class AdaptiveZigZag:
             s.confirmed_pivot_count = 0
             s.confirmed_pivot_tail_hhmm = ""
 
-        # Collector 통지 (매 봉마다)
-        self._notify_collector_bar_update(float(close))
+    def _analyze_market_structure(self, new_swing_signal: str) -> tuple:
+        """시장 구조 분석"""
+        if new_swing_signal != "none":
+            structure = self._analyze_structure()
+            hh = self._is_higher_highs()
+            ll = self._is_lower_lows()
+            micro_structure      = self._analyze_micro_structure()   # [보완-3]
+            structure_confidence = self._calc_structure_confidence()  # [보완-3]
+        else:
+            structure            = str(self._state.structure)
+            hh = bool(self._state.is_making_higher_highs)
+            ll = bool(self._state.is_making_lower_lows)
+            micro_structure      = str(self._state.micro_structure)         # [보완-3]
+            structure_confidence = float(self._state.structure_confidence)  # [보완-3]
+        return structure, hh, ll, micro_structure, structure_confidence
 
-        # _bar_idx 증가: 다음 봉을 위한 카운터 증가
-        # 세션 리셋 시에도 계속 증가하여 인덱스 충돌 방지
-        self._bar_idx += 1
-        return self._state
+    def _calculate_wave_size(self, close: float) -> tuple:
+        """파동 크기 계산"""
+        if self._state.last_swing_high > 0 and self._state.last_swing_low > 0:
+            wave_size = self._state.last_swing_high - self._state.last_swing_low
+            mid = (self._state.last_swing_high + self._state.last_swing_low) / 2.0
+            wave_pct = wave_size / mid * 100.0 if mid > 0 else 0.0
+        else:
+            wave_size = wave_pct = 0.0
+        return wave_size, wave_pct
+
+    def _process_direction_minus_one(self, high: float, low: float, close: float, atr: float, thr_abs: float, thr_pct: float) -> str:
+        """direction=-1 하락 방향 처리"""
+        new_swing_signal = "none"
+        if low < self._pending_low:
+            self._pending_low = low; self._pending_low_idx = self._bar_idx
+        if high - self._pending_low >= thr_abs:
+            if self._is_wave_length_ok(thr_abs, close,
+                                       candidate_idx=self._pending_low_idx):
+                # [FIX-2] 반대 타입인 경우 교체 허용
+                # [P-FIX-B] 피봇 확정 봉과 동일 봉에서 후보 등록 차단
+                if self._bar_idx <= self._last_confirmed_bar_idx and self._last_confirmed_bar_idx >= 0:
+                    # 피봇 확정 봉과 동일하거나 이전 봉이면 후보 등록 차단
+                    pass
+                else:
+                    if self._pending_confirm is None or self._pending_confirm.get("type") != "low":
+                        # [BUG-REMAIN-1] 교번 사전 검증
+                        if self._would_violate_alternation(SwingType.LOW):
+                            pass  # 등록 차단 — _add_swing() FIX-ALT-1이 2차 방어
+                        else:
+                            # ── 이하 전체가 else 블록 내부 ──────────────────
+                            old_pc = self._pending_confirm
+                            if isinstance(old_pc, dict) and old_pc.get("type") == "high":
+                                try:
+                                    cancelled_info = {
+                                        "type": "high",
+                                        "time": self._bar_hhmm(old_pc.get("idx")),
+                                        "price": round(old_pc.get("price") or 0.0, 4),
+                                        "cancel_time": self._bar_hhmm(self._bar_idx),
+                                        "cancel_price": round(close, 4),
+                                        "reason": "반대후보교체",
+                                    }
+                                    self._state.cancelled_candidates.append(cancelled_info)
+                                except Exception:
+                                    pass
+                                self._state.pending_candidate_status = "취소"
+                                self._pivot_event_emit(
+                                    "취소",
+                                    close=close,
+                                    reason="반대후보교체",
+                                    cancelled_type="high",
+                                    cancelled_time=self._bar_hhmm(old_pc.get("idx")),
+                                    cancelled_price=round(old_pc.get("price") or 0.0, 4),
+                                )
+                                self._candidate_cancelled_count += 1
+                                self._notify_collector_cancelled(
+                                    cancelled_bar=self._bar_idx,
+                                    cancelled_close=close,
+                                    reason="반대후보교체",
+                                )
+                            if self._pending_low_idx != -1:
+                                swing_time_low = self._bar_hhmm(self._pending_low_idx)
+                                self._pending_confirm = dict(
+                                    type="low",
+                                    idx=self._pending_low_idx,
+                                    price=self._pending_low,
+                                    atr=atr,
+                                    remaining=self._calc_confirmation_bars(),
+                                )
+                                self._pending_confirm_registered_bar = self._bar_idx
+                                self._candidate_registered_count += 1
+                                self._state.pending_candidate_type = "low"
+                                self._state.pending_candidate_time = swing_time_low
+                                self._state.pending_candidate_price = round(float(self._pending_low), 4)
+                                self._state.pending_candidate_remaining = self._calc_confirmation_bars()
+                                self._state.pending_candidate_status = "등록"
+                                self._pivot_event_emit(
+                                    "후보등록",
+                                    close=float(close),
+                                    candidate="low",
+                                    swing_time=swing_time_low,
+                                    swing_price=round(float(self._pending_low), 4),
+                                    remaining=self._calc_confirmation_bars(),
+                                    thr_abs=round(float(thr_abs), 4),
+                                    thr_pct=round(float(thr_pct), 4),
+                                    prob=round(self.get_pending_confirmation_probability(float(close)), 3),
+                                )
+                                self._notify_collector_candidate_registered(
+                                    candidate_type="low",
+                                    candidate_price=float(self._pending_low),
+                                    bar_idx=self._pending_low_idx,
+                                    close=float(close),
+                                )
+        return new_swing_signal
+
+    def _process_direction_one(self, high: float, low: float, close: float, atr: float, thr_abs: float, thr_pct: float) -> str:
+        """direction=1 상승 방향 처리"""
+        new_swing_signal = "none"
+        if high > self._pending_high:
+            self._pending_high = high; self._pending_high_idx = self._bar_idx
+        if self._pending_high - low >= thr_abs:
+            if self._is_wave_length_ok(thr_abs, close,
+                                       candidate_idx=self._pending_high_idx):
+                # [FIX-2] 반대 타입인 경우 교체 허용
+                if self._bar_idx <= self._last_confirmed_bar_idx and self._last_confirmed_bar_idx >= 0:
+                    # 피봇 확정 봉과 동일하거나 이전 봉이면 후보 등록 차단
+                    pass
+                else:
+                    if self._pending_confirm is None or self._pending_confirm.get("type") != "high":
+                        if self._would_violate_alternation(SwingType.HIGH):
+                            pass  # 등록 차단 — _add_swing() FIX-ALT-1이 2차 방어
+                        else:
+                            old_pc = self._pending_confirm
+                            if isinstance(old_pc, dict) and old_pc.get("type") == "low":
+                                try:
+                                    cancelled_info = {
+                                        "type": "low",
+                                        "time": self._bar_hhmm(old_pc.get("idx")),
+                                        "price": round(float(old_pc.get("price") or 0.0), 4),
+                                        "cancel_time": self._bar_hhmm(self._bar_idx),
+                                        "cancel_price": round(float(close), 4),
+                                        "reason": "반대후보교체",
+                                    }
+                                    self._state.cancelled_candidates.append(cancelled_info)
+                                except Exception:
+                                    pass
+                                self._state.pending_candidate_status = "취소"
+                                self._pivot_event_emit(
+                                    "취소",
+                                    close=float(close),
+                                    reason="반대후보교체",
+                                    cancelled_type="low",
+                                    cancelled_time=self._bar_hhmm(old_pc.get("idx")),
+                                    cancelled_price=round(float(old_pc.get("price") or 0.0), 4),
+                                )
+                                self._candidate_cancelled_count += 1
+                                self._notify_collector_cancelled(
+                                    cancelled_bar=self._bar_idx,
+                                    cancelled_close=float(close),
+                                    reason="반대후보교체",
+                                )
+                            if self._pending_high_idx != -1:
+                                swing_time_high = self._bar_hhmm(self._pending_high_idx)
+                                self._pending_confirm = dict(
+                                    type="high",
+                                    idx=self._pending_high_idx,
+                                    price=self._pending_high,
+                                    atr=atr,
+                                    remaining=self._calc_confirmation_bars(),
+                                )
+                                self._pending_confirm_registered_bar = self._bar_idx
+                                self._candidate_registered_count += 1
+                                self._state.pending_candidate_type = "high"
+                                self._state.pending_candidate_time = swing_time_high
+                                self._state.pending_candidate_price = round(
+                                    float(self._pending_high), 4)
+                                self._state.pending_candidate_remaining = \
+                                    self._calc_confirmation_bars()
+                                self._state.pending_candidate_status = "등록"
+                                self._pivot_event_emit(
+                                    "후보등록",
+                                    close=float(close),
+                                    candidate="high",
+                                    swing_time=swing_time_high,
+                                    swing_price=round(float(self._pending_high), 4),
+                                    remaining=self._calc_confirmation_bars(),
+                                    thr_abs=round(float(thr_abs), 4),
+                                    thr_pct=round(float(thr_pct), 4),
+                                    prob=round(
+                                        self.get_pending_confirmation_probability(
+                                            float(close)), 3),
+                                )
+                                self._notify_collector_candidate_registered(
+                                    candidate_type="high",
+                                    candidate_price=float(self._pending_high),
+                                    bar_idx=self._pending_high_idx,
+                                    close=float(close),
+                                )
+                    else:
+                        self._pivot_event_emit(
+                            "후보등록",
+                            close=close,
+                            candidate="high",
+                            swing_time=self._bar_hhmm(self._pending_high_idx),
+                            swing_price=round(float(self._pending_confirm.get("price") or 0.0), 4),
+                            remaining=int(self._pending_confirm.get("remaining") or 0),
+                            reason="same_type_retrigger",
+                            prob=round(self.get_pending_confirmation_probability(float(close)), 3),
+                        )
+        return new_swing_signal
+
+    def _process_direction_zero(self, high: float, low: float, close: float, atr: float, thr_abs: float, thr_pct: float) -> str:
+        """direction=0 초기범위 처리"""
+        new_swing_signal = "none"
+        cfg = self.config
+
+        if len(self._highs) >= 2:
+            if high > self._pending_high:
+                self._pending_high     = high
+                self._pending_high_idx = self._bar_idx
+            if low < self._pending_low:
+                self._pending_low     = low
+                self._pending_low_idx = self._bar_idx
+            # [DEBUG] direction=0 상태 로깅
+            _logger.debug(
+                "[ZZ][DIR0] bar=%d high=%.2f low=%.2f pending_high=%.2f(idx=%d) pending_low=%.2f(idx=%d) thr_abs=%.2f",
+                self._bar_idx, high, low, self._pending_high, self._pending_high_idx,
+                self._pending_low, self._pending_low_idx, thr_abs
+            )
+            if self._pending_high > 0 and self._pending_low < float("inf"):
+                if (self._pending_high - self._pending_low) >= thr_abs:
+                    # [FIX] 초기범위 확정 조건부 허용 - seed_anchor가 없는 경우에만 허용
+                    # seed_anchor가 이미 심어진 경우 초기범위 확정 차단
+                    if len(self._all_swings) > 0:
+                        _logger.debug(
+                            "[ZZ][DIR0] 초기범위 확정 차단: seed_anchor 이미 존재 (swings=%d)",
+                            len(self._all_swings)
+                        )
+                        pass  # seed_anchor가 있으면 초기범위 확정 차단
+                    else:
+                        # seed_anchor가 없는 경우 초기범위 확정 허용
+                        # [FIX] 최소 봉 수 조건 추가 - 장 초반 잘못된 피봇 방지
+                        min_wave_bars = int(getattr(cfg, "min_wave_bars", 5) or 5)
+                        if self._bar_idx < min_wave_bars:
+                            _logger.debug(
+                                "[ZZ][DIR0] 초기범위 확정 차단: 봉 수 부족 (bar_idx=%d < min_wave_bars=%d)",
+                                self._bar_idx, min_wave_bars
+                            )
+                            pass  # 봉 수 부족 시 초기범위 확정 차단
+                        else:
+                            _logger.debug(
+                                "[ZZ][DIR0] 초기범위 조건 충족: pending_high_idx=%d pending_low_idx=%d diff=%.2f",
+                                self._pending_high_idx, self._pending_low_idx,
+                                self._pending_high - self._pending_low
+                            )
+                            # [EDGE-CASE-1] 동일 봉 내 발생 시 시가 기준 방향 결정
+                            # 시가가 저점에 가까우면 LOW 우선, 고점에 가까우면 HIGH 우선
+                            prefer_low_first = False  # 기본: HIGH 우선
+                            if self._pending_high_idx == self._pending_low_idx:
+                                open_price = self._last_bar_open if self._last_bar_open > 0 else (high + low) / 2
+                                dist_to_high = abs(high - open_price)
+                                dist_to_low = abs(low - open_price)
+                                _logger.debug(
+                                    "[ZZ][DIR0] 동일 봉 내 발생: open=%.2f dist_to_high=%.2f dist_to_low=%.2f",
+                                    open_price, dist_to_high, dist_to_low
+                                )
+                                # 시가에서 더 먼 쪽을 먼저 확정 (더 큰 움직임)
+                                prefer_low_first = (dist_to_low > dist_to_high)
+
+                            # 인덱스 비교 대신 플래그 사용 (동일 봉 처리 시 미래 인덱스 방지)
+                            if self._pending_high_idx > self._pending_low_idx or (self._pending_high_idx == self._pending_low_idx and prefer_low_first):
+                                # [FIX v3-3] 초기범위 확정 시 deque 상대 인덱스 변환
+                                base_offset = self._bar_idx - len(self._lows)
+                                relative_low_idx = self._pending_low_idx - base_offset
+                                if 0 <= relative_low_idx < len(self._lows):
+                                    actual_low = self._lows[relative_low_idx]
+                                else:
+                                    actual_low = self._pending_low
+
+                                self._current_direction = 1
+                                self._state.last_swing_low     = actual_low
+                                self._state.last_swing_low_idx = self._pending_low_idx
+                                # [버그 C 수정] 초기범위 확정 전 교번 검사
+                                _swing_added = False
+                                _log_low_idx = _log_low_price = _lag = None
+                                if not self._would_violate_alternation(SwingType.LOW):
+                                    _logger.debug("[ZZ][DIR0] LOW 확정: actual_low=%.2f", actual_low)
+                                    self._add_swing(
+                                        self._pending_low_idx,
+                                        actual_low,
+                                        SwingType.LOW,
+                                        atr,
+                                        confirmed_at_idx=self._bar_idx,
+                                        confirmed_close=self._last_bar_close,
+                                    )
+                                    self._last_confirmed_bar_idx = self._bar_idx
+                                    new_swing_signal = "new_low"
+                                    _swing_added = True
+                                    # 완결봉: 초기범위 확정은 현재 봉 기준
+                                    self._state.last_swing_low_time         = self._bar_hhmm(self._pending_low_idx) or self._bar_hhmm(self._bar_idx)
+                                    self._state.last_swing_low_confirm_time = self._bar_hhmm(self._bar_idx)
+                                    self._state.last_swing_low_lag_bars     = max(0, self._bar_idx - self._pending_low_idx)
+                                    self._state.last_swing_low_open         = self._last_bar_open
+                                    self._state.last_swing_low_close        = self._last_bar_close
+                                    # 로그용 값을 리셋 전에 캡처
+                                    _log_low_idx   = self._pending_low_idx
+                                    _log_low_price = actual_low
+                                    # lag 미리 계산 (순서 의존성 방지)
+                                    _lag = max(0, self._bar_idx - _log_low_idx)
+                                else:
+                                    _logger.debug("[ZZ][DIR0] LOW 확정 차단: 교번 위반")
+                                # [P-FIX-C] 초기 방향 확정 후 반대 방향 pending 초기화
+                                self._pending_high     = high
+                                self._pending_high_idx = self._bar_idx
+                                self._pending_low      = float("inf")
+                                self._pending_low_idx  = -1
+                                if _swing_added:
+                                    self._pivot_event_emit(
+                                        "확정",
+                                        close=close,
+                                        mode="초기범위",
+                                        signal=new_swing_signal,
+                                        swing_type="low",
+                                        swing_time=self._bar_hhmm(_log_low_idx),
+                                        swing_price=round(_log_low_price, 4),
+                                        thr_pct=round(thr_pct, 4),
+                                        lag=_lag,
+                                    )
+                            else:
+                                # [FIX v3-3] 초기범위 확정 시 deque 상대 인덱스 변환
+                                base_offset = self._bar_idx - len(self._highs)
+                                relative_high_idx = self._pending_high_idx - base_offset
+                                if 0 <= relative_high_idx < len(self._highs):
+                                    actual_high = self._highs[relative_high_idx]
+                                else:
+                                    actual_high = self._pending_high
+
+                                self._current_direction = -1
+                                self._state.last_swing_high     = actual_high
+                                self._state.last_swing_high_idx = self._pending_high_idx
+                                # [버그 C 수정] 초기범위 확정 전 교번 검사
+                                _swing_added = False
+                                _log_high_idx = _log_high_price = _lag = None
+                                if not self._would_violate_alternation(SwingType.HIGH):
+                                    _logger.debug("[ZZ][DIR0] HIGH 확정: actual_high=%.2f", actual_high)
+                                    self._add_swing(
+                                        self._pending_high_idx,
+                                        actual_high,
+                                        SwingType.HIGH,
+                                        atr,
+                                        confirmed_at_idx=self._bar_idx,
+                                        confirmed_close=self._last_bar_close,
+                                    )
+                                    self._last_confirmed_bar_idx = self._bar_idx
+                                    new_swing_signal = "new_high"
+                                    _swing_added = True
+                                    # 완결봉: 초기범위 확정은 현재 봉 기준
+                                    self._state.last_swing_high_time         = self._bar_hhmm(self._pending_high_idx) or self._bar_hhmm(self._bar_idx)
+                                    self._state.last_swing_high_confirm_time = self._bar_hhmm(self._bar_idx)
+                                    self._state.last_swing_high_lag_bars     = max(0, self._bar_idx - self._pending_high_idx)
+                                    self._state.last_swing_high_open         = self._last_bar_open
+                                    self._state.last_swing_high_close        = self._last_bar_close
+                                    # 로그용 값을 리셋 전에 캡처
+                                    _log_high_idx   = self._pending_high_idx
+                                    _log_high_price = actual_high
+                                    # lag 미리 계산 (순서 의존성 방지)
+                                    _lag = max(0, self._bar_idx - _log_high_idx)
+                                else:
+                                    _logger.debug("[ZZ][DIR0] HIGH 확정 차단: 교번 위반")
+                                # [P-FIX-C] 초기 방향 확정 후 반대 방향 pending 초기화
+                                self._pending_low      = low
+                                self._pending_low_idx  = self._bar_idx
+                                self._pending_high     = 0.0
+                                self._pending_high_idx = -1
+                                if _swing_added:
+                                    self._pivot_event_emit(
+                                        "확정",
+                                        close=close,
+                                        mode="초기범위",
+                                        signal=new_swing_signal,
+                                        swing_type="high",
+                                        swing_time=self._bar_hhmm(_log_high_idx),
+                                        swing_price=round(_log_high_price, 4),
+                                        thr_pct=round(thr_pct, 4),
+                                        lag=_lag,
+                                    )
+        return new_swing_signal
+
+    def _update_dynamic_atr_ratio(self, atr_monitor_result: Dict) -> None:
+        """ATR 급변 시 동적 비율 조정"""
+        self._dynamic_atr_ratio = 0.0  # 0이면 급변 없음
+        spike_detected = atr_monitor_result['spike_detected']
+        change_pct = atr_monitor_result['change_pct']
+        if spike_detected:
+            # ATR 급증 시: 변동성 증가 → 임계값 높여 노이즈 억제
+            if change_pct > 0:
+                self._dynamic_atr_ratio = 1.3
+            # ATR 급락 시: 변동성 감소 → 임계값 낮춰 민감도 회복
+            else:
+                self._dynamic_atr_ratio = 0.7
+
+    def _update_atr_monitor(self, atr: float) -> Dict:
+        """ATR 모니터 업데이트"""
+        atr_monitor_result = self._atr_monitor.update(atr)
+        self._state.atr = atr
+        self._state.atr_change_pct = atr_monitor_result['change_pct']
+        self._state.atr_trend = atr_monitor_result['trend']
+        self._state.atr_spike_detected = atr_monitor_result['spike_detected']
+        self._state.atr_ma = atr_monitor_result['ma']
+        return atr_monitor_result
+
+    def _update_atr(self, high: float, low: float, close: float) -> float:
+        """ATR 계산 및 업데이트"""
+        n = len(self._closes)
+        if n >= 2:
+            pc = self._closes[-2]
+            tr = max(high - low, abs(high - pc), abs(low - pc))
+        else:
+            tr = high - low
+        self._tr.append(tr)
+        try:
+            atr = self._atr_rma.update(tr)
+        except (ValueError, TypeError, AttributeError):
+            atr = np.mean(list(self._tr)) if self._tr else tr
+        self._atr_values.append(atr)
+        self._prev_atr = atr
+        
+        # [DATA-CONSISTENCY] ATR 값 저장 (세션 간 연속성 보존)
+        if atr > 0:
+            self._saved_atr = atr
+        
+        return atr
+
+    def _check_market_open_time(self, bar_time: Any) -> bool:
+        """장 시작 시간 체크 - 장 시작 전이면 False 반환"""
+        if not bar_time:
+            return True
+        
+        try:
+            if isinstance(bar_time, str):
+                bar_dt = datetime.datetime.strptime(bar_time, "%H:%M")
+            elif isinstance(bar_time, datetime.datetime):
+                bar_dt = bar_time
+            else:
+                bar_dt = None
+            
+            if bar_dt:
+                bar_hour = bar_dt.hour
+                bar_minute = bar_dt.minute
+                # 심볼별 장 시작 시간 결정
+                market_start_hour = 9
+                market_start_minute = 0
+                if "KP200" in self._symbol_name or "선물" in self._symbol_name:
+                    market_start_hour = 8
+                    market_start_minute = 45
+                
+                # 장 시작 시간 이전이면 피봇 생성 차단
+                if bar_hour < market_start_hour or (bar_hour == market_start_hour and bar_minute < market_start_minute):
+                    _logger.debug("[ZZ][UPDATE] 장 시작 전 시간 차단: %s (장 시작: %02d:%02d)", bar_time, market_start_hour, market_start_minute)
+                    return False
+        except Exception:
+            pass  # 시간 파싱 실패 시 무시
+        
+        return True
+
+    def update(self, high: float, low: float, close: float, bar_time: Any = None, open: float = 0.0, volume: float = 1.0) -> ZigZagState:
+        # ── [다중 시간프레임] 상위 시간프레임 데이터 업데이트 ─────────
+        self._update_multi_timeframe(high, low, close, bar_time, open, volume)
+        
+        # [FIX v2-4] _bar_idx는 이 메서드 전체에서 현재 처리 중인 봉 번호를 나타냄
+        # _remember_bar_time()이 _bar_hhmm_map에 현재 봉 시각을 저장한 후
+        # 내부 메서드들(_calc_threshold_pct 등)이 _bar_hhmm(_bar_idx)로 조회 가능
+        if not self._buffer_and_check_initial_bars(high, low, close, open, volume, bar_time):
+            return self.state
+
+        # [DATA-CONSISTENCY] 시가 앵커 설정은 indicator_integration에서 seed_anchor로 직접 호출
+        # update 메서드 내부에서는 시가 앵커 설정 제거 - 중복 방지
+
+        # 1. True Range & ATR, 2. 적응형 임계값
+        atr, thr_abs, thr_pct = self._calculate_atr_and_threshold(high, low, close, bar_time)
+
+        # 3. ZigZag 로직
+        new_swing_signal = "none"
+
+        # 3-a. Pending confirmation window
+        new_swing_signal = self._process_pending_confirmation_with_error_handling(high, low, close, atr, thr_pct)
+
+        # 3-b. 방향 결정 / 전환
+        new_swing_signal = self._process_direction_based_pivots(high, low, close, atr, thr_abs, thr_pct, new_swing_signal)
+
+        # 4-8. 파동 크기, 피보나치, S/R, 구조 분석 및 상태 갱신
+        return self._finalize_update(close, atr, thr_pct, new_swing_signal)
 
     def compute_from_df(
         self,
@@ -3894,7 +3989,7 @@ class ATRMonitor:
         }
 
 
-def _get_time_based_atr_ratio(current_time: datetime.datetime, ratio_table: List[Tuple[str, str, float]], fallback_ratio: float = 0.5) -> float:
+def _get_time_based_atr_ratio(current_time: datetime.datetime, ratio_table: List[Tuple[str, str, float]], fallback_ratio: float = 1.0) -> float:
     """
     현재 시간에 해당하는 min_wave_atr_ratio 반환
 
