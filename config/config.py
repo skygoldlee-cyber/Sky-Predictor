@@ -511,7 +511,7 @@ class AdaptiveIndicatorSettings:
     futures_symbol: str = "KP200 선물"
     warmup_bars: int = 15
     min_swings_for_ready: int = 4
-    supertrend_pivot_filter: bool = True  # 슈퍼트렌드 신호 참조 피봇 필터 활성화
+    supertrend_pivot_filter: bool = False  # 슈퍼트렌드 신호 참조 피봇 필터 활성화
     # 피봇 신호 간 최소 간격 (분봉) - 시간대별 테이블이 있을 경우 기본값으로만 사용
     min_pivot_interval_bars: int = 10
     # 시간대별 피봇 신호 최소 간격 테이블 [[시작시간, 종료시간, 간격], ...]
