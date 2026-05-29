@@ -13,19 +13,19 @@
       "smooth_period": 3
     },
     "zigzag": {
-      "atr_multiplier": 0.8,
+      "atr_multiplier": 0.5,
       "atr_period": 14,
       "er_period": 10,
       "atr_multiplier_min": 0.5,
       "atr_multiplier_max": 2.0,
-      "pivot_threshold_min_pct": 0.15,
+      "pivot_threshold_min_pct": 0.05,
       "pivot_threshold_max_pct": 2.0,
       "major_swing_ratio": 2.0,
-      "confirmation_bars": 1,
+      "confirmation_bars": 0,
       "max_swings": 20,
       "freeze_on_confirm": false,
       "min_wave_bars": 1,
-      "min_wave_pct": 0.2,
+      "min_wave_pct": 0.05,
       "cluster_tolerance_pct": 0.3,
       "structure_lookback_swings": 30,
       "structure_points": 4
