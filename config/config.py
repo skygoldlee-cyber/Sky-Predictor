@@ -854,10 +854,12 @@ class AppConfig:
 
         # [DEBUG] supertrend_pivot_filter 파싱 로그
         stpf_raw = ad_data.get("supertrend_pivot_filter")
+        print(f"[CONFIG][DEBUG] supertrend_pivot_filter raw value: {stpf_raw}")
         import logging
         logger = logging.getLogger(__name__)
         logger.info("[CONFIG][DEBUG] supertrend_pivot_filter raw value: %s", stpf_raw)
         stpf_value = bool(stpf_raw) if stpf_raw is not None else True
+        print(f"[CONFIG][DEBUG] supertrend_pivot_filter parsed value: {stpf_value}")
         logger.info("[CONFIG][DEBUG] supertrend_pivot_filter parsed value: %s", stpf_value)
 
         adaptive_indicator = AdaptiveIndicatorSettings(
