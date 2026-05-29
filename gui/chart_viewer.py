@@ -2506,6 +2506,7 @@ class ChartViewerWidget:
     def _on_compute_finished(self, df: pd.DataFrame, pm: Optional[Dict], force_clear: bool) -> None:
         """백그라운드 컴퓨팅 완료 핸들러."""
         logger.info("[ChartViewer] 백그라운드 컴퓨팅 완료 (force_clear=%s, df.shape=%s)", force_clear, df.shape if hasattr(df, 'shape') else 'N/A')
+        logger.info("[ChartViewer] _on_compute_finished 진입 - df=%s, pm=%s", type(df), type(pm))
 
         # ── [보완-3] 설정값 검증 (멀티스레드 데이터 경합 방지) ──
         # 스레드 시작 시점의 설정값과 현재 설정값이 다르면 무시
@@ -2517,6 +2518,7 @@ class ChartViewerWidget:
                 return
         # ────────────────────────────────────────────────────────────────────────────
 
+        logger.info("[ChartViewer] 설정값 검증 완료 - 렌더링 시작")
         self._t0 = time.perf_counter()
         try:
             # df 타입 검증
@@ -2529,9 +2531,10 @@ class ChartViewerWidget:
                 return
 
             # 차트 렌더링 (메인 스레드에서 실행)
+            logger.info("[ChartViewer] _render_chart 호출 전 - df.shape=%s, pm=%s", df.shape, pm is not None)
             try:
                 was_redrawn = self._render_chart(df, pm, force_clear)
-                logger.debug("[ChartViewer] 렌더링 완료 (was_redrawn=%s)", was_redrawn)
+                logger.info("[ChartViewer] 렌더링 완료 (was_redrawn=%s)", was_redrawn)
             except Exception as e:
                 logger.error("[ChartViewer] _render_chart 실패: %s", e)
                 import traceback
