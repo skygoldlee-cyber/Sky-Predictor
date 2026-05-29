@@ -22,7 +22,7 @@
       "pivot_threshold_max_pct": 3.0,
       "major_swing_ratio": 2.0,
       "confirmation_bars": 2,
-      "max_swings": 20,
+      "max_swings": 7,
       "freeze_on_confirm": true,
       "min_wave_bars": 1,
       "min_wave_pct": 0.4,
@@ -30,7 +30,7 @@
       "structure_lookback_swings": 30,
       "structure_points": 4
     },
-    "supertrend_pivot_filter": true,
+    "supertrend_pivot_filter": false,
     "warmup_bars": 15
   },
   "prediction": {
