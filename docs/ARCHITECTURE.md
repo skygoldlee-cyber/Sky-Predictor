@@ -349,8 +349,14 @@ python main.py  # 기본값
 
 ## 관련 문서
 
-- [docs_README.md](docs_README.md) - 프로젝트 개요 및 사용 가이드
+### 메인 문서
+- [README.md](../README.md) - 프로젝트 개요 및 빠른 시작
+- [docs_README.md](docs_README.md) - 프로젝트 개요 및 상세 사용 가이드
+
+### 기술 가이드
 - [ADAPTIVE_INDICATOR_GUIDE.md](ADAPTIVE_INDICATOR_GUIDE.md) - 적응형 지표 가이드
 - [ML_PREDICTION_GUIDE.md](ML_PREDICTION_GUIDE.md) - 머신러닝 예측 시스템 가이드
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](TFT_DUAL_MODEL_DESIGN_GUIDE.md) - TFT 설계 가이드
+
+### 운영 가이드
 - [DAILY_TICK_TRAINING_RUNBOOK.md](DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
