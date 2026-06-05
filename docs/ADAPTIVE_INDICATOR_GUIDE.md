@@ -2,12 +2,6 @@
 
 SkyPredictor의 적응형 지표(Adaptive ZigZag, Adaptive SuperTrend, AdaptiveParamEngine)를 통합한 가이드입니다.
 
-> **참고 문서**: 상세 기술 문서는 아래 문서들을 참조하세요.
-> - [architecture/zigzag_pivot_logic.md](architecture/zigzag_pivot_logic.md) - ZigZag 피봇 로직
-> - [guides/PIVOT_COLLECTOR_GUIDE.md](guides/PIVOT_COLLECTOR_GUIDE.md) - 피봇 수집기 가이드
-> - [guides/PIVOT_ML_ALGORITHM_GUIDE.md](guides/PIVOT_ML_ALGORITHM_GUIDE.md) - 피봇 ML 알고리즘 가이드
-> - [reports/zigzag_pivot_improvement.md](reports/zigzag_pivot_improvement.md) - ZigZag 피봇 개선 리포트
-
 ---
 
 ## 개요
@@ -166,15 +160,23 @@ def _get_runtime_params(self) -> ZigzagRuntimeParams:
 
 ### 피봇 탐지 파라미터
 - **atr_period**: ATR 계산 기간 (기본 14)
+- **er_period**: Efficiency Ratio 계산 기간 (기본 10)
 - **atr_multiplier**: ATR 배수 (기본 1.5)
+- **atr_multiplier_min**: 최소 ATR 배수 (기본 1.0)
+- **atr_multiplier_max**: 최대 ATR 배수 (기본 4.0)
 - **min_wave_bars**: 최소 파동 봉 수 (기본 1)
 - **confirmation_bars**: 확인 봉 수 (기본 2)
-- **min_wave_pct**: 최소 파동 비율 (기본 0.3%)
+- **confirmation_bars_ranging**: 횡보 구간 확인 봉 수 (기본 1)
+- **confirmation_bars_unknown**: 미확인 구간 확인 봉 수 (기본 1)
+- **min_wave_pct**: 최소 파동 비율 (기본 0.0)
 - **pivot_threshold_min_pct**: 피봇 임계값 최소 비율 (기본 0.3%)
 - **pivot_threshold_max_pct**: 피봇 임계값 최대 비율 (기본 3.0%)
 - **major_swing_ratio**: 메이저 스윙 비율 (기본 2.0)
-- **max_swings**: 최대 스윙 수 (기본 20)
+- **max_swings**: 최대 스윙 수 (기본 50)
 - **cluster_tolerance_pct**: 클러스터 허용 비율 (기본 0.3%)
+- **structure_lookback_swings**: 구조 분석용 최근 스윙 수 (기본 8)
+- **structure_points**: 구조 판단 최소 고점/저점 수 (기본 3)
+- **structure_majority_threshold**: 구조 다수결 임계값 (기본 0.7)
 
 ### 피봇 확정 로직
 1. **방향 전환 감지**: 현재 방향과 반대 방향으로 가격이 임계값을 돌파
@@ -182,15 +184,17 @@ def _get_runtime_params(self) -> ZigzagRuntimeParams:
 3. **확인 기간**: `confirmation_bars` 동안 후보 유지 확인
 4. **피봇 확정**: 확인 기간 동안 후보가 유지되면 피봇으로 확정
 5. **클러스터링**: 인접한 피봇들을 그룹화하여 대표 피봇 선정
-6. **교번 보장**: 연속 HIGH/LOW 피봇 방지
+6. **교번 보장**: `_enforce_hl_alternation`으로 연속 HIGH/LOW 피봇 방지
+7. **구조 분석**: `_analyze_structure`로 상승/하락/횡보 판정
 
 ### 피봇 기반 매매 전략
 상세한 피봇 기반 매매 전략은 [PIVOT_BASED_TRADING_STRATEGY.md](PIVOT_BASED_TRADING_STRATEGY.md)를 참조하세요.
 
-### 보완 항목
-- **confirmation_bars 동적 조절**: 레짐에 따른 가변 확인 기간
-- **합의도 가중치**: 지표별 중요도 부여
-- **필터링 강도**: 시장 상태에 따른 필터링 조절
+### 관련 문서
+- [multi_timeframe_zigzag.md](multi_timeframe_zigzag.md) - 다중 시간프레임 ZigZag 구현 가이드
+- [OVERSEAS_FUTURES_ADAPTIVE_ZIGZAG_APPLICABILITY.md](OVERSEAS_FUTURES_ADAPTIVE_ZIGZAG_APPLICABILITY.md) - 해외선물 적용 가능성 검토
+- [zigzag_tuning.md](zigzag_tuning.md) - ZigZag 파라미터 튜닝 가이드
+- [regime_zigzag_tuning.md](regime_zigzag_tuning.md) - 레짐 기반 ZigZag 튜닝
 
 ---
 
