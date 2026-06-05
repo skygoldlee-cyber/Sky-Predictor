@@ -675,8 +675,8 @@ class PredictionPipeline(
         self._adaptive_last_features: Dict[str, float] = {}
         self._adaptive_last_context: str = ""
 
-        # Numeric predictor 초기화 (기존 로직 유지)
-        # ... (기존 numeric_predictor 생성 로직)
+        # 지표 인스턴스 생성 (adaptive_indicator 파라미터 필요)
+        self._adaptive_indicator_param = adaptive_indicator
 
     def _init_state(self, *, config_path: Optional[str]) -> None:
         """상태 변수 초기화."""
@@ -740,118 +740,6 @@ class PredictionPipeline(
         self._kf:  Optional[Any] = None          # KalmanTurningPoint
         self._oi_gate: Optional[Any] = None      # OIStructureGate
         self._integrator: Optional[Any] = None   # PivotScoreIntegrator
-        try:
-            from indicators import (
-                ATRAdaptivePivot,    ATRAdaptivePivotConfig,
-                PercentAdaptivePivot, PercentAdaptivePivotConfig,
-                MarketStructureBreak, MSBConfig,
-                OIStructureGate,     OIStructureConfig,
-                KalmanTurningPoint,  KalmanConfig,
-                PivotScoreIntegrator, IntegratorConfig,
-            )
-            # config.json adaptive_indicator.atr_pivot 섹션에서 파라미터 로드
-            # 없으면 실전 검증된 기본값 사용
-            _atr_cfg = dict((ad or {}).get("atr_pivot") or {})
-            self._aap = ATRAdaptivePivot(ATRAdaptivePivotConfig(
-                atr_period         = int(_atr_cfg.get("atr_period",       14)  or 14),
-                base_multiplier    = float(_atr_cfg.get("base_multiplier", 2.0) or 2.0),
-                multiplier_min     = float(_atr_cfg.get("multiplier_min",  1.2) or 1.2),
-                multiplier_max     = float(_atr_cfg.get("multiplier_max",  3.5) or 3.5),
-                er_period          = int(_atr_cfg.get("er_period",         10)  or 10),
-                confirmation_bars  = int(_atr_cfg.get("confirmation_bars",  1)  or 1),
-                min_wave_atr_ratio = float(_atr_cfg.get("min_wave_atr_ratio", 0.5) or 0.5),
-                warmup_bars        = int(_atr_cfg.get("warmup_bars",       20)  or 20),
-            ))
-            self._aap.set_symbol(str(ad.get("symbol") or "KP200 선물"))
-
-            # pivot_type에 따라 배타적으로 초기화
-            _pivot_type = str((ad or {}).get("pivot_type", "atr") or "atr").lower()
-
-            if _pivot_type == "atr":
-                self._pap = None  # ATRAdaptivePivot 사용 시 PercentAdaptivePivot 비활성
-                logger.info("[PIPELINE_INIT] pivot_type=atr → ATRAdaptivePivot 활성, PercentAdaptivePivot 비활성")
-            elif _pivot_type == "percent":
-                self._aap = None  # PercentAdaptivePivot 사용 시 ATRAdaptivePivot 비활성
-                # config.json adaptive_indicator.percent_pivot 섹션에서 파라미터 로드
-                _pap_cfg = dict((ad or {}).get("percent_pivot") or {})
-                self._pap = PercentAdaptivePivot(PercentAdaptivePivotConfig(
-                    base_pct             = float(_pap_cfg.get("base_pct",             0.3)  or 0.3),
-                    multiplier_min       = float(_pap_cfg.get("multiplier_min",       0.8)  or 0.8),
-                    multiplier_max       = float(_pap_cfg.get("multiplier_max",       2.0)  or 2.0),
-                    er_period            = int(_pap_cfg.get("er_period",             10)   or 10),
-                    confirmation_bars    = int(_pap_cfg.get("confirmation_bars",     1)    or 1),
-                    min_wave_pct         = float(_pap_cfg.get("min_wave_pct",        0.15) or 0.15),
-                    min_bar_gap          = int(_pap_cfg.get("min_bar_gap",           3)    or 3),
-                    max_pivots           = int(_pap_cfg.get("max_pivots",           30)   or 30),
-                    warmup_bars          = int(_pap_cfg.get("warmup_bars",           20)   or 20),
-                    cancel_ratio         = float(_pap_cfg.get("cancel_ratio",        0.3)  or 0.3),
-                ))
-                logger.info("[PIPELINE_INIT] pivot_type=percent → PercentAdaptivePivot 활성, ATRAdaptivePivot 비활성")
-            else:
-                logger.warning("[PIPELINE_INIT] 알 수 없는 pivot_type=%s, 기본값 atr 사용", _pivot_type)
-                self._pap = None
-
-            _msb_cfg = dict((ad or {}).get("msb") or {})
-            self._msb = MarketStructureBreak(MSBConfig(
-                swing_lookback            = int(_msb_cfg.get("swing_lookback",           3)    or 3),
-                bos_buffer_pct            = float(_msb_cfg.get("bos_buffer_pct",         0.20) or 0.20),
-                structure_lookback_pivots = int(_msb_cfg.get("structure_lookback_pivots", 6)   or 6),
-                choch_enabled             = bool(_msb_cfg.get("choch_enabled",            True)),
-            ))
-
-            _kf_cfg = dict((ad or {}).get("kalman") or {})
-            self._kf = KalmanTurningPoint(KalmanConfig(
-                q              = float(_kf_cfg.get("q",           0.01) or 0.01),
-                r              = float(_kf_cfg.get("r",           2.0)  or 2.0),
-                warmup_bars    = int(_kf_cfg.get("warmup_bars",   15)   or 15),
-                slope_flip_min = float(_kf_cfg.get("slope_flip_min", 0.005) or 0.005),
-                adaptive_q     = bool(_kf_cfg.get("adaptive_q",   True)),
-            ))
-
-            self._oi_gate = OIStructureGate(OIStructureConfig(
-                oi_proximity_pct = float((ad or {}).get("oi_proximity_pct", 0.3) or 0.3),
-            ))
-
-            _int_cfg = dict((ad or {}).get("integrator") or {})
-            # pivot_type에 따라 가중치 동적 조정
-            if _pivot_type == "atr":
-                _w_aap = float(_int_cfg.get("w_aap", 0.50) or 0.50)
-                _w_pap = 0.0
-            elif _pivot_type == "percent":
-                _w_aap = 0.0
-                _w_pap = float(_int_cfg.get("w_pap", 0.50) or 0.50)
-            else:
-                _w_aap = float(_int_cfg.get("w_aap", 0.50) or 0.50)
-                _w_pap = 0.0
-
-            self._integrator = PivotScoreIntegrator(IntegratorConfig(
-                w_aap            = _w_aap,
-                w_pap            = _w_pap,
-                w_msb            = float(_int_cfg.get("w_msb",            0.25) or 0.25),
-                w_oi             = float(_int_cfg.get("w_oi",             0.10) or 0.10),
-                w_kf             = float(_int_cfg.get("w_kf",             0.15) or 0.15),
-                entry_threshold  = float(_int_cfg.get("entry_threshold",  0.55) or 0.55),
-                strong_threshold = float(_int_cfg.get("strong_threshold", 0.72) or 0.72),
-                regime_boost     = float(_int_cfg.get("regime_boost",     1.15) or 1.15),
-                regime_suppress  = float(_int_cfg.get("regime_suppress",  0.85) or 0.85),
-            ))
-            logger.info(
-                "[PIPELINE_INIT] %s·MSB·Kalman·OIGate·Integrator 초기화 완료 (w_aap=%.2f, w_pap=%.2f)",
-                "ATRAdaptivePivot" if _pivot_type == "atr" else "PercentAdaptivePivot",
-                _w_aap,
-                _w_pap
-            )
-        except Exception as _step_ex:
-            logger.warning(
-                "[PIPELINE_INIT] Step 1~3 지표 초기화 실패 (비필수 — 계속 진행): %s",
-                _step_ex,
-            )
-            self._aap = self._pap = self._msb = self._kf = self._oi_gate = self._integrator = None
-        self._last_pivot_signal_bar_idx = -999
-        self._min_pivot_interval_bars = int(ad.get("min_pivot_interval_bars") or 10)
-        self._session_min_pivot_interval_table = list(ad.get("session_min_pivot_interval_table", []))
-        # P8: 다중 타임프레임 통합
-        self._higher_tf_pivot_filter = bool(ad.get("higher_tf_pivot_filter", False))
         # P10: ADX 기반 confidence 조정
         self._adx_confidence_filter_enabled = bool(ad.get("adx_confidence_filter", {}).get("enabled", False))
         self._adx_hold_threshold = float(ad.get("adx_confidence_filter", {}).get("hold_threshold", 15.0))
