@@ -677,6 +677,34 @@ class PredictionPipeline(
 
         # 지표 인스턴스 생성
         self._init_indicators(adaptive_indicator=adaptive_indicator)
+        
+        # Numeric predictor 초기화
+        self._init_numeric_predictor(
+            numeric_predictor=numeric_predictor,
+            model_class=model_class,
+            patch_len=patch_len,
+            stride=stride,
+            conformal_alpha=conformal_alpha,
+            conformal_path=conformal_path,
+            mamba_enabled=mamba_enabled,
+            mamba_weights_path=mamba_weights_path,
+            mamba_weight=mamba_weight,
+            transformer_weight=transformer_weight,
+            transformer_weights_path=transformer_weights_path,
+            tft_weights_path=tft_weights_path,
+            tft_horizon=tft_horizon,
+            disagreement_hold=disagreement_hold,
+            disagreement_hold_prob_diff_max=disagreement_hold_prob_diff_max,
+            ensemble_agreement_confidence_boost=ensemble_agreement_confidence_boost,
+            ensemble_agreement_prob_diff_max=ensemble_agreement_prob_diff_max,
+            rule_based_weights=rule_based_weights,
+            rule_based_mom_multiplier=rule_based_mom_multiplier,
+            min_minute_bars_required=min_minute_bars_required,
+            adaptive_indicator=adaptive_indicator,
+        )
+        
+        # Adaptive manager 초기화
+        self._init_adaptive_manager(adaptive_indicator=adaptive_indicator)
 
     def _init_indicators(self, *, adaptive_indicator: Optional[dict]) -> None:
         """지표 인스턴스 초기화."""
@@ -795,6 +823,216 @@ class PredictionPipeline(
                 _step_ex,
             )
             self._aap = self._pap = self._msb = self._kf = self._oi_gate = self._integrator = None
+
+    def _init_numeric_predictor(
+        self,
+        *,
+        numeric_predictor: str,
+        model_class: str,
+        patch_len: int,
+        stride: int,
+        conformal_alpha: float,
+        conformal_path: Optional[str],
+        mamba_enabled: bool,
+        mamba_weights_path: Optional[str],
+        mamba_weight: float,
+        transformer_weight: float,
+        transformer_weights_path: Optional[str],
+        tft_weights_path: Optional[str],
+        tft_horizon: int,
+        disagreement_hold: bool,
+        disagreement_hold_prob_diff_max: float,
+        ensemble_agreement_confidence_boost: bool,
+        ensemble_agreement_prob_diff_max: float,
+        rule_based_weights: Optional[Dict[str, float]],
+        rule_based_mom_multiplier: float,
+        min_minute_bars_required: int,
+        adaptive_indicator: Optional[dict],
+    ) -> None:
+        """Numeric predictor 초기화."""
+        ad = adaptive_indicator if isinstance(adaptive_indicator, dict) else {}
+        adaptive_block_dim = int(len(ADAPT_KEYS)) if self._adaptive_mgr is not None else 0
+        
+        # 멀티스케일 피처 차원 계산 (중복 방지)
+        multiscale_block_dim = 0
+        if self._multiscale_5m or self._multiscale_enabled:
+            # 5분봉 피처
+            if 5 in self._multiscale_time_scales:
+                multiscale_block_dim += len(MS5_KEYS)
+            # 15분봉 피처 (multiscale_enabled가 true일 때만)
+            if self._multiscale_enabled and 15 in self._multiscale_time_scales:
+                multiscale_block_dim += len(MS15_KEYS)
+        
+        # Transformer 피처 차원 (numeric_predictor에서 관리)
+        transformer_block_dim = 0  # Transformer 피처는 numeric_predictor에서 처리
+        
+        self._feature_dim = (
+            transformer_block_dim +
+            adaptive_block_dim +
+            multiscale_block_dim
+        )
+        feature_dim = int(len(OB_KEYS) + len(CD_KEYS) + len(self._opt_keys) + 
+                         multiscale_block_dim + adaptive_block_dim + int(FUTURE_KNOWN_DIM))
+
+        try:
+            logger.info(
+                "[FEATURE_DIM] option_feature_set=%s adaptive=%s multiscale_5m=%s multiscale_enabled=%s scales=%s multiscale_dim=%d time_dim=%d -> feature_dim=%d",
+                str(self._option_feature_set),
+                bool(self._adaptive_mgr is not None),
+                bool(self._multiscale_5m),
+                bool(self._multiscale_enabled),
+                str(self._multiscale_time_scales),
+                int(multiscale_block_dim),
+                int(FUTURE_KNOWN_DIM),
+                int(feature_dim),
+            )
+        except Exception as _e:
+            logger.debug("오류 무시: %s", _e)
+
+        self.numeric_predictor: NumericPredictor = create_numeric_predictor(
+            numeric_predictor=str(numeric_predictor or "transformer"),
+            model_class=str(model_class or "transformer"),
+            patch_len=int(patch_len or 8),
+            stride=int(stride or 4),
+            conformal_alpha=float(conformal_alpha or 0.1),
+            conformal_path=str(conformal_path) if conformal_path else None,
+            mamba_enabled=bool(mamba_enabled),
+            mamba_weights_path=str(mamba_weights_path) if mamba_weights_path else None,
+            mamba_weight=float(mamba_weight or 0.33),
+            buy_threshold=float(self._buy_threshold),
+            sell_threshold=float(self._sell_threshold),
+            confidence_high_margin=float(self._confidence_high_margin),
+            confidence_mid_margin=float(self._confidence_mid_margin),
+            confidence_spread_max_for_high=float(self._confidence_spread_max_for_high),
+            confidence_conformal_width_max_for_high=float(self._confidence_conformal_width_max_for_high),
+            confidence_conformal_width_max_for_medium=float(self._confidence_conformal_width_max_for_medium),
+            transformer_weight=float(transformer_weight),
+            transformer_weights_path=str(transformer_weights_path) if transformer_weights_path else None,
+            tft_weights_path=str(tft_weights_path) if tft_weights_path else None,
+            tft_horizon=int(tft_horizon),
+            disagreement_hold=bool(disagreement_hold),
+            disagreement_hold_prob_diff_max=float(disagreement_hold_prob_diff_max),
+            disagreement_hold_prob_diff_max_by_regime=self._disagreement_hold_prob_diff_max_by_regime,
+            ensemble_agreement_confidence_boost=bool(self._ensemble_agreement_confidence_boost),
+            ensemble_agreement_prob_diff_max=float(self._ensemble_agreement_prob_diff_max),
+            rule_based_weights=self._rule_based_weights,
+            rule_based_mom_multiplier=float(self._rule_based_mom_multiplier),
+            seq_len=int(self._seq_len),
+            feature_dim=int(feature_dim),
+            past_unknown_dim=int(feature_dim),
+        )
+
+        self._min_minute_bars_required = max(1, int(min_minute_bars_required or 20))
+
+    def _init_adaptive_manager(self, *, adaptive_indicator: Optional[dict]) -> None:
+        """Adaptive manager 초기화."""
+        ad = adaptive_indicator if isinstance(adaptive_indicator, dict) else {}
+        try:
+            from indicators import (  # type: ignore
+                AdaptiveIndicatorManager,
+                IndicatorManagerConfig,
+                AdaptiveSuperTrendConfig,
+            )
+            # ── [SSOT] AdaptiveZigZagConfig 는 항상 AdaptiveZigZagSettings.to_zigzag_config()
+            #    경유로 생성한다. 파라미터 직접 파싱을 금지하여 chart_engine 과 동일한
+            #    설정값을 보장한다.
+            _fn = _zz_settings_from_dict
+            if _fn is None:
+                raise ImportError("zigzag_settings_from_dict를 config.py에서 로드하지 못했습니다.")
+
+            symbol         = str(ad.get("symbol") or "KP200 선물")
+            kospi_symbol   = str(ad.get("kospi_symbol", "KOSPI 지수") or "KOSPI 지수")
+            futures_symbol = str(ad.get("futures_symbol", "KP200 선물") or "KP200 선물")
+            dual_mode      = bool(ad.get("dual_mode", False) or False)
+
+            _sym_n  = normalize_adaptive_indicator_symbol(symbol)
+            _prefix = f"[{_sym_n}]" if _sym_n else ""
+
+            # SuperTrend config — Settings 헬퍼 미제공으로 기존 방식 유지
+            st_any = ad.get("supertrend")
+            st: Dict[str, Any] = st_any if isinstance(st_any, dict) else {}
+            st_cfg = AdaptiveSuperTrendConfig(
+                atr_min_period=int(st.get("atr_min_period", 7) or 7),
+                atr_max_period=int(st.get("atr_max_period", 21) or 21),
+                multiplier_min=float(st.get("multiplier_min", 1.5) or 1.5),
+                multiplier_max=float(st.get("multiplier_max", 4.0) or 4.0),
+                er_period=int(st.get("er_period", 10) or 10),
+                adx_period=int(st.get("adx_period", 14) or 14),
+                use_bb_correction=bool(st.get("use_bb_correction", True)),
+                bb_period=int(st.get("bb_period", 20) or 20),
+                bb_std=float(st.get("bb_std", 2.0) or 2.0),
+                smooth_period=int(st.get("smooth_period", 3) or 3),
+            )
+            kospi_st_cfg   = AdaptiveSuperTrendConfig(**{k: v for k, v in st_cfg.__dict__.items()})
+            futures_st_cfg = AdaptiveSuperTrendConfig(**{k: v for k, v in st_cfg.__dict__.items()})
+
+            # ── ZigZag: dict → Settings → AdaptiveZigZagConfig (SSOT 경로) ──
+            zz_s         = _fn(ad.get("zigzag")        or {})
+            kospi_zz_s   = _fn(ad.get("kospi_zigzag")  or {}, base=zz_s)
+            futures_zz_s = _fn(ad.get("futures_zigzag") or {}, base=zz_s)
+
+            logger.info(
+                "[PIPELINE_INIT] ZigZag settings (SSOT): "
+                "futures use_atr=%s min_wave_atr=%.2f | kospi use_atr=%s min_wave_atr=%.2f",
+                futures_zz_s.use_atr_based_filtering, futures_zz_s.min_wave_atr_ratio,
+                kospi_zz_s.use_atr_based_filtering,   kospi_zz_s.min_wave_atr_ratio,
+            )
+
+            zz_cfg         = zz_s.to_zigzag_config(
+                pivot_lifecycle_log=True, pivot_lifecycle_log_prefix=_prefix)
+            kospi_zz_cfg   = kospi_zz_s.to_zigzag_config(
+                pivot_lifecycle_log=True, pivot_lifecycle_log_prefix="[KOSPI]")
+            futures_zz_cfg = futures_zz_s.to_zigzag_config(
+                pivot_lifecycle_log=True, pivot_lifecycle_log_prefix="[KP200]")
+
+            # 피봇 근접 알림 설정
+            pivot_proximity_alert = ad.get("pivot_proximity_alert") or {}
+            pivot_proximity_alert_enabled = bool(pivot_proximity_alert.get("enabled", True) or True)
+            pivot_proximity_max_bars_diff = int(pivot_proximity_alert.get("max_bars_diff", 1) or 1)
+            pivot_proximity_telegram_enabled = bool(pivot_proximity_alert.get("telegram_enabled", True) or True)
+
+            # 피봇 후보 알림 설정
+            pivot_candidate_alert = ad.get("pivot_candidate_alert") or {}
+            pivot_candidate_alert_enabled = bool(pivot_candidate_alert.get("enabled", True) or True)
+            pivot_candidate_alert_events = list(pivot_candidate_alert.get("events") or ["registered", "changed", "cancelled"])
+            pivot_candidate_alert_telegram_enabled = bool(pivot_candidate_alert.get("telegram_enabled", True) or True)
+            pivot_candidate_alert_change_cooldown_sec = float(pivot_candidate_alert.get("change_cooldown_sec") or 60.0)
+
+            if self._adaptive_enabled:
+                self._adaptive_mgr = AdaptiveIndicatorManager(
+                    config=IndicatorManagerConfig(
+                        supertrend=st_cfg,
+                        zigzag=zz_cfg,
+                        kospi_supertrend=kospi_st_cfg,
+                        kospi_zigzag=kospi_zz_cfg,
+                        futures_supertrend=futures_st_cfg,
+                        futures_zigzag=futures_zz_cfg,
+                        symbol=symbol,
+                        kospi_symbol=kospi_symbol,
+                        futures_symbol=futures_symbol,
+                        dual_mode=dual_mode,
+                        pivot_proximity_alert_enabled=pivot_proximity_alert_enabled,
+                        pivot_proximity_max_bars_diff=pivot_proximity_max_bars_diff,
+                        pivot_proximity_telegram_enabled=pivot_proximity_telegram_enabled,
+                        pivot_candidate_alert_enabled=pivot_candidate_alert_enabled,
+                        pivot_candidate_alert_events=pivot_candidate_alert_events,
+                        pivot_candidate_alert_telegram_enabled=pivot_candidate_alert_telegram_enabled,
+                        pivot_candidate_alert_change_cooldown_sec=pivot_candidate_alert_change_cooldown_sec,
+                    )
+                )
+
+                # 피봇 근접 알림 콜백 설정
+                if pivot_proximity_telegram_enabled:
+                    self._setup_pivot_proximity_callback()
+
+                # 피봇 후보 알림 콜백 설정
+                if pivot_candidate_alert_telegram_enabled:
+                    self._setup_pivot_candidate_callback()
+            else:
+                self._adaptive_mgr = None
+        except Exception as _adp_ex:
+            logger.warning("[PIPELINE_INIT] _adaptive_mgr 생성 실패: %s", _adp_ex, exc_info=True)
+            self._adaptive_mgr = None
 
     def _init_state(self, *, config_path: Optional[str]) -> None:
         """상태 변수 초기화."""
