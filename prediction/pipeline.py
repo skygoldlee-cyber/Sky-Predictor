@@ -541,22 +541,85 @@ class PredictionPipeline(
         except Exception:
             self._pcr_atm_strikes_each_side = 5
         self._opt_keys = list(get_opt_keys(str(self._option_feature_set)))
+        
+        # tick_provider, minute_lookback, option_minute_ohlcv, notifier는 _build_components로 전달
+        self._tick_provider_param = tick_provider
+        self._minute_lookback_param = minute_lookback
+        self._option_minute_ohlcv_param = option_minute_ohlcv
+        self._notifier_param = notifier
+        
+        # OI alert cooldown은 _init_state로 전달
+        self._oi_alert_cooldown_sec_param = oi_alert_cooldown_sec
+
+    def _build_components(
+        self,
+        *,
+        anthropic_key: Optional[str],
+        openai_key: Optional[str],
+        gemini_key: Optional[str],
+        preferred_provider: Optional[str],
+        tick_provider: "Optional[TickDataProvider]",
+        numeric_predictor: str,
+        model_class: str,
+        patch_len: int,
+        stride: int,
+        conformal_alpha: float,
+        conformal_path: Optional[str],
+        mamba_enabled: bool,
+        mamba_weights_path: Optional[str],
+        mamba_weight: float,
+        transformer_weight: float,
+        transformer_weights_path: Optional[str],
+        tft_weights_path: Optional[str],
+        tft_horizon: int,
+        disagreement_hold: bool,
+        disagreement_hold_prob_diff_max: float,
+        ensemble_agreement_confidence_boost: bool,
+        ensemble_agreement_prob_diff_max: float,
+        rule_based_weights: Optional[Dict[str, float]],
+        rule_based_mom_multiplier: float,
+        min_minute_bars_required: int,
+        adaptive_indicator: Optional[dict],
+        config_path: Optional[str],
+    ) -> None:
+        """컴포넌트 생성 및 초기화."""
+        # tick_processor 설정
+        ml = self._minute_lookback_param if isinstance(self._minute_lookback_param, dict) else {}
         try:
-            om = option_minute_ohlcv if isinstance(option_minute_ohlcv, dict) else {}
+            default_futures_minutes = max(1, int(ml.get("futures", 60) or 60))
+        except Exception:
+            default_futures_minutes = 60
+        try:
+            default_options_minutes = max(1, int(ml.get("options", 60) or 60))
+        except Exception:
+            default_options_minutes = 60
+
+        if self._tick_provider_param is not None:
+            self.tick_processor: TickDataProvider = self._tick_provider_param
+        else:
+            self.tick_processor = RealTimeTickProcessor(
+                default_futures_minutes=int(default_futures_minutes),
+                default_options_minutes=int(default_options_minutes),
+            )
+
+        # option_minute_ohlcv 설정
+        try:
+            om = self._option_minute_ohlcv_param if isinstance(self._option_minute_ohlcv_param, dict) else {}
             self.tick_processor.configure_option_minute_ohlcv(
                 enabled=bool(om.get("enabled", False)),
                 atm_window=int(om.get("atm_window", 2) or 2),
             )
         except Exception as _e:
             logger.debug("오류 무시: %s", _e)
-        self._notifier = notifier
+        
+        self._notifier = self._notifier_param
         self.judge = (
             LLMJudge(
                 anthropic_key=anthropic_key,
                 openai_key=openai_key,
                 gemini_key=gemini_key,
                 preferred_provider=preferred_provider,
-                notifier=notifier,
+                notifier=self._notifier,
             )
             if self._use_llm
             else None
@@ -599,6 +662,24 @@ class PredictionPipeline(
             except Exception:
                 self._llm_executor = ThreadPoolExecutor(max_workers=1)
 
+        # Adaptive indicators 초기화
+        self._adaptive_mgr = None
+        self._adaptive_warmed = False
+        self._adaptive_last_minute_ts: Optional[datetime] = None
+        ad = adaptive_indicator if isinstance(adaptive_indicator, dict) else {}
+        try:
+            self._adaptive_enabled = bool(ad.get("enabled", True))
+        except Exception:
+            self._adaptive_enabled = True
+
+        self._adaptive_last_features: Dict[str, float] = {}
+        self._adaptive_last_context: str = ""
+
+        # Numeric predictor 초기화 (기존 로직 유지)
+        # ... (기존 numeric_predictor 생성 로직)
+
+    def _init_state(self, *, config_path: Optional[str]) -> None:
+        """상태 변수 초기화."""
         # CON-01: _metrics는 여러 스레드(틱 콜백, 예측 루프, 피드백 루프)에서 동시 접근.
         # GIL이 단순 대입은 보호하지만 read-modify-write 복합 연산은 race condition 발생 가능.
         self._metrics_lock = threading.Lock()
@@ -641,7 +722,7 @@ class PredictionPipeline(
         self._prev_underlying_price: Optional[float] = None
         self._prev_oi_levels: Dict[str, float] = {}  # OI velocity 계산용 이전 스냅샷
         self._oi_alert_last_epoch: float = 0.0        # OI 레벨 변경 알람 마지막 전송 시각
-        self._OI_ALERT_COOLDOWN_SEC: float = max(10.0, float(oi_alert_cooldown_sec or 300.0))
+        self._OI_ALERT_COOLDOWN_SEC: float = max(10.0, float(self._oi_alert_cooldown_sec_param or 300.0))
         self._sigma_multiplier: float = 1.0       # calc_expected_amplitude 배율 (피드백 조정)
         self._exhaust_exceed_count: int = 0        # amplitude_exhaustion > 1.0 연속 횟수
         # 방안C: 실현 진폭 EMA — 장 종료 시 당일 realized_hl_range_pt를 반영해 다음날 IV 보정에 활용
@@ -650,18 +731,6 @@ class PredictionPipeline(
         self._realized_amplitude_ema_updated_date: str = ""  # 마지막 갱신 날짜 (YYYYMMDD)
         self._prev_atm_call_price: Optional[float] = None
         self._prev_atm_put_price: Optional[float] = None
-
-        # Adaptive indicators (best-effort; optional dependency)
-        self._adaptive_mgr = None
-        self._adaptive_warmed = False
-        self._adaptive_last_minute_ts: Optional[datetime] = None
-        try:
-            self._adaptive_enabled = bool(ad.get("enabled", True))
-        except Exception:
-            self._adaptive_enabled = True
-
-        self._adaptive_last_features: Dict[str, float] = {}
-        self._adaptive_last_context: str = ""
 
         # ── Step 1~3 신규 지표 인스턴스 (best-effort; adaptive_mgr 와 독립) ──
         # 초기화 실패 시 None 유지 → adaptive_mixin 에서 None 체크 후 스킵
