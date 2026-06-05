@@ -205,27 +205,31 @@ Args:
                     f"Dataset seq_len mismatch: got {int(seq_len)} but config.prediction.seq_len={int(expected_seq_len)}. "
                     "Rebuild dataset with matching --seq-len."
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN] seq_len validation skipped: %s", e)
     try:
         pos_rate = float(y.mean().item())
-    except Exception:
+    except Exception as e:
+        logger.debug("[TRAIN] pos_rate calculation fallback: %s", e)
         pos_rate = float(np.mean(y_np))
 
     try:
         pos_n = int((y_np >= 0.5).sum())
         neg_n = int((y_np < 0.5).sum())
-    except Exception:
+    except Exception as e:
+        logger.debug("[TRAIN] pos/neg count fallback (numpy): %s", e)
         try:
             pos_n = int((y >= 0.5).sum().item())
             neg_n = int((y < 0.5).sum().item())
-        except Exception:
+        except Exception as e2:
+            logger.debug("[TRAIN] pos/neg count fallback (torch): %s", e2)
             pos_n = -1
             neg_n = -1
 
     try:
         pos_rate = float(max(1e-6, min(1.0 - 1e-6, float(pos_rate))))
-    except Exception:
+    except Exception as e:
+        logger.debug("[TRAIN] pos_rate clamping fallback: %s", e)
         pos_rate = 0.5
 
     logger.info(
@@ -238,8 +242,8 @@ Args:
     try:
         if int(pos_n) >= 0 and int(neg_n) >= 0:
             logger.info("label_counts: pos=%d neg=%d", int(pos_n), int(neg_n))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[TRAIN] label_counts logging skipped: %s", e)
 
     n_train = int(N * 0.8)
     train_ds = TensorDataset(X[:n_train], y[:n_train])
@@ -270,14 +274,15 @@ Args:
     pos_weight = torch.tensor([pos_weight_val], device=device)
     try:
         logger.info("pos_weight: %.4f", float(pos_weight_val))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[TRAIN] pos_weight logging skipped: %s", e)
 
     loss_name = str(getattr(args, "loss", "bce") or "bce").strip().lower()
     focal_gamma = 2.0
     try:
         focal_gamma = float(getattr(args, "focal_gamma", 2.0) or 2.0)
-    except Exception:
+    except Exception as e:
+        logger.debug("[TRAIN] focal_gamma parsing fallback: %s", e)
         focal_gamma = 2.0
     if loss_name not in {"bce", "focal"}:
         loss_name = "bce"
@@ -285,8 +290,8 @@ Args:
         logger.info("loss: %s", loss_name)
         if loss_name == "focal":
             logger.info("focal_gamma: %.4f", float(focal_gamma))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[TRAIN] loss config logging skipped: %s", e)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.lr), weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(

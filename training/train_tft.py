@@ -145,8 +145,8 @@ def run(args: argparse.Namespace) -> None:
                     f"Dataset seq_len mismatch: got {int(seq_len)} but config.prediction.seq_len={int(expected_seq_len)}. "
                     "Rebuild dataset with matching --seq-len."
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN_TFT] seq_len validation skipped: %s", e)
 
         try:
             expected_h = int(getattr(getattr(cfg, "prediction", None), "tft_horizon", HORIZON_SEC) or HORIZON_SEC)
@@ -155,8 +155,8 @@ def run(args: argparse.Namespace) -> None:
                     f"Dataset horizon mismatch: got {int(horizon)} but config.prediction.tft_horizon={int(expected_h)}. "
                     "Rebuild dataset with matching --tft-horizon-sec."
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN_TFT] horizon validation skipped: %s", e)
 
     # Backward-compat: keep the constant check only when config is unavailable.
     # When config is present, the config-derived expected_pu_cfg check above is authoritative.
