@@ -3,10 +3,10 @@
 SkyPredictor의 적응형 지표(Adaptive ZigZag, Adaptive SuperTrend, AdaptiveParamEngine)를 통합한 가이드입니다.
 
 > **참고 문서**: 상세 기술 문서는 아래 문서들을 참조하세요.
-> - [guides/ADAPTIVE_INDICATOR_GUIDE.md](guides/ADAPTIVE_INDICATOR_GUIDE.md) - 적응형 지표 사용 가이드
 > - [architecture/zigzag_pivot_logic.md](architecture/zigzag_pivot_logic.md) - ZigZag 피봇 로직
-> - [archives/ADAPTIVE_ZIGZAG_COMPLETE.md](archives/ADAPTIVE_ZIGZAG_COMPLETE.md) - ZigZag 상세 설명
-> - [archives/adaptive_param_engine.md](archives/adaptive_param_engine.md) - ParamEngine 상세
+> - [guides/PIVOT_COLLECTOR_GUIDE.md](guides/PIVOT_COLLECTOR_GUIDE.md) - 피봇 수집기 가이드
+> - [guides/PIVOT_ML_ALGORITHM_GUIDE.md](guides/PIVOT_ML_ALGORITHM_GUIDE.md) - 피봇 ML 알고리즘 가이드
+> - [reports/zigzag_pivot_improvement.md](reports/zigzag_pivot_improvement.md) - ZigZag 피봇 개선 리포트
 
 ---
 
@@ -163,6 +163,29 @@ def _get_runtime_params(self) -> ZigzagRuntimeParams:
 3. **합의도 검사**: 다른 지표와의 일치 확인
 4. **피봇 확정**: 조건 만족 시 피봇으로 확정
 5. **클러스터링**: 인접 피봇 그룹화
+
+### 피봇 탐지 파라미터
+- **atr_period**: ATR 계산 기간 (기본 14)
+- **atr_multiplier**: ATR 배수 (기본 1.5)
+- **min_wave_bars**: 최소 파동 봉 수 (기본 1)
+- **confirmation_bars**: 확인 봉 수 (기본 2)
+- **min_wave_pct**: 최소 파동 비율 (기본 0.3%)
+- **pivot_threshold_min_pct**: 피봇 임계값 최소 비율 (기본 0.3%)
+- **pivot_threshold_max_pct**: 피봇 임계값 최대 비율 (기본 3.0%)
+- **major_swing_ratio**: 메이저 스윙 비율 (기본 2.0)
+- **max_swings**: 최대 스윙 수 (기본 20)
+- **cluster_tolerance_pct**: 클러스터 허용 비율 (기본 0.3%)
+
+### 피봇 확정 로직
+1. **방향 전환 감지**: 현재 방향과 반대 방향으로 가격이 임계값을 돌파
+2. **후보 등록**: `_pending_confirm`에 후보 정보 저장
+3. **확인 기간**: `confirmation_bars` 동안 후보 유지 확인
+4. **피봇 확정**: 확인 기간 동안 후보가 유지되면 피봇으로 확정
+5. **클러스터링**: 인접한 피봇들을 그룹화하여 대표 피봇 선정
+6. **교번 보장**: 연속 HIGH/LOW 피봇 방지
+
+### 피봇 기반 매매 전략
+상세한 피봇 기반 매매 전략은 [PIVOT_BASED_TRADING_STRATEGY.md](PIVOT_BASED_TRADING_STRATEGY.md)를 참조하세요.
 
 ### 보완 항목
 - **confirmation_bars 동적 조절**: 레짐에 따른 가변 확인 기간
