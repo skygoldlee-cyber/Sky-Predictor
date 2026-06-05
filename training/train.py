@@ -50,6 +50,31 @@ def _focal_loss(prob: "torch.Tensor", y: "torch.Tensor", *, gamma: float, pos_we
 from core.utils import set_seed  # noqa: E402
 
 
+def _validate_ohlcv(h: float, l: float, o: float, c: float, v: float) -> bool:
+    """OHLCV 데이터 유효성 검증.
+    
+    Args:
+        h: high
+        l: low
+        o: open
+        c: close
+        v: volume
+    
+    Returns:
+        True if valid, False otherwise
+    """
+    # high >= low
+    if h < l:
+        return False
+    # OHLC 관계: low <= open <= high, low <= close <= high
+    if not (l <= o <= h) or not (l <= c <= h):
+        return False
+    # volume >= 0
+    if v < 0:
+        return False
+    return True
+
+
 def load_data(path: str):
     """Load training dataset (X, y) from npz."""
     data = np.load(str(path))

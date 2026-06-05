@@ -712,12 +712,13 @@ class RealTimeTickProcessor:
 
                     # Global sweep: symbols that stopped receiving ticks never get pruned by per-symbol cleanup.
                     # Sweep is intentionally lightweight and runs infrequently.
+                    # [MEM-OPT-1] Increased sweep frequency for better memory management
                     try:
                         self._options_minute_sweep_counter = int(self._options_minute_sweep_counter) + 1
                         do_sweep = False
-                        if int(self._options_minute_sweep_counter) >= 500:
+                        if int(self._options_minute_sweep_counter) >= 100:  # Reduced from 500 to 100
                             do_sweep = True
-                        if float(time.time()) - float(self._options_minute_last_sweep_epoch) >= 60.0:
+                        if float(time.time()) - float(self._options_minute_last_sweep_epoch) >= 30.0:  # Reduced from 60s to 30s
                             do_sweep = True
 
                         if do_sweep:
