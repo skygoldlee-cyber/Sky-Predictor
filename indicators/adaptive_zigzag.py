@@ -843,7 +843,6 @@ class AdaptiveZigZag:
                     "[ZZ][후보등록] %s | %s@%s=%.2f | 대기=%d봉 | 역전임계=%.2fpt%s | bar=%d",
                     prefix, ctype, swing_time, swing_px, rem, thr, prob_str, bar,
                 )
-                print(log_msg)
 
             elif action in ("후보갱신", "후보상태"):
                 ctype      = str(p.get("candidate") or "").upper()[:1] or "?"
@@ -859,7 +858,6 @@ class AdaptiveZigZag:
                     "[ZZ][후보갱신] %s | %s@%s=%.2f | 잔여=%d봉 | close=%.2f%s%s | bar=%d",
                     prefix, ctype, swing_time, swing_px, rem, float(close), reason_str, prob_str, bar,
                 )
-                print(log_msg)
 
             elif action == "취소":
                 # 취소된 피봇 정보
@@ -873,7 +871,6 @@ class AdaptiveZigZag:
                     "[ZZ][취소] %s | %s@%s=%.2f 취소 | 사유=%s | 취소봉=%s | close=%.2f | bar=%d",
                     prefix, ctype, swing_time, swing_px, reason, cancel_tm, float(close), bar,
                 )
-                print(log_msg)
 
             elif action == "확정":
                 stype      = str(p.get("swing_type") or "").upper()[:1] or "?"
@@ -892,14 +889,12 @@ class AdaptiveZigZag:
                         "[ZZ][확정-무후보] %s | %s@%s=%.2f 확정✓ (후보등록없음) | 확정봉=%s | lag=%d봉 | close=%.2f | signal=%s | bar=%d",
                         prefix, stype, swing_time, swing_px, confirm_tm, lag, float(close), signal, bar,
                     )
-                    print(log_msg)
                 else:
                     log_msg = f"[ZZ][확정]    {prefix} | {stype}@{swing_time}={swing_px:.2f} 확정✓ | 확정봉={confirm_tm} | lag={lag}봉 | close={float(close):.2f} | signal={signal} | bar={bar}"
                     _logger.warning(  # [FIX] 중요 이벤트는 WARNING 유지
                         "[ZZ][확정] %s | %s@%s=%.2f 확정✓ | 확정봉=%s | lag=%d봉 | close=%.2f | signal=%s | bar=%d",
                         prefix, stype, swing_time, swing_px, confirm_tm, lag, float(close), signal, bar,
                     )
-                    print(log_msg)
 
             else:
                 # 기타 (후보상태 등)
@@ -908,7 +903,6 @@ class AdaptiveZigZag:
                     "[ZZ][%s] %s | bar=%d | %s", action, prefix, bar,
                     " ".join(f"{k}={v}" for k, v in p.items() if v is not None)
                 )
-                print(log_msg)
 
         except Exception as _e:
             _logger.debug("[ZZ][emit_error] action=%s err=%s", action, _e)

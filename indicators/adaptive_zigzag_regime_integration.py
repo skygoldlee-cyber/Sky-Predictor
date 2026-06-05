@@ -328,12 +328,11 @@ if __name__ == "__main__":
         )
         if state.new_swing_signal != "none":
             pivot_count += 1
-            print(
-                f"  봉={i:3d} [{dates[i].strftime('%H:%M')}] "
-                f"signal={state.new_swing_signal:8s} "
-                f"regime={runner.current_regime.value:25s} "
-                f"conf_bars={runner.zigzag.config.confirmation_bars}  "
-                f"atr_mult={runner.zigzag.config.atr_multiplier:.2f}"
+            logger.debug(
+                "봉=%d [%s] signal=%s regime=%s conf_bars=%d atr_mult=%.2f",
+                i, dates[i].strftime('%H:%M'), state.new_swing_signal,
+                runner.current_regime.value, runner.zigzag.config.confirmation_bars,
+                runner.zigzag.config.atr_multiplier
             )
 
-    print(f"\n총 확정 피봇: {pivot_count}개")
+    logger.info("총 확정 피봇: %d개", pivot_count)
