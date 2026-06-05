@@ -186,11 +186,11 @@ class TradeDashboard:
             "timestamp": datetime.now().isoformat()
         }
     
-    def run_api(self, host: str = "0.0.0.0", port: int = 8000):
+    def run_api(self, host: str = "127.0.0.1", port: int = 8000):
         """FastAPI 서버 실행.
         
         Args:
-            host: 호스트
+            host: 호스트 (기본값 127.0.0.1로 변경 - 보안 강화)
             port: 포트
         """
         try:

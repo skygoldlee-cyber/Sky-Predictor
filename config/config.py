@@ -104,9 +104,9 @@ def _secrets_paths_to_merge(config_path: str) -> list[Path]:
 @dataclass
 class AIProviderConfig:
     """AI 제공자 설정"""
-    anthropic_key: Optional[str] = None
-    openai_key: Optional[str] = None
-    gemini_key: Optional[str] = None
+    anthropic_key: Optional[str] = field(default=None, repr=False)  # [SECURITY] secret 마스킹
+    openai_key: Optional[str] = field(default=None, repr=False)  # [SECURITY] secret 마스킹
+    gemini_key: Optional[str] = field(default=None, repr=False)  # [SECURITY] secret 마스킹
 
 
 def log_ai_provider_keys_loaded(
@@ -137,8 +137,8 @@ def log_ai_provider_keys_loaded(
 @dataclass
 class EBestConfig:
     """eBest 인증 설정"""
-    appkey: Optional[str] = None
-    appsecretkey: Optional[str] = None
+    appkey: Optional[str] = field(default=None, repr=False)  # [SECURITY] secret 마스킹
+    appsecretkey: Optional[str] = field(default=None, repr=False)  # [SECURITY] secret 마스킹
 
 
 @dataclass
