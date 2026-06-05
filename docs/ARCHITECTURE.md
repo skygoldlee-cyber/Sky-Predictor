@@ -359,4 +359,5 @@ python main.py  # 기본값
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](TFT_DUAL_MODEL_DESIGN_GUIDE.md) - TFT 설계 가이드
 
 ### 운영 가이드
-- [DAILY_TICK_TRAINING_RUNBOOK.md](DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
+- [DAILY_TICK_TRAINING_RUNBOOK.md](operations/DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
+- [telegram.md](operations/telegram.md) - 텔레그램 연동 가이드

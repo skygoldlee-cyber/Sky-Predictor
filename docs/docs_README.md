@@ -22,7 +22,7 @@ Transformer 관련 로직(입력 피처, 모델, 학습/추론)은 별도 문서
  - [ML_PREDICTION_GUIDE.md](ML_PREDICTION_GUIDE.md) - 머신러닝 예측 시스템 통합 가이드
 
 운영/학습 루틴(매일 ticks 저장 → dataset 생성 → 최근 N일 merge → 재학습 → 성능평가)은 아래 런북을 참고하세요.
-- [DAILY_TICK_TRAINING_RUNBOOK.md](DAILY_TICK_TRAINING_RUNBOOK.md)
+- [DAILY_TICK_TRAINING_RUNBOOK.md](operations/DAILY_TICK_TRAINING_RUNBOOK.md)
 
 듀얼 모델(TFT 포함) 설계 가이드는 아래 문서에 정리되어 있습니다.
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](TFT_DUAL_MODEL_DESIGN_GUIDE.md)

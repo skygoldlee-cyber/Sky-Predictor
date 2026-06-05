@@ -173,7 +173,8 @@ SkyPredictor/
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](docs/TFT_DUAL_MODEL_DESIGN_GUIDE.md) - TFT 설계 가이드
 
 ### 운영 가이드
-- [DAILY_TICK_TRAINING_RUNBOOK.md](docs/DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
+- [DAILY_TICK_TRAINING_RUNBOOK.md](docs/operations/DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
+- [telegram.md](docs/operations/telegram.md) - 텔레그램 연동 가이드
 
 ## 라이선스
 
