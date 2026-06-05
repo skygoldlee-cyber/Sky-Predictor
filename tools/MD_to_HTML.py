@@ -2634,7 +2634,10 @@ def _inline_mermaid_fences(md_text: str) -> str:
             if inner.startswith('"') and inner.endswith('"'):
                 return f"|{inner}|"
             # 따옴표 없는 경우만 sanitize
-            return "|" + _sanitize_label(inner) + "|"
+            sanitized = _sanitize_label(inner)
+            # ( ) 는 Mermaid 렉서가 PS(stadium) 토큰으로 오해석 → 전각 괄호로 교체
+            sanitized = sanitized.replace("(", "（").replace(")", "）")
+            return "|" + sanitized + "|"
 
         line = re.sub(r"\|([^|]+)\|", _edge_label_repl, line)
 
@@ -2710,12 +2713,22 @@ def _inline_mermaid_fences(md_text: str) -> str:
             label = _sanitize_label(m.group('label'))
             return f"{prefix}{node_id}{{\"{label}\"}}"
 
-        # sequenceDiagram / xychart 라인은 node_pat 적용 금지.
-        # sequenceDiagram 메시지(E->>D: text)에 node_pat_par 가 적용되면
-        # enc_out(60) → enc_out("60") 처럼 함수 호출 표현이 노드 레이블로 오변환됨.
-        # xychart 는 x-axis/y-axis 배열 구문이 node_pat 과 충돌 가능.
+        # flowchart 노드 문법(id[label], id(label), id{label})을 쓰지 않는
+        # 다이어그램 타입은 node_pat 치환을 완전히 건너뜀.
+        #
+        # sequenceDiagram : E->>D: text 메시지가 node_pat_par 에 오매칭됨
+        # xychart-beta    : x-axis/y-axis 배열 구문 충돌
+        # quadrantChart   : x-axis/y-axis/title 특수 문법
+        # timeline        : 'generate()' 같은 텍스트가 generate("") 로 오변환됨
+        # gantt           : 태스크 이름이 node_pat 과 우연히 매칭될 수 있음
+        # mindmap         : 들여쓰기 트리 구조, 노드 문법 없음
+        # sankey-beta     : CSV 형식, 노드 문법 없음
+        # block-beta / packet-beta / architecture-beta : 별도 문법
         skip_node_pat = getattr(sanitize_mermaid_line, '_diagram_type', '') in (
-            'sequenceDiagram', 'xychart-beta', 'quadrantChart'
+            'sequenceDiagram', 'xychart-beta', 'quadrantChart',
+            'timeline', 'gantt', 'mindmap', 'sankey-beta',
+            'block-beta', 'packet-beta', 'architecture-beta',
+            'classDiagram',   # 메서드 시그니처 id(params)가 flowchart node_pat에 오매칭됨
         )
         if not skip_node_pat:
             # ★ BUG FIX: node_pat_par/cur 는 ["..."] 내부까지 재처리한다.
@@ -2808,6 +2821,7 @@ def _inline_mermaid_fences(md_text: str) -> str:
                     inner = line[inner_start:close_idx]
                     # 내부 " → ' (단, HTML 엔티티 &quot; 는 보호)
                     inner = inner.replace('"', "'")
+                    inner = inner.replace('<', '&lt;')
                     result.append(inner + '"]')
                     pos = close_idx + 2
                 return ''.join(result)
@@ -3015,7 +3029,7 @@ def run_gui() -> int:
             QSpinBox,
             QComboBox,
         )
-        from PySide6.QtCore import QSettings, QUrl
+        from PySide6.QtCore import Qt, QSettings, QUrl
         from PySide6.QtGui import QDesktopServices
     except Exception as e:
         raise SystemExit(
@@ -3158,8 +3172,7 @@ def run_gui() -> int:
         if p:
             in_edit.setText(p)
             try:
-                if not title_edit.text().strip():
-                    title_edit.setText(Path(p).stem)
+                title_edit.setText(Path(p).stem)
             except Exception:
                 pass
             try:
@@ -3170,8 +3183,7 @@ def run_gui() -> int:
     def _handle_drop(path: str):
         in_edit.setText(path)
         try:
-            if not title_edit.text().strip():
-                title_edit.setText(Path(path).stem)
+            title_edit.setText(Path(path).stem)
         except Exception:
             pass
         try:
