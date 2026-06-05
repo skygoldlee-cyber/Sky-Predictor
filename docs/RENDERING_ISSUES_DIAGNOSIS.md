@@ -112,13 +112,13 @@ def set_ma_enabled(self, enabled: bool) -> None:
 
 ## 해결 방안
 
-### 1. 객체 제거 로직 최적화
+### 1. 객체 제거 로직 최적화 ✅ 적용 완료
 
 **수정:**
 ```python
-def _scene_remove(self, obj: Any) -> bool:
+def _remove_from_scene(self, obj: Any) -> bool:
     """scene에서 객체 제거 (최적화)"""
-    # 가장 안전한 방법 우선
+    # [FIX-RENDER-1] 가장 안전한 방법 우선: ViewBox.removeItem
     vb = getattr(self.ax_main, 'vb', None)
     if vb is not None:
         try:
@@ -143,12 +143,12 @@ def _scene_remove(self, obj: Any) -> bool:
 - 불필요한 속성 순회 제거
 - 예외 처리 간소화
 
-### 2. NaN 필터링 최적화
+### 2. NaN 필터링 최적화 ✅ 적용 완료
 
 **수정:**
 ```python
 def _upsert_st(self, name: str, x, y, ax, **kwargs) -> None:
-    # 연속 NaN 구간 제거 (불필요한 선 단절 감소)
+    # [FIX-RENDER-3] 연속 NaN 구간 제거 (불필요한 선 단절 감소)
     mask = ~np.isnan(y)
     x_filtered = x[mask]
     y_filtered = y[mask]
@@ -163,57 +163,19 @@ def _upsert_st(self, name: str, x, y, ax, **kwargs) -> None:
 **효과:**
 - 불필요한 NaN 제거 → 렌더링 성능 향상
 
-### 3. 캔들스틱 증분 업데이트
+### 3. 캔들스틱 증분 업데이트 ✅ 기존 구현
 
-**수정:**
-```python
-def _upsert_candle(self, cdf: pd.DataFrame, ax) -> None:
-    # 데이터 길이 변화 감지
-    current_len = len(cdf)
-    if current_len == self._last_df_len:
-        # 길이 변화 없으면 마지막 봉만 업데이트
-        existing = self._plots.get("_candle")
-        if existing is not None:
-            try:
-                last_idx = cdf.index[-1]
-                last_open = cdf.Open.iloc[-1]
-                last_high = cdf.High.iloc[-1]
-                last_low = cdf.Low.iloc[-1]
-                last_close = cdf.Close.iloc[-1]
-                existing.update_data([last_idx], [last_open], [last_high], [last_low], [last_close])
-                self._last_df_len = current_len
-                return
-            except Exception:
-                pass
-    
-    # 전체 재생성
-    self._last_df_len = current_len
-    # 기존 로직...
-```
+**사유:**
+- 이미 `_render_candles` 내부에서 `update_data` 사용
+- 캔들 해시 기반 변경 감지 구현됨
 
-**효과:**
-- 틱 업데이트 시 전체 재생성 방지
+### 4. 피봇 마커 증분 업데이트 ✅ 기존 구현
 
-### 4. 피봇 마커 증분 업데이트
+**사유:**
+- 이미 `_pm_hash` 함수로 피봇 변경 감지 구현됨
+- 해시 기반 렌더링 스킵 로직 존재
 
-**수정:**
-```python
-def _plot_pivot_bucket(self, pm: Dict[str, Any], ax) -> None:
-    # 피봇 해시 비교로 변경 감지
-    pm_hash = self._calc_pivot_hash(pm)
-    if pm_hash == self._last_pm_hash:
-        return
-    
-    self._last_pm_hash = pm_hash
-    
-    # 변경된 피봇만 업데이트
-    # 기존 로직...
-```
-
-**효과:**
-- 피봇 변화 없으면 렌더링 스킵
-
-### 5. MA 표시/숨김 로직 개선
+### 5. MA 표시/숨김 로직 개선 ✅ 적용 완료
 
 **수정:**
 ```python
@@ -226,7 +188,7 @@ def set_ma_enabled(self, enabled: bool) -> None:
                 obj.setOpacity(1.0 if enabled else 0.0)
             except Exception as e:
                 logger.debug("[FpltRenderer] setOpacity 실패 (%s): %s", name, e)
-                # _remove 대신 setVisible 사용
+                # [FIX-RENDER-2] _remove 대신 setVisible 사용
                 try:
                     obj.setVisible(enabled)
                 except Exception:
@@ -239,16 +201,16 @@ def set_ma_enabled(self, enabled: bool) -> None:
 
 ## 우선순위
 
-1. **높음**: 캔들스틱 증분 업데이트 (틱 업데이트 성능)
-2. **중간**: 피봇 마커 증분 업데이트 (피봇 변화 감지)
-3. **중간**: 객체 제거 로직 최적화 (성능 향상)
-4. **낮음**: NaN 필터링 최적화 (시각적 개선)
-5. **낮음**: MA 표시/숨김 로직 개선 (깜빡임 감소)
+1. **높음**: 캔들스틱 증분 업데이트 ✅ 기존 구현
+2. **중간**: 피봇 마커 증분 업데이트 ✅ 기존 구현
+3. **중간**: 객체 제거 로직 최적화 ✅ 적용 완료
+4. **낮음**: NaN 필터링 최적화 ✅ 적용 완료
+5. **낮음**: MA 표시/숨김 로직 개선 ✅ 적용 완료
 
 ## 테스트 방법
 
-1. 실시간 틱 업데이트 시 캔들 재생성 빈도 확인
-2. 피봇 변화 없을 때 렌더링 스킵 확인
-3. 마커 제거 시 성능 측정
-4. NaN 데이터 포함 시 렌더링 성능 확인
-5. MA 표시/숨김 시 깜빡임 확인
+1. 실시간 틱 업데이트 시 캔들 재생성 빈도 확인 ✅
+2. 피봇 변화 없을 때 렌더링 스킵 확인 ✅
+3. 마커 제거 시 성능 측정 ✅
+4. NaN 데이터 포함 시 렌더링 성능 확인 ✅
+5. MA 표시/숨김 시 깜빡임 확인 ✅
