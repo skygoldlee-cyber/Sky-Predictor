@@ -330,8 +330,8 @@ if __name__ == "__main__":
             if best is None or (best_abs_ms is not None and abs_ms < best_abs_ms):
                 best = r
                 best_abs_ms = abs_ms
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] offset_ms_avg parsing error: {e}")
 
     if not any_ok:
         sys.exit(1)
@@ -344,8 +344,8 @@ if __name__ == "__main__":
                 print("  동기화 결과([SYNC]/[AFTER SYNC])를 보려면 아래처럼 실행하세요:")
                 print("  python internet_time_sync.py --sync")
                 print("=" * 70)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] hint display error: {e}")
 
     if args.sync:
         if best is None:
@@ -362,8 +362,8 @@ if __name__ == "__main__":
             print(f"  적용 오프셋(ms): {float(best.get('offset_ms_avg')):.2f} (+면 시스템이 느림)")
             print(f"  목표 UTC: {_fmt_dt(target_utc)}")
             print("=" * 70)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] sync info display error: {e}")
 
         ok, msg = _set_windows_system_time_utc(target_utc)
         if ok:
@@ -375,8 +375,8 @@ if __name__ == "__main__":
                 print("\n" + "-" * 70)
                 print("[AFTER SYNC] 재측정 결과")
                 print("-" * 70)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[DEBUG] after-sync header display error: {e}")
             _, err3 = _print_report(str(best.get("server")), max(3, int(args.samples)), float(args.timeout))
             if err3 is not None:
                 print(f"[AFTER SYNC][ERROR] {best.get('server')}: {err3}")
@@ -395,8 +395,8 @@ if __name__ == "__main__":
                 print("\n" + "-" * 70)
                 print("[AFTER SYNC] 재측정 결과")
                 print("-" * 70)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[DEBUG] after-sync header display error: {e}")
             _, err3 = _print_report(str(best.get("server")), max(3, int(args.samples)), float(args.timeout))
             if err3 is not None:
                 print(f"[AFTER SYNC][ERROR] {best.get('server')}: {err3}")
