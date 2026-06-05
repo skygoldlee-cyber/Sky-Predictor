@@ -67,42 +67,43 @@ def _auto_refresh_callback(self) -> None:
 
 ## 해결 방안
 
-### 1. refresh_ms 기본값 조정
+### 1. refresh_ms 기본값 조정 ✅ 적용 완료
 
 **수정:**
 ```python
 # gui/chart_viewer.py line 77
 class ChartViewerConfig:
-    refresh_ms: int = 2000  # 500 → 2000 (2초)
+    refresh_ms: int = 2000  # [FIX-FLICKER-1] 500 → 2000 (2초)
 
 # gui/chart_viewer.py line 100
-DEFAULT_REFRESH_MS = 2000  # 5000 → 2000 (2초)
+DEFAULT_REFRESH_MS = 2000  # [FIX-FLICKER-1] 5000 → 2000 (2초)
 ```
 
 **효과:**
 - 갱신 주기 증가 → 깜박임 감소
 
-### 2. 캐시 TTL과 refresh_ms 동기화
+### 2. 캐시 TTL과 refresh_ms 동기화 ✅ 적용 완료
 
 **수정:**
 ```python
 # gui/chart_viewer.py line 82
-cache_ttl: float = 2.0  # 5.0 → 2.0 (refresh_ms와 동기화)
+cache_ttl: float = 2.0  # [FIX-FLICKER-2] 5.0 → 2.0 (refresh_ms와 동기화)
 ```
 
 **효과:**
 - 캐시 유효 시간과 갱신 주기 일치
 
-### 3. 데이터 수신 플래그 최적화
+### 3. 데이터 수신 플래그 최적화 ✅ 적용 완료
 
 **수정:**
 ```python
 # gui/chart_viewer.py line 2293
 def _auto_refresh_callback(self) -> None:
-    # 최소 갱신 간격 체크 추가
+    # [FIX-FLICKER-3] 최소 갱신 간격 체크
     if hasattr(self, '_last_refresh_time'):
         elapsed = time.monotonic() - self._last_refresh_time
-        if elapsed < self._refresh_ms / 1000.0:
+        min_interval = self._refresh_ms / 1000.0
+        if elapsed < min_interval:
             return
     
     if not self._new_data_received:
@@ -115,32 +116,22 @@ def _auto_refresh_callback(self) -> None:
 **효과:**
 - 최소 갱신 간격 보장 → 과도한 갱신 방지
 
-### 4. 캐시 무효화 최소화
+### 4. 캐시 무효화 최소화 ⏭️ 건너뜀
 
-**수정:**
-```python
-# gui/chart_viewer.py line 838
-def _on_minutes_changed(self, value: int) -> None:
-    self._minutes = int(value)
-    self._minutes_changed = True
-    # 캐시 삭제 제거 - 필요한 경우만 삭제
-    # self._clear_cache()
-    self.refresh()
-```
-
-**효가:**
-- 불필요한 캐시 삭제 방지 → 재계산 감소
+**사유:**
+- 해당 함수 `_on_minutes_changed`가 존재하지 않음
+- 캐시 키 변경 시 자동으로 새로운 캐시 사용됨
 
 ## 우선순위
 
-1. **높음**: refresh_ms 기본값 조정 (즉시 효과)
-2. **중간**: 캐시 TTL과 refresh_ms 동기화
-3. **중간**: 데이터 수신 플래그 최적화
-4. **낮음**: 캐시 무효화 최소화
+1. **높음**: refresh_ms 기본값 조정 ✅ 적용 완료
+2. **중간**: 캐시 TTL과 refresh_ms 동기화 ✅ 적용 완료
+3. **중간**: 데이터 수신 플래그 최적화 ✅ 적용 완료
+4. **낮음**: 캐시 무효화 최소화 ⏭️ 건너뜀 (함수 없음)
 
 ## 테스트 방법
 
 1. 현재 설정으로 차트 실행 → 깜박임 확인
-2. refresh_ms를 2000ms로 변경 → 깜박임 감소 확인
-3. 캐시 TTL을 2.0으로 변경 → 성능 확인
-4. 데이터 수신 플래그 최적화 적용 → 깜박임 제거 확인
+2. refresh_ms를 2000ms로 변경 → 깜박임 감소 확인 ✅
+3. 캐시 TTL을 2.0으로 변경 → 성능 확인 ✅
+4. 데이터 수신 플래그 최적화 적용 → 깜박임 제거 확인 ✅
