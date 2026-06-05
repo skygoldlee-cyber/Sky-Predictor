@@ -74,12 +74,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ChartViewerConfig:
     """차트 뷰어 설정."""
-    refresh_ms: int = 500
+    refresh_ms: int = 2000  # [FIX-FLICKER-1] 500 → 2000 (깜박임 방지)
     minutes: int = 120
     auto_refresh: bool = True
     show_ma: bool = True
     show_pivots: bool = True
-    cache_ttl: float = 5.0
+    cache_ttl: float = 2.0  # [FIX-FLICKER-2] 5.0 → 2.0 (refresh_ms와 동기화)
     loading_enabled: bool = True
     zoom_enabled: bool = True  # 줌 기능 활성화
     pan_enabled: bool = True   # 팬 기능 활성화
@@ -97,7 +97,7 @@ class ChartViewerWidget:
     QTimer 로 자동 갱신(기본 5초), 수동 refresh(), 범위 콤보박스 제공.
     """
 
-    DEFAULT_REFRESH_MS = 5000  # 기본값 5초 (config.json과 일치)
+    DEFAULT_REFRESH_MS = 2000  # [FIX-FLICKER-1] 기본값 2초 (깜박임 방지)
     DEFAULT_MINUTES    = 120
 
     def __init__(
@@ -136,7 +136,7 @@ class ChartViewerWidget:
                 auto_refresh=True,
                 show_ma=True,
                 show_pivots=True,
-                cache_ttl=5.0,
+                cache_ttl=2.0,  # [FIX-FLICKER-2] 5.0 → 2.0
                 loading_enabled=True,
                 zoom_enabled=True,
                 pan_enabled=True,
@@ -144,7 +144,7 @@ class ChartViewerWidget:
             auto_refresh = True
             show_ma = True
             show_pivots = True
-            cache_ttl = 5.0
+            cache_ttl = 2.0  # [FIX-FLICKER-2] 5.0 → 2.0
             loading_enabled = True
             zoom_enabled = True
             pan_enabled = True
@@ -253,6 +253,9 @@ class ChartViewerWidget:
         self._loading_enabled: bool = loading_enabled  # 로딩 표시 활성화 (설정에서 가져옴)
         self._zoom_enabled: bool = zoom_enabled  # 줌 기능 활성화 (설정에서 가져옴)
         self._pan_enabled: bool = pan_enabled  # 팬 기능 활성화 (설정에서 가져옴)
+        
+        # [FIX-FLICKER-3] 갱신 시간 추적
+        self._last_refresh_time: float = 0.0
 
         # 피봇 정보 패널 (crosshair용)
         self._pivot_info_panel: Optional[Any] = None
@@ -2294,6 +2297,14 @@ class ChartViewerWidget:
         """자동 갱신 타이머 콜백 (장 마감 시 중지)"""
         logger.info("[ChartViewer] 자동 갱신 콜백 호출 (new_data_received=%s)", self._new_data_received)
 
+        # [FIX-FLICKER-3] 최소 갱신 간격 체크
+        if hasattr(self, '_last_refresh_time'):
+            elapsed = time.monotonic() - self._last_refresh_time
+            min_interval = self._refresh_ms / 1000.0
+            if elapsed < min_interval:
+                logger.debug("[ChartViewer] 최소 갱신 간격 미달: %.2f < %.2f", elapsed, min_interval)
+                return
+
         # 일일 리포트 체크
         self.check_and_send_daily_report()
 
@@ -2320,6 +2331,9 @@ class ChartViewerWidget:
                 return
             
             logger.info("[ChartViewer] 새로운 데이터 수신됨 - refresh 호출")
+            # [FIX-FLICKER-3] 갱신 시간 기록
+            self._last_refresh_time = time.monotonic()
+            
             # 피봇 품질 모니터 업데이트
             try:
                 if hasattr(self, '_engine') and self._engine is not None \
