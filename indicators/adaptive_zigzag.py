@@ -197,9 +197,19 @@ class AdaptiveZigZagConfig:
     #       ("09:00", "09:30", 10),   # 장초반:  피봇 적게
     #       ("09:30", "10:30",  7),   # 오전장:  중간
     #       ("10:30", "14:30",  5),   # 중반:    기본
-    #       ("14:30", "15:20",  7),   # 장마감전: 조임
-    #       ("15:20", "15:31", 10),   # 동시호가: 매우 엄격
+
+    # ── [보완-4] 시간대별 파라미터 테이블 ─────────────────────────
+    # 시간대별로 atr_multiplier, confirmation_bars 등을 조절
+    # 형식: List[Tuple[시작HH:MM, 종료HH:MM(미포함), Dict[str, Any]]]
+    # Dict 키: atr_multiplier, confirmation_bars, pivot_threshold_min_pct 등
+    # 예시:
+    #   session_param_table = [
+    #       ("09:00", "09:30", {"atr_multiplier": 0.8, "confirmation_bars": 1}),
+    #       ("09:30", "10:30", {"atr_multiplier": 1.2, "confirmation_bars": 2}),
+    #       ("10:30", "15:00", {"atr_multiplier": 1.0, "confirmation_bars": 2}),
     #   ]
+    session_param_table: List[Tuple[str, str, Dict[str, Any]]] = field(default_factory=list)
+
     session_min_wave_bars_table: List[Tuple[str, str, int]] = field(
         default_factory=list
     )
@@ -3240,6 +3250,147 @@ class AdaptiveZigZag:
                 base = max(1, base - reduce)
 
         return max(1, base)
+
+    def _calc_consensus_score(self, supertrend_dir: int, structure: str, ob_imbalance: float) -> float:
+        """지표별 가중치 부여 및 종합 점수 계산.
+
+        Args:
+            supertrend_dir: SuperTrend 방향 (1=상승, -1=하락, 0=중립)
+            structure: 구조 판정 ("uptrend", "downtrend", "ranging", "unknown")
+            ob_imbalance: 오더북 불균형 (-1~1, 양수=매수 우위, 음수=매도 우위)
+
+        Returns:
+            합의도 점수 (0~1)
+        """
+        score = 0.0
+        
+        # SuperTrend 방향 일치: 가중치 0.4
+        if supertrend_dir != 0:
+            st_weight = 0.4
+            if structure == "uptrend" and supertrend_dir == 1:
+                score += st_weight
+            elif structure == "downtrend" and supertrend_dir == -1:
+                score += st_weight
+        
+        # 구조 판정 일치: 가중치 0.3
+        if structure in ("uptrend", "downtrend"):
+            score += 0.3
+        elif structure == "ranging":
+            score += 0.1
+        
+        # 오더북 불균형: 가중치 0.3
+        ob_weight = 0.3
+        if structure == "uptrend" and ob_imbalance > 0:
+            score += ob_weight * min(1.0, abs(ob_imbalance))
+        elif structure == "downtrend" and ob_imbalance < 0:
+            score += ob_weight * min(1.0, abs(ob_imbalance))
+        
+        return min(1.0, score)
+
+    def _calc_pivot_quality_score(self, wave_size: float, atr: float, structure: str, 
+                                   support_dist: float, resistance_dist: float) -> float:
+        """피봇 품질 점수 계산.
+
+        Args:
+            wave_size: 파동 크기
+            atr: ATR 값
+            structure: 구조 판정
+            support_dist: 지지선 거리 (%)
+            resistance_dist: 저항선 거리 (%)
+
+        Returns:
+            피봇 품질 점수 (0~1)
+        """
+        score = 0.0
+        
+        # 파동 크기 점수: ATR 대비 파동 크기
+        if atr > 0:
+            wave_ratio = abs(wave_size) / atr
+            wave_score = min(1.0, wave_ratio / 2.0)  # ATR의 2배 이상이면 최대 점수
+            score += wave_score * 0.4
+        
+        # 구조 일치 점수
+        if structure in ("uptrend", "downtrend"):
+            score += 0.3
+        elif structure == "ranging":
+            score += 0.1
+        
+        # 지지/저항 거리 점수
+        sr_score = 0.0
+        if support_dist > 0:
+            sr_score += min(1.0, support_dist / 1.0)  # 1% 이상이면 최대 점수
+        if resistance_dist > 0:
+            sr_score += min(1.0, resistance_dist / 1.0)
+        score += (sr_score / 2.0) * 0.3
+        
+        return min(1.0, score)
+
+    def _get_session_params(self, current_time: str) -> Dict[str, Any]:
+        """시간대별 파라미터 테이블에서 해당 파라미터 반환.
+
+        Args:
+            current_time: 현재 시간 (HH:MM 형식)
+
+        Returns:
+            해당 시간대의 파라미터 딕셔너리 (비어있으면 빈 딕셔너리)
+        """
+        cfg = self.config
+        table = getattr(cfg, "session_param_table", [])
+        if not table:
+            return {}
+        
+        for start, end, params in table:
+            if start <= current_time < end:
+                return params
+        
+        return {}
+
+    def _update_feedback_stats(self, confirmed: bool):
+        """피봇 확정/취소 이력 기반 통계 업데이트.
+
+        Args:
+            confirmed: 피봇 확정 여부
+        """
+        if not hasattr(self, '_feedback_stats'):
+            self._feedback_stats = {
+                'total_candidates': 0,
+                'confirmed_count': 0,
+                'cancelled_count': 0,
+            }
+        
+        self._feedback_stats['total_candidates'] += 1
+        if confirmed:
+            self._feedback_stats['confirmed_count'] += 1
+        else:
+            self._feedback_stats['cancelled_count'] += 1
+
+    def _get_feedback_adjusted_params(self) -> Dict[str, Any]:
+        """피드백 통계 기반 파라미터 조정.
+
+        Returns:
+            조정된 파라미터 딕셔너리
+        """
+        if not hasattr(self, '_feedback_stats'):
+            return {}
+        
+        stats = self._feedback_stats
+        total = stats['total_candidates']
+        if total < 10:  # 최소 10개 후보 필요
+            return {}
+        
+        confirmed_rate = stats['confirmed_count'] / total
+        cancelled_rate = stats['cancelled_count'] / total
+        
+        adjustments = {}
+        
+        # 확정률이 낮으면 atr_multiplier 증가
+        if confirmed_rate < 0.3:
+            adjustments['atr_multiplier'] = 1.2  # 20% 증가
+        # 취소율이 높으면 confirmation_bars 증가
+        elif cancelled_rate > 0.5:
+            adjustments['confirmation_bars'] = 1  # 1 증가
+        
+        return adjustments
 
     # ── [보완-3] 단기 구조 분석 (micro_structure) ────────────────
     def _analyze_micro_structure(self) -> str:
