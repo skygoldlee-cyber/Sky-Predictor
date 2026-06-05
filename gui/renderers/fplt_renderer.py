@@ -485,6 +485,8 @@ class FpltRenderer:
         finplot update_data()가 길이 불일치 예외를 던져 _remove→재생성 루프를 유발.
         이 메서드는 NaN 제거 없이 full-length 배열을 그대로 전달한다.
         finplot은 NaN 구간을 선 단절로 처리하므로 시각적으로 정상이다.
+        
+        [FIX-RENDER-3] NaN 필터링 최적화: 연속 NaN 구간 제거로 불필요한 선 단절 감소
         """
         if x.size == 0 or y.size == 0:
             obj = self._plots.get(name)
@@ -500,10 +502,25 @@ class FpltRenderer:
         x = np.asarray(x).ravel()   # dtype 유지 (datetime64[ns])
         y = np.asarray(y, dtype=np.float64).ravel()
 
+        # [FIX-RENDER-3] 연속 NaN 구간 제거 (불필요한 선 단절 감소)
+        mask = ~np.isnan(y)
+        x_filtered = x[mask]
+        y_filtered = y[mask]
+        
+        # 필터링 후 데이터가 있는지 확인
+        if len(x_filtered) == 0:
+            obj = self._plots.get(name)
+            if obj is not None:
+                try:
+                    obj.setVisible(False)
+                except Exception:
+                    self._remove(name)
+            return
+
         existing = self._plots.get(name)
         if existing is not None:
             try:
-                existing.update_data((x, y))
+                existing.update_data((x_filtered, y_filtered))
                 try:
                     existing.setVisible(True)
                 except Exception:
@@ -514,11 +531,11 @@ class FpltRenderer:
                 self._remove(name)
 
         # 데이터 타입 명시적 변환 (np.where 결과가 object 타입일 수 있음)
-        x = np.asarray(x, dtype=np.float64).ravel()
-        y = np.asarray(y, dtype=np.float64).ravel()
+        x_filtered = np.asarray(x_filtered, dtype=np.float64).ravel()
+        y_filtered = np.asarray(y_filtered, dtype=np.float64).ravel()
 
         try:
-            obj = self._fplt.plot(x, y, ax=ax,
+            obj = self._fplt.plot(x_filtered, y_filtered, ax=ax,
                                   color=color, style=style, width=width)
             self._plots[name] = obj
 
