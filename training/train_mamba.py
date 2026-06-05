@@ -106,8 +106,8 @@ def run(args: argparse.Namespace) -> None:
         x_mean_np = np.mean(X_np, axis=(0, 1)).astype(np.float32).reshape(-1)
         x_std_np  = np.std(X_np,  axis=(0, 1)).astype(np.float32).reshape(-1)
         x_std_np  = np.where(x_std_np > 1e-6, x_std_np, 1e-6).astype(np.float32)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[TRAIN_MAMBA] normalization stats calculation skipped: %s", e)
 
     N, seq_len, feature_dim = X.shape
 
@@ -115,8 +115,8 @@ def run(args: argparse.Namespace) -> None:
     cfg = None
     try:
         cfg = load_config(str(getattr(args, "config", "config.json") or "config.json"))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[TRAIN_MAMBA] config load skipped: %s", e)
 
     adaptive_enabled   = False
     option_feature_set = "v1"
@@ -127,21 +127,21 @@ def run(args: argparse.Namespace) -> None:
             adaptive_enabled = bool(
                 getattr(cfg, "adaptive_indicator", None) and cfg.adaptive_indicator.enabled
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN_MAMBA] adaptive_enabled parsing skipped: %s", e)
         try:
             option_feature_set = str(
                 getattr(getattr(cfg, "prediction", None), "option_feature_set", "v1") or "v1"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN_MAMBA] option_feature_set parsing skipped: %s", e)
         if not multiscale_5m:
             try:
                 multiscale_5m = bool(
                     getattr(getattr(cfg, "prediction", None), "multiscale_5m", False)
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("[TRAIN_MAMBA] multiscale_5m parsing skipped: %s", e)
 
     opt_keys = list(get_opt_keys(str(option_feature_set or "v1")))
     expected_dim = int(

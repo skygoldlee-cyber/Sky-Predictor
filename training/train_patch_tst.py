@@ -157,7 +157,8 @@ def run(args: argparse.Namespace) -> None:
             option_feature_set = str(
                 getattr(getattr(cfg, "prediction", None), "option_feature_set", "v1") or "v1"
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("[TRAIN_PATCH_TST] option_feature_set parsing fallback: %s", e)
             option_feature_set = "v1"
 
     # --multiscale-5m CLI 인자 우선, 없으면 config 값 사용
@@ -165,8 +166,8 @@ def run(args: argparse.Namespace) -> None:
     if not multiscale_5m and cfg is not None:
         try:
             multiscale_5m = bool(getattr(getattr(cfg, "prediction", None), "multiscale_5m", False))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[TRAIN_PATCH_TST] multiscale_5m parsing skipped: %s", e)
 
     opt_keys = list(get_opt_keys(str(option_feature_set or "v1")))
     expected_dim = int(
