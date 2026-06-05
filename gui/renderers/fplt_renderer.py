@@ -446,22 +446,25 @@ class FpltRenderer:
             return False
 
     def _remove_from_scene(self, obj: Any) -> bool:
-        """scene에서 객체 제거"""
-        for attr in ("items", "item", "curve", "scatter"):
+        """scene에서 객체 제거 (최적화)"""
+        # [FIX-RENDER-1] 가장 안전한 방법 우선: ViewBox.removeItem
+        vb = getattr(self.ax_main, 'vb', None)
+        if vb is not None:
             try:
-                child = getattr(obj, attr, None)
-                if child is None:
-                    continue
-                for t in (child if isinstance(child, (list, tuple)) else [child]):
-                    try:
-                        sc = t.scene() if callable(getattr(t, "scene", None)) else None
-                        if sc:
-                            sc.removeItem(t)
-                            return True
-                    except Exception:
-                        continue
+                vb.removeItem(obj)
+                return True
             except Exception:
-                continue
+                pass
+        
+        # fallback: scene에서 직접 제거
+        try:
+            scene = obj.scene()
+            if scene is not None:
+                scene.removeItem(obj)
+                return True
+        except Exception:
+            pass
+        
         return False
 
     def _remove(self, name: str) -> None:
@@ -1222,10 +1225,14 @@ class FpltRenderer:
             if obj is not None:
                 try:
                     obj.setOpacity(1.0 if enabled else 0.0)
-                except Exception:
-                    # setOpacity 실패 시 fallback으로 _remove 사용
-                    if not enabled:
-                        self._remove(name)
+                except Exception as e:
+                    logger.debug("[FpltRenderer] setOpacity 실패 (%s): %s", name, e)
+                    # [FIX-RENDER-2] _remove 대신 setVisible 사용
+                    try:
+                        obj.setVisible(enabled)
+                    except Exception:
+                        if not enabled:
+                            self._remove(name)
 
     def _render_ma(self, x_idx: np.ndarray, df: pd.DataFrame) -> None:
         """20/60 EMA 오버레이."""
