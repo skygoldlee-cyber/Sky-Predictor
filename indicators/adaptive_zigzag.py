@@ -927,13 +927,11 @@ class AdaptiveZigZag:
                         "[ZZ][피봇목록] %s | 확정%d개: %s",
                         prefix, len(parts), " | ".join(parts),
                     )
-                    print(log_msg)
                 else:
                     log_msg = f"[ZZ][피봇목록] {prefix} | 확정0개 (초기화 또는 전체취소)"
                     _logger.debug(  # [FIX] 반복 로그 방지를 위해 DEBUG로 변경
                         "[ZZ][피봇목록] %s | 확정0개 (초기화 또는 전체취소)", prefix
                     )
-                    print(log_msg)
         except Exception as _e:
             _logger.debug("[ZZ][pivot_list_error] %s", _e)
 
