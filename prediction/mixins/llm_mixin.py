@@ -33,7 +33,8 @@ class LLMMixin:
             if p == "gemini":
                 return max(0.1, float(getattr(self, "_gemini_timeout_sec", self._llm_timeout_sec)))
             return max(0.1, float(getattr(self, "_llm_timeout_sec", 8.0)))
-        except Exception:
+        except Exception as e:
+            logger.debug("[LLMMixin] timeout calculation failed, using default: %s", e)
             return max(0.1, float(getattr(self, "_llm_timeout_sec", 8.0)))
 
     def _llm_failure_fallback_action(
@@ -60,7 +61,8 @@ class LLMMixin:
         h: Any = None
         try:
             h = (merged_model_outputs or {}).get("heuristic")
-        except Exception:
+        except Exception as e:
+            logger.debug("[LLMMixin] heuristic extraction failed: %s", e)
             h = None
         if isinstance(h, dict) and bool(h.get("is_ready", True)):
             ha = str(h.get("action") or "").strip().upper()
@@ -410,7 +412,8 @@ class LLMMixin:
         now_epoch = 0.0
         try:
             now_epoch = float(time.time())
-        except Exception:
+        except Exception as e:
+            logger.debug("[LLMMixin] time fetch failed: %s", e)
             now_epoch = 0.0
 
         # ── 429 쿨다운 체크 (dual_llm 포함 모든 경로) ─────────────────────────
@@ -437,11 +440,13 @@ class LLMMixin:
         cache_key = ""
         try:
             signal = str(getattr(t_res, "signal", "HOLD") or "HOLD")
-        except Exception:
+        except Exception as e:
+            logger.debug("[LLMMixin] signal extraction failed, using HOLD: %s", e)
             signal = "HOLD"
         try:
             ensemble_method = str(getattr(t_res, "ensemble_method", "") or "")
-        except Exception:
+        except Exception as e:
+            logger.debug("[LLMMixin] ensemble method extraction failed: %s", e)
             ensemble_method = ""
         try:
             # [IMP-LLM-01] 캐시 키에 시장 상태 필드 추가.

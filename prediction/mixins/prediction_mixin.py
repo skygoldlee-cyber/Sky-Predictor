@@ -69,7 +69,8 @@ class PredictionMixin:
                 ob_records_snapshot = list(self._ob_records)
                 last_ob_snapshot = dict(self._last_ob_snapshot) if self._last_ob_snapshot else {}
                 ob_len_snapshot = int(len(self._ob_records))
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] ob_records snapshot failed: %s", e)
             ob_records_snapshot = []
             last_ob_snapshot = {}
             ob_len_snapshot = 0
@@ -85,7 +86,8 @@ class PredictionMixin:
                     if tp is not None:
                         try:
                             raw_1m = tp.get_futures_ohlcv()
-                        except Exception:
+                        except Exception as e:
+                            logger.debug("[PredictionMixin] futures_ohlcv fetch failed: %s", e)
                             raw_1m = None
                     if raw_1m is not None and not raw_1m.empty:
                         multiscale_snap = {}
@@ -97,7 +99,8 @@ class PredictionMixin:
                         ms15_df = calc_multiscale_features_15m(raw_1m)
                         if not ms15_df.empty:
                             multiscale_snap["ms15"] = ms15_df
-                except Exception:
+                except Exception as e:
+                    logger.debug("[PredictionMixin] multiscale features failed: %s", e)
                     multiscale_snap = None
 
             seq = build_sequence(
@@ -109,7 +112,8 @@ class PredictionMixin:
                 opt_keys_override=list(self._opt_keys),
                 multiscale_features=multiscale_snap,
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] sequence build failed: %s", e)
             seq = None
 
         horizon_steps = int(max(1, int(getattr(self, "_tft_horizon", HORIZON_SEC) or HORIZON_SEC)))
@@ -127,7 +131,8 @@ class PredictionMixin:
                 except Exception:
                     pass
             past_known = pk_arr
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] past_known build failed: %s", e)
             past_known = None
 
         future_known = None
@@ -140,7 +145,8 @@ class PredictionMixin:
                 except Exception:
                     pass
             future_known = fk_arr
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] future_known build failed: %s", e)
             future_known = None
 
         try:
@@ -285,7 +291,8 @@ class PredictionMixin:
             fn_w = getattr(self.numeric_predictor, "get_transformer_weight", None)
             if callable(fn_w):
                 transformer_weight = float(fn_w())
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] transformer weight fetch failed: %s", e)
             transformer_weight = None
 
         return _NumericResult(
@@ -350,7 +357,8 @@ class PredictionMixin:
                 adaptive_features=adaptive_features,
                 adaptive_supertrend_state=adaptive_supertrend_state,
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] regime detection failed: %s", e)
             regime = None
 
         return df, adaptive_features, adaptive_context, adaptive_supertrend_state, adaptive_zigzag_state, model_outputs, regime
@@ -371,7 +379,8 @@ class PredictionMixin:
         try:
             if self._last_fo0_seen_epoch is not None:
                 fo0_age_sec = float(time.time()) - float(self._last_fo0_seen_epoch)
-        except Exception:
+        except Exception as e:
+            logger.debug("[PredictionMixin] fo0_age calculation failed: %s", e)
             fo0_age_sec = None
 
         stale = fo0_age_sec is None or float(fo0_age_sec) > float(self._fo0_stale_sec)

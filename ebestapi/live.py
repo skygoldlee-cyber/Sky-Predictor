@@ -77,7 +77,8 @@ def _last_complete_minute_ts_from_df(df: Any, now_dt: datetime) -> Optional[date
                     frame = frame.copy()
                     frame["timestamp"] = pd.to_datetime(frame["timestamp"])
                     frame = frame.set_index("timestamp")
-            except Exception:
+            except Exception as e:
+                logger.debug("[eBest] timestamp conversion failed: %s", e)
                 return None
         if not isinstance(frame.index, pd.DatetimeIndex):
             return None
@@ -88,7 +89,8 @@ def _last_complete_minute_ts_from_df(df: Any, now_dt: datetime) -> Optional[date
         if last_ts >= now_min:
             return frame.index[-2].to_pydatetime().replace(second=0, microsecond=0)
         return last_ts
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] _get_reference_bar_time failed: %s", e)
         return None
 
 
@@ -101,11 +103,13 @@ def _ebest_adaptive_minute_df(predictor: Any, warmup_bars: Optional[int] = None)
     if wb is None:
         try:
             wb = int(getattr(tp, "default_futures_minutes", 120) or 120)
-        except Exception:
+        except Exception as e:
+            logger.debug("[eBest] warmup_bars parse failed, using default 120: %s", e)
             wb = 120
     try:
         wb = max(1, int(wb))
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] warmup_bars validation failed, using default 120: %s", e)
         wb = 120
     return tp.get_kospi_minute_df(int(wb))
 
@@ -549,7 +553,8 @@ async def _initialize_api(
         cfg_root = _load_config(config_path=str(config_path or "config.json")) or {}
         if not isinstance(cfg_root, dict):
             cfg_root = {}
-    except Exception:
+    except Exception as e:
+        logger.warning("[eBest] config load failed, using empty config: %s", e)
         cfg_root = {}
 
     opt_cfg = cfg_root.get("options_subscription") if isinstance(cfg_root.get("options_subscription"), dict) else {}
@@ -560,7 +565,8 @@ async def _initialize_api(
         # config.json의 itm 값 우선 사용, CLI opt_itm은 fallback
         config_itm = int(opt_cfg.get("itm", 10))
         opt_itm_eff = int(opt_itm) if opt_itm is not None else config_itm
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] opt_itm parse failed, using default 10: %s", e)
         opt_itm_eff = 10
     if opt_itm_eff < 0:
         opt_itm_eff = 0
@@ -569,7 +575,8 @@ async def _initialize_api(
 
     try:
         opt_wait_sec_eff = int(opt_wait_sec)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] opt_wait_sec parse failed, using default 2: %s", e)
         opt_wait_sec_eff = 2
     if opt_wait_sec_eff < 0:
         opt_wait_sec_eff = 0
@@ -578,20 +585,24 @@ async def _initialize_api(
 
     try:
         otm_open_min = float(opt_cfg.get("otm_open_min", 0.30) or 0.30)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] otm_open_min parse failed, using default 0.30: %s", e)
         otm_open_min = 0.30
     try:
         max_otm_calls = int(opt_cfg.get("max_otm_calls", 0) or 0)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] max_otm_calls parse failed, using default 0: %s", e)
         max_otm_calls = 0
     try:
         max_otm_puts = int(opt_cfg.get("max_otm_puts", 0) or 0)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] max_otm_puts parse failed, using default 0: %s", e)
         max_otm_puts = 0
 
     try:
         preopen_oh0_window = int(opt_cfg.get("preopen_oh0_window", 2) or 2)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] preopen_oh0_window parse failed, using default 2: %s", e)
         preopen_oh0_window = 2
     if preopen_oh0_window < 0:
         preopen_oh0_window = 0
@@ -604,7 +615,8 @@ async def _initialize_api(
     # oi_rebalance_interval_sec: 장중 OC0 재구독 갱신 주기(초). 기본 60.
     try:
         oi_itm_count = int(opt_cfg.get("oi_itm_count", 10) or 10)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] oi_itm_count parse failed, using default 10: %s", e)
         oi_itm_count = 10
     if oi_itm_count < 1:
         oi_itm_count = 1
@@ -613,7 +625,8 @@ async def _initialize_api(
 
     try:
         oi_otm_count = int(opt_cfg.get("oi_otm_count", 10) or 10)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] oi_otm_count parse failed, using default 10: %s", e)
         oi_otm_count = 10
     if oi_otm_count < 1:
         oi_otm_count = 1
@@ -622,7 +635,8 @@ async def _initialize_api(
 
     try:
         oi_rebalance_interval_sec = float(opt_cfg.get("oi_rebalance_interval_sec", 60.0) or 60.0)
-    except Exception:
+    except Exception as e:
+        logger.debug("[eBest] oi_rebalance_interval_sec parse failed, using default 60.0: %s", e)
         oi_rebalance_interval_sec = 60.0
     if oi_rebalance_interval_sec < 10.0:
         oi_rebalance_interval_sec = 10.0
@@ -674,7 +688,8 @@ async def _initialize_api(
         if isinstance(init_pack, dict):
             kp200_symbol = init_pack.get("kp200_symbol")
             kp200_prev_close = init_pack.get("kp200_prev_close")
-    except Exception:
+    except Exception as e:
+        logger.warning("[eBest] front month symbol fetch failed: %s", e)
         init_pack = None
 
     if not kp200_symbol:
@@ -685,16 +700,17 @@ async def _initialize_api(
     if kp200_prev_close is not None:
         try:
             _log("[eBest] KP200 prev_close=%.2f symbol=%s", float(kp200_prev_close), kp200_symbol)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[eBest] prev_close log failed: %s", e)
         try:
             state.kp200_prev_close = float(kp200_prev_close)
-        except Exception:
+        except Exception as e:
+            logger.debug("[eBest] prev_close state update failed: %s", e)
             state.kp200_prev_close = None
         try:
             setattr(predictor, "kp200_prev_close", state.kp200_prev_close)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[eBest] prev_close predictor setattr failed: %s", e)
 
     async def _post_open_init() -> None:
         """Defer snapshot queries & option subscriptions until market open JIF is seen."""
