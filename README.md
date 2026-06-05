@@ -163,11 +163,16 @@ SkyPredictor/
 
 ## 문서
 
+### 메인 문서
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - 시스템 아키텍처 상세
-- [docs_README.md](docs/docs_README.md) - 프로젝트 개요 및 사용 가이드
+- [docs_README.md](docs/docs_README.md) - 프로젝트 개요 및 상세 사용 가이드
+
+### 기술 가이드
 - [ADAPTIVE_INDICATOR_GUIDE.md](docs/ADAPTIVE_INDICATOR_GUIDE.md) - 적응형 지표 가이드
 - [ML_PREDICTION_GUIDE.md](docs/ML_PREDICTION_GUIDE.md) - 머신러닝 예측 시스템 가이드
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](docs/TFT_DUAL_MODEL_DESIGN_GUIDE.md) - TFT 설계 가이드
+
+### 운영 가이드
 - [DAILY_TICK_TRAINING_RUNBOOK.md](docs/DAILY_TICK_TRAINING_RUNBOOK.md) - 운영 런북
 
 ## 라이선스
