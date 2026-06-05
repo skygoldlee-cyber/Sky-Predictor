@@ -20,17 +20,12 @@ LLM 관련 (옵션):
 
 Transformer 관련 로직(입력 피처, 모델, 학습/추론)은 별도 문서에 정리되어 있습니다.
  - [ML_PREDICTION_GUIDE.md](ML_PREDICTION_GUIDE.md) - 머신러닝 예측 시스템 통합 가이드
- - [archives/TRANSFORMER_GUIDE.md](archives/TRANSFORMER_GUIDE.md) - Transformer 상세 로직
 
 운영/학습 루틴(매일 ticks 저장 → dataset 생성 → 최근 N일 merge → 재학습 → 성능평가)은 아래 런북을 참고하세요.
 - [DAILY_TICK_TRAINING_RUNBOOK.md](DAILY_TICK_TRAINING_RUNBOOK.md)
 
 듀얼 모델(TFT 포함) 설계 가이드는 아래 문서에 정리되어 있습니다.
 - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](TFT_DUAL_MODEL_DESIGN_GUIDE.md)
-
-런타임 **예측 알고리즘**(수치·앙상블·가드레일·진폭/OI·LLM·피드백) 통합 요약:
-- [ML_PREDICTION_GUIDE.md](ML_PREDICTION_GUIDE.md)
-- [archives/Prediction_Algorithm.md](archives/Prediction_Algorithm.md)
 
 ---
  
@@ -581,6 +576,9 @@ LLM 입력(snapshot) 개요:
 ## 문서
 
 - `ARCHITECTURE.md`: 모듈 아키텍처/데이터 흐름
+- `ADAPTIVE_INDICATOR_GUIDE.md`: 적응형 지표 통합 가이드
+- `ML_PREDICTION_GUIDE.md`: 머신러닝 예측 시스템 통합 가이드
+- `TFT_DUAL_MODEL_DESIGN_GUIDE.md`: TFT 듀얼 모델 설계 가이드
 - `docs/runtime/README.md`: 런타임(실시간 예측) 핵심 모듈 함수/클래스 레퍼런스
 - `docs/training/README.md`: 오프라인 데이터셋 생성/학습 경로 함수/클래스 레퍼런스
 

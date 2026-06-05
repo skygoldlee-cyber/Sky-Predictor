@@ -3,7 +3,6 @@
 SkyPredictor의 머신러닝 예측 엔진 구조와 Transformer/TFT/LLM 파이프라인을 통합한 가이드입니다.
 
 > **참고 문서**: 상세 기술 문서는 아래 문서들을 참조하세요.
-> - [archives/TRANSFORMER_GUIDE.md](archives/TRANSFORMER_GUIDE.md) - Transformer 상세 로직
 > - [TFT_DUAL_MODEL_DESIGN_GUIDE.md](TFT_DUAL_MODEL_DESIGN_GUIDE.md) - TFT 상세 설계
 > - [guides/MODELS_GUIDE.md](guides/MODELS_GUIDE.md) - 모델 사용 가이드
 
