@@ -4132,7 +4132,12 @@ class ATRMonitor:
         }
 
 
-def _get_time_based_atr_ratio(current_time: datetime.datetime, ratio_table: List[Tuple[str, str, float]], fallback_ratio: float = 1.0) -> float:
+def _get_time_based_atr_ratio(
+    current_time: datetime.datetime,
+    ratio_table: List[Tuple[str, str, float]],
+    fallback_ratio: float = 1.0,
+    now_fn: Optional[Callable[[], datetime.datetime]] = None
+) -> float:
     """
     현재 시간에 해당하는 min_wave_atr_ratio 반환
 
@@ -4140,10 +4145,12 @@ def _get_time_based_atr_ratio(current_time: datetime.datetime, ratio_table: List
         current_time: 현재 시간 (datetime.datetime)
         ratio_table: [(시작HH:MM, 종료HH:MM(미포함), 비율), ...] 형태의 테이블
         fallback_ratio: 매칭되는 시간대가 없을 때 사용할 기본값 (상위 min_wave_atr_ratio)
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
 
     Returns:
         해당 시간대의 min_wave_atr_ratio. 매칭되는 시간대가 없으면 fallback_ratio 반환
     """
+    _now = now_fn if now_fn is not None else datetime.datetime.now
     if not ratio_table:
         return fallback_ratio
 
@@ -4151,7 +4158,7 @@ def _get_time_based_atr_ratio(current_time: datetime.datetime, ratio_table: List
     if isinstance(current_time, str):
         # HH:MM 형식인 경우 오늘 날짜를 추가
         if ":" in current_time and len(current_time) <= 5:
-            today = datetime.datetime.now().date()
+            today = _now().date()
             current_time = datetime.datetime.combine(today, datetime.datetime.strptime(current_time, "%H:%M").time())
         else:
             current_time = pd.Timestamp(current_time).to_pydatetime()

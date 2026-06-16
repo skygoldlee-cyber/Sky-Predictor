@@ -6,6 +6,7 @@ import sys
 import logging
 from datetime import datetime
 from itertools import product
+from typing import Callable, Optional
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
@@ -1007,9 +1008,17 @@ def generate_optimization_report(results: pd.DataFrame, best_params: dict,
     
     return "\n".join(report)
 
-def save_optimization_report(report: str, symbol: str, config_type: str):
-    """최적화 리포트 저장 (Phase 4)"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+def save_optimization_report(report: str, symbol: str, config_type: str, now_fn: Optional[Callable[[], datetime]] = None):
+    """최적화 리포트 저장 (Phase 4)
+
+    Args:
+        report: 리포트 내용
+        symbol: 심볼명
+        config_type: 설정 타입
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+    timestamp = _now().strftime("%Y%m%d_%H%M%S")
     filename = f"optimization_report_{symbol}_{config_type}_{timestamp}.txt"
     report_dir = os.path.join(os.path.dirname(__file__), '../../reports')
     
@@ -1282,8 +1291,14 @@ def update_config_with_session_table(session_table: list, config_type: str):
 # ──────────────────────────────────────────────
 # 엔트리포인트
 # ──────────────────────────────────────────────
-if __name__ == '__main__':
-    t0 = datetime.now()
+def main(now_fn: Optional[Callable[[], datetime]] = None):
+    """메인 함수
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+    t0 = _now()
 
     # 사용자 입력 받기
     print(f"\n{'='*80}")
@@ -1606,12 +1621,12 @@ if __name__ == '__main__':
             if use_report and kospi_cv_results is not None:
                 kospi_report = generate_optimization_report(kospi_cv_results, kospi_best, 'kospi', 'kospi_zigzag')
                 print(kospi_report)
-                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag')
+                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag', now_fn)
             
             if use_report and kp200_cv_results is not None:
                 kp200_report = generate_optimization_report(kp200_cv_results, kp200_best, 'kp200', 'futures_zigzag')
                 print(kp200_report)
-                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag')
+                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag', now_fn)
         elif use_time_based:
             # 시간대별 최적화
             kospi_time_results = optimize_time_based_parameters('kospi', 'kospi_zigzag', n_jobs,
@@ -1654,12 +1669,12 @@ if __name__ == '__main__':
             if use_report and kospi_train is not None:
                 kospi_report = generate_optimization_report(kospi_train, kospi_best, 'kospi', 'kospi_zigzag')
                 print(kospi_report)
-                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag')
+                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag', now_fn)
             
             if use_report and kp200_train is not None:
                 kp200_report = generate_optimization_report(kp200_train, kp200_best, 'kp200', 'futures_zigzag')
                 print(kp200_report)
-                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag')
+                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag', now_fn)
         else:
             # Phase 4 기본 (확장 파라미터 + 배치 처리 + 리포트)
             test_ratio_input = input("  테스트 비율 (기본값 0.2): ").strip()
@@ -1687,12 +1702,12 @@ if __name__ == '__main__':
             if use_report and kospi_train is not None:
                 kospi_report = generate_optimization_report(kospi_train, kospi_best, 'kospi', 'kospi_zigzag')
                 print(kospi_report)
-                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag')
+                save_optimization_report(kospi_report, 'kospi', 'kospi_zigzag', now_fn)
             
             if use_report and kp200_train is not None:
                 kp200_report = generate_optimization_report(kp200_train, kp200_best, 'kp200', 'futures_zigzag')
                 print(kp200_report)
-                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag')
+                save_optimization_report(kp200_report, 'kp200', 'futures_zigzag', now_fn)
 
     # config.json 업데이트 (사용자 확인 후)
     print(f"\n{'='*80}")
@@ -1759,7 +1774,11 @@ if __name__ == '__main__':
         if response == 'y':
             update_config_json(kp200_best, 'futures_zigzag')
 
-    elapsed = (datetime.now() - t0).total_seconds()
+    elapsed = (_now() - t0).total_seconds()
     print(f"\n{'='*80}")
     print(f"시뮬레이션 완료  |  총 소요시간: {elapsed:.1f}초")
     print(f"{'='*80}")
+
+
+if __name__ == '__main__':
+    main()

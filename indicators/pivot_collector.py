@@ -33,7 +33,7 @@ import pickle
 import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import uuid
 
 _logger = logging.getLogger(__name__)
@@ -85,11 +85,12 @@ class PivotCandidateCollector:
     전체 히스토리를 수집합니다.
     """
     
-    def __init__(self, max_sequence_length: int = 120):
+    def __init__(self, max_sequence_length: int = 120, now_fn: Optional[Callable[[], datetime]] = None):
         """초기화.
 
         Args:
             max_sequence_length: 시계열 최대 길이 (봉수)
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.max_sequence_length = max_sequence_length
         self.active_candidates: Dict[str, CandidateRecord] = {}
@@ -98,6 +99,7 @@ class PivotCandidateCollector:
         self._callback = None  # 피봇 후보 알림 콜백
         self._last_alert_time: Dict[str, float] = {}  # candidate_id -> last_alert_time
         self._change_cooldown_sec = 60.0  # 변경 이벤트 쿨다운 (초)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
     
     def enable(self):
         """수집 활성화."""
@@ -154,7 +156,7 @@ class PivotCandidateCollector:
             return
         
         # 날짜 추출 (timestamp에서)
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        date_str = self._now_fn().strftime("%Y-%m-%d")
         
         record = CandidateRecord(
             candidate_id=candidate_id,
@@ -429,7 +431,7 @@ class PivotCandidateCollector:
             data = {
                 "completed_candidates": [asdict(r) for r in self.completed_candidates],
                 "statistics": self.get_statistics(),
-                "saved_at": datetime.now().isoformat(),
+                "saved_at": self._now_fn().isoformat(),
             }
             
             with open(path, 'wb') as f:
