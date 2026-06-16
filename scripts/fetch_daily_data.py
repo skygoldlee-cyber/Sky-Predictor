@@ -5,6 +5,11 @@ config.json의 target_date를 사용하여 해당 날짜의 분봉 데이터를 
 - t8415: KOSPI200 선물 분봉 데이터
 - t8418: KOSPI 지수 분봉 데이터
 
+TR 코드 변경 주의사항:
+- 일부 환경에서는 t8415 → t8465, t8418 → t8427로 변경되었을 수 있음
+- ebest API 문서를 확인하여 현재 사용 가능한 TR 코드 확인 필요
+- TR 코드 변경 시 해당 함수의 request("t8415", req) 부분 수정 필요
+
 사용법:
     python scripts/fetch_daily_data.py                              # config.json의 target_date 사용
     python scripts/fetch_daily_data.py --target-date 20260514       # 인자로 target_date 지정
