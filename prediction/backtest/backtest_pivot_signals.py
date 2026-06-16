@@ -27,7 +27,7 @@ Usage:
 import json
 import logging
 import pandas as pd
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
@@ -84,13 +84,15 @@ class BacktestResult:
 class PivotSignalBacktester:
     """피봇 신호 백테스터."""
     
-    def __init__(self, config: Optional[BacktestConfig] = None):
+    def __init__(self, config: Optional[BacktestConfig] = None, now_fn: Optional[Callable[[], datetime]] = None):
         """초기화.
-        
+
         Args:
             config: 백테스팅 설정
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.config = config or BacktestConfig()
+        self._now_fn = now_fn if now_fn is not None else datetime.now
     
     def run_backtest(
         self,
@@ -623,7 +625,7 @@ class PivotSignalBacktester:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = self._now_fn().strftime("%Y%m%d_%H%M%S")
             filename = f"backtest_full_{timestamp}.json"
 
         output_path = output_dir / filename
@@ -675,7 +677,7 @@ class PivotSignalBacktester:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = self._now_fn().strftime("%Y%m%d_%H%M%S")
             filename = f"backtest_trades_{timestamp}.csv"
 
         output_path = output_dir / filename
@@ -723,14 +725,14 @@ class PivotSignalBacktester:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = self._now_fn().strftime("%Y%m%d_%H%M%S")
             filename = f"backtest_summary_{timestamp}.json"
 
         output_path = output_dir / filename
 
         # 요약 결과
         summary = {
-            "backtest_date": datetime.now().isoformat(),
+            "backtest_date": self._now_fn().isoformat(),
             "total_trades": result.total_trades,
             "win_trades": result.win_trades,
             "loss_trades": result.loss_trades,
@@ -782,7 +784,7 @@ class PivotSignalBacktester:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if timestamp is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = self._now_fn().strftime("%Y%m%d_%H%M%S")
 
         # 각 파일명 생성
         full_filename = f"backtest_full_{timestamp}.json"

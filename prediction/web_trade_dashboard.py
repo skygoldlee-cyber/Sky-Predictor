@@ -10,7 +10,7 @@ Usage:
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import Callable, List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,12 +19,17 @@ _logger = logging.getLogger(__name__)
 
 class TradeDashboard:
     """거래 모니터링 대시보드."""
-    
-    def __init__(self):
-        """초기화."""
+
+    def __init__(self, now_fn: Optional[Callable[[], datetime]] = None):
+        """초기화.
+
+        Args:
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+        """
         self._position_tracker = None
         self._trade_logger = None
         self._trade_database = None
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         _logger.info("[DASHBOARD] 대시보드 초기화")
     
     def _get_position_tracker(self):
@@ -98,8 +103,8 @@ class TradeDashboard:
         db = self._get_trade_database()
         if db is None:
             return {}
-        
-        end_date = datetime.now()
+
+        end_date = self._now_fn()
         start_date = end_date - timedelta(days=days)
         
         try:
@@ -160,7 +165,7 @@ class TradeDashboard:
             return []
         
         try:
-            end_date = datetime.now()
+            end_date = self._now_fn()
             start_date = end_date - timedelta(days=30)
             trades = db.query_trades(start_date, end_date)
             
@@ -183,7 +188,7 @@ class TradeDashboard:
             "daily_pnl": self.get_daily_pnl(),
             "risk_metrics": self.get_risk_metrics(),
             "recent_trades": self.get_recent_trades(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": self._now_fn().isoformat()
         }
     
     def run_api(self, host: str = "127.0.0.1", port: int = 8000):

@@ -12,7 +12,7 @@ Usage:
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Callable, Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -35,15 +35,17 @@ class NotificationConfig:
 
 class TradeNotifier:
     """거래 알림 통합."""
-    
-    def __init__(self, config: Optional[NotificationConfig] = None):
+
+    def __init__(self, config: Optional[NotificationConfig] = None, now_fn: Optional[Callable[[], datetime]] = None):
         """초기화.
-        
+
         Args:
             config: 알림 설정
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.config = config or NotificationConfig()
         self._telegram_client = None
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         
         if self.config.enabled and self.config.telegram_enabled:
             self._init_telegram()
@@ -134,7 +136,7 @@ class TradeNotifier:
         message += f"손절: {stop_loss:.2f}\n"
         message += f"이익실현: {take_profit:.2f}\n"
         message += "━━━━━━━━━━━━━━━━━━\n"
-        message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        message += f"시간: {self._now_fn().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message
     
@@ -153,7 +155,7 @@ class TradeNotifier:
         message += f"사유: {reason}\n"
         message += f"손익: {pnl:,.0f}원 ({pnl/abs(pnl)*100:.2f}%)\n"
         message += "━━━━━━━━━━━━━━━━━━\n"
-        message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        message += f"시간: {self._now_fn().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message
     
@@ -174,7 +176,7 @@ class TradeNotifier:
         message += f"미실현 손익: {unrealized_pnl_pct:.2f}%\n"
         message += f"사유: {reason}\n"
         message += "━━━━━━━━━━━━━━━━━━\n"
-        message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        message += f"시간: {self._now_fn().strftime('%Y-%m-%d %H:%M:%S')}"
         
         return message
     

@@ -28,7 +28,7 @@ from collections import deque
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 # [SSOT] config.py 헬퍼 — AdaptiveZigZagSettings 경유 AdaptiveZigZagConfig 생성
@@ -198,6 +198,7 @@ class PredictionPipeline(
         dual_llm_primary_provider: str = "gpt",
         notifier: Any = None,
         tick_provider: "Optional[TickDataProvider]" = None,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ):
         """Create a new pipeline instance.
 
@@ -272,6 +273,7 @@ class PredictionPipeline(
             pcr_atm_strikes_each_side=pcr_atm_strikes_each_side,
             option_minute_ohlcv=option_minute_ohlcv,
             notifier=notifier,
+            now_fn=now_fn,
         )
         
         self._build_components(
@@ -367,8 +369,10 @@ class PredictionPipeline(
         pcr_atm_strikes_each_side: int,
         option_minute_ohlcv: Optional[dict],
         notifier: Any,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ) -> None:
         """파라미터 초기화 및 검증."""
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         self._prediction_minutes = int(prediction_minutes or 5)
         self._config_path = str(config_path or "config.json")
         self._use_llm = bool(use_llm)

@@ -27,7 +27,7 @@ import logging
 import gzip
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -166,6 +166,7 @@ def build_dataset(
     config_path: str = "config.json",
     min_profit_ticks: float = 1.5,
     multiscale_5m: bool = False,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> Tuple[np.ndarray, np.ndarray] | Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Build (X, y) from jsonl files.
 
@@ -180,6 +181,7 @@ def build_dataset(
 
     seq_len = int(seq_len)
     horizon_min = int(horizon_min)
+    _now = now_fn if now_fn is not None else datetime.now
 
     cfg = None
     try:
@@ -756,7 +758,7 @@ def build_dataset(
                                 first_date = sorted(minute_ohlcv.keys())[0]
                                 date_str = first_date.strftime("%Y-%m-%d")
                             else:
-                                date_str = datetime.now().strftime("%Y-%m-%d")
+                                date_str = _now().strftime("%Y-%m-%d")
                             
                             # 결과 데이터 구성
                             result = {
@@ -1142,7 +1144,7 @@ def build_dataset(
         try:
             kospi_output_dir = Path("data/kospi_ohlcv")
             kospi_output_dir.mkdir(parents=True, exist_ok=True)
-            kospi_output_file = kospi_output_dir / f"kospi_1m_{datetime.now().strftime('%Y%m%d')}.csv"
+            kospi_output_file = kospi_output_dir / f"kospi_1m_{_now().strftime('%Y%m%d')}.csv"
             candle_df_kospi.to_csv(kospi_output_file)
             logger.info("[KOSPI] OHLCV 저장 완료: %s (%d rows)", kospi_output_file, len(candle_df_kospi))
         except Exception as e:
@@ -1155,9 +1157,13 @@ def build_dataset(
     return X, y
 
 
-def main() -> None:
+def main(now_fn: Optional[Callable[[], datetime]] = None) -> None:
     """main.
-"""
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
     parser = argparse.ArgumentParser()
@@ -1203,6 +1209,7 @@ def main() -> None:
             config_path=str(args.config or "config.json"),
             min_profit_ticks=float(getattr(args, "min_profit_ticks", 1.5) or 1.5),
             multiscale_5m=_ms5,
+            now_fn=now_fn,
         )
         try:
             metadata = {
@@ -1221,7 +1228,7 @@ def main() -> None:
                 "opt_keys": list(get_opt_keys(str(option_feature_set or "v1"))),
                 "ms5_keys": list(MS5_KEYS) if _ms5 else [],
                 "adapt_keys": list(ADAPT_KEYS) if bool(adaptive_enabled) else [],
-                "created_at": datetime.now().isoformat(),
+                "created_at": _now().isoformat(),
             }
             meta_s = json.dumps(metadata, ensure_ascii=False)
         except Exception:
@@ -1236,6 +1243,7 @@ def main() -> None:
             config_path=str(args.config or "config.json"),
             min_profit_ticks=float(getattr(args, "min_profit_ticks", 1.5) or 1.5),
             multiscale_5m=_ms5,
+            now_fn=now_fn,
         )
         try:
             metadata = {
@@ -1253,7 +1261,7 @@ def main() -> None:
                 "opt_keys": list(get_opt_keys(str(option_feature_set or "v1"))),
                 "ms5_keys": list(MS5_KEYS) if _ms5 else [],
                 "adapt_keys": list(ADAPT_KEYS) if bool(adaptive_enabled) else [],
-                "created_at": datetime.now().isoformat(),
+                "created_at": _now().isoformat(),
             }
             meta_s = json.dumps(metadata, ensure_ascii=False)
         except Exception:

@@ -43,7 +43,7 @@ Usage:
 
 import logging
 import sqlite3
-from typing import List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -54,13 +54,15 @@ _logger = logging.getLogger(__name__)
 class PivotParameterDB:
     """피봇 파라미터 데이터베이스."""
     
-    def __init__(self, db_path: str = "data/pivot_parameters.db"):
+    def __init__(self, db_path: str = "data/pivot_parameters.db", now_fn: Optional[Callable[[], datetime]] = None):
         """초기화.
-        
+
         Args:
             db_path: 데이터베이스 파일 경로
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.db_path = db_path
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         # 디렉토리 생성
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         
@@ -276,9 +278,9 @@ class PivotParameterDB:
             최적 파라미터 딕셔너리
         """
         cursor = self.conn.cursor()
-        
+
         # 날짜 범위 계산
-        end_date = datetime.now()
+        end_date = self._now_fn()
         start_date = end_date - timedelta(days=lookback_days)
         
         query = """
@@ -361,9 +363,9 @@ class PivotParameterDB:
                 end_date = datetime.strptime(as_of_date, "%Y-%m-%d")
             except ValueError:
                 _logger.warning("[PIVOT_PARAM_DB] as_of_date 파싱 실패(%s), 현재시각 사용", as_of_date)
-                end_date = datetime.now()
+                end_date = self._now_fn()
         else:
-            end_date = datetime.now()
+            end_date = self._now_fn()
         start_date = end_date - timedelta(days=lookback_days)
         
         query = """
@@ -653,8 +655,8 @@ class PivotParameterDB:
             days_to_keep: 보유 기간 (일)
         """
         cursor = self.conn.cursor()
-        
-        cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+
+        cutoff_date = self._now_fn() - timedelta(days=days_to_keep)
         
         cursor.execute(
             "DELETE FROM pivot_parameters_daily WHERE date < ?",

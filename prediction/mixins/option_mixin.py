@@ -23,7 +23,7 @@ class OptionMixin:
     def _build_option_tick_flow_snapshot(self, *, current_price: Optional[float] = None) -> Dict[str, float]:
         """옵션 틱 유입 강도 스냅샷(1분 카운트/20분 평균/배수)을 계산한다."""
         try:
-            now_min = datetime.now().replace(second=0, microsecond=0)
+            now_min = self._now_fn().replace(second=0, microsecond=0)
             call_ticks = int(getattr(self.tick_processor, "call_option_ticks", 0) or 0)
             put_ticks = int(getattr(self.tick_processor, "put_option_ticks", 0) or 0)
             total_ticks = int(call_ticks + put_ticks)

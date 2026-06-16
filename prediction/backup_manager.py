@@ -17,7 +17,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Callable, Optional, List
 from dataclasses import dataclass
 import threading
 import time
@@ -41,22 +41,25 @@ class BackupManager:
         self,
         log_dir: Optional[Path] = None,
         backup_dir: Optional[Path] = None,
-        max_backups: int = 30
+        max_backups: int = 30,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ):
         """초기화.
-        
+
         Args:
             log_dir: 로그 디렉토리 (기본: logs/trades)
             backup_dir: 백업 디렉토리 (기본: logs/backups)
             max_backups: 최대 백업 보관 수 (기본: 30)
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.log_dir = log_dir or Path("logs/trades")
         self.backup_dir = backup_dir or Path("logs/backups")
         self.max_backups = max_backups
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         self._backup_thread: Optional[threading.Thread] = None
         self._backup_running = False
-        logger.info("[BackupManager] 초기화 완료: log_dir=%s, backup_dir=%s", 
+        logger.info("[BackupManager] 초기화 완료: log_dir=%s, backup_dir=%s",
                    self.log_dir, self.backup_dir)
     
     def create_backup(self) -> Optional[str]:
@@ -71,7 +74,7 @@ class BackupManager:
                 return None
             
             # 백업 이름 생성
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            timestamp = self._now_fn().strftime("%Y-%m-%d_%H%M%S")
             backup_name = f"backup_{timestamp}"
             backup_path = self.backup_dir / backup_name
             
@@ -131,7 +134,7 @@ class BackupManager:
                 return False
             
             # 현재 로그 백업
-            current_backup = self.log_dir / f"pre_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            current_backup = self.log_dir / f"pre_restore_{self._now_fn().strftime('%Y%m%d_%H%M%S')}"
             if self.log_dir.exists():
                 shutil.copytree(self.log_dir, current_backup)
                 logger.info("[BackupManager] 현재 로그 백업 완료: %s", current_backup)

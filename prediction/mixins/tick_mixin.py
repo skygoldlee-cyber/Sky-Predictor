@@ -338,7 +338,7 @@ class TickMixin:
     def _get_now_dt(self, *, now_override: Any = None) -> datetime:
         now_dt = now_override
         if not isinstance(now_dt, datetime):
-            now_dt = datetime.now()
+            now_dt = self._now_fn()
         return now_dt
 
     def _update_fc0_stale_detection(self) -> None:

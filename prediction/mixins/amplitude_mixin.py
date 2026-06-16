@@ -56,7 +56,7 @@ class AmplitudeMixin:
 
             now_dt = None
             try:
-                now_dt = datetime.now()
+                now_dt = self._now_fn()
             except Exception:
                 return
 

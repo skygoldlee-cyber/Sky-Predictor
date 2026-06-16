@@ -620,6 +620,7 @@ def build_sequence(
     opt_keys_override: "list[str] | None" = None,
     ms5_features: "dict | None" = None,
     multiscale_features: "dict[str, pd.DataFrame] | None" = None,
+    now_fn: "Callable[[], datetime] | None" = None,
 ) -> np.ndarray:
     """Build a fixed-length 2D feature sequence.
 
@@ -638,6 +639,7 @@ def build_sequence(
     cd_keys = CD_KEYS
     opt_keys = opt_keys_override if opt_keys_override is not None else OPT_KEYS
     adapt_keys = ADAPT_KEYS
+    _now = now_fn if now_fn is not None else datetime.now
 
     ob_arr = np.zeros((seq_len, len(ob_keys)), dtype=np.float32)
     tail = ob_records[-seq_len:] if ob_records else []
@@ -753,7 +755,7 @@ def build_sequence(
 
     time_arr = np.zeros((seq_len, int(FUTURE_KNOWN_DIM)), dtype=np.float32)
     try:
-        last_dt = datetime.now()
+        last_dt = _now()
         for i, rec in enumerate(tail):
             try:
                 ts = float((rec or {}).get("_ts_epoch") or 0.0)

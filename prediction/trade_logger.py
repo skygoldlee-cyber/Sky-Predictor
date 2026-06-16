@@ -9,7 +9,7 @@ Usage:
     logger = TradeLogger()
     logger.log_event(TradeEvent(
         event_type="ENTRY",
-        timestamp=datetime.now(),
+        timestamp=datetime.now(),  # 또는 백테스트용 주입 시간
         action="BUY",
         price=325.50,
         size=1.0,
@@ -24,7 +24,7 @@ import json
 import uuid
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import Callable, Optional, List, Dict
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -137,10 +137,15 @@ class PositionState:
 
 class PositionTracker:
     """포지션 상태 추적."""
-    
-    def __init__(self):
-        """초기화."""
+
+    def __init__(self, now_fn: Optional[Callable[[], datetime]] = None):
+        """초기화.
+
+        Args:
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+        """
         self.positions: Dict[str, PositionState] = {}
+        self._now_fn = now_fn if now_fn is not None else datetime.now
     
     def create_position(
         self,
@@ -169,12 +174,12 @@ class PositionTracker:
             포지션 ID
         """
         position_id = str(uuid.uuid4())
-        
+
         position = PositionState(
             position_id=position_id,
             action=action,
             entry_price=entry_price,
-            entry_time=datetime.now(),
+            entry_time=self._now_fn(),
             size=size,
             confidence=confidence,
             signal_reason=signal_reason,
@@ -247,7 +252,7 @@ class PositionTracker:
         if new_stop != pos.current_stop:
             pos.current_stop = new_stop
             pos.trailing_stops.append({
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": self._now_fn().isoformat(),
                 "new_stop": new_stop,
                 "current_price": current_price,
                 "atr": atr
@@ -293,7 +298,7 @@ class PositionTracker:
         
         pos = self.positions[position_id]
         pos.partial_exits.append({
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": self._now_fn().isoformat(),
             "exit_price": exit_price,
             "exit_size": exit_size,
             "reason": reason
@@ -473,15 +478,17 @@ class PositionTracker:
 
 class TradeLogger:
     """실시간 거래 이벤트 로거."""
-    
-    def __init__(self, log_dir: Path = Path("logs/trades")):
+
+    def __init__(self, log_dir: Path = Path("logs/trades"), now_fn: Optional[Callable[[], datetime]] = None):
         """초기화.
-        
+
         Args:
             log_dir: 로그 디렉토리
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         self.current_log_file = self._get_log_file()
         self.backup_dir = log_dir / "backup"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
@@ -491,7 +498,7 @@ class TradeLogger:
     
     def _get_log_file(self) -> Path:
         """오늘 날짜의 로그 파일 경로 반환."""
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = self._now_fn().strftime("%Y-%m-%d")
         return self.log_dir / f"trades_{today}.jsonl"
     
     def log_event(self, event: TradeEvent):
@@ -535,12 +542,12 @@ class TradeLogger:
     
     def _log_to_backup(self, log_entry: dict):
         """백업 경로에 로그 기록.
-        
+
         Args:
             log_entry: 로그 엔트리
         """
         try:
-            backup_file = self.backup_dir / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"
+            backup_file = self.backup_dir / f"backup_{self._now_fn().strftime('%Y%m%d_%H%M%S')}.jsonl"
             with open(backup_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
             _logger.warning("[TRADE_LOGGER] 백업 경로에 기록: %s", backup_file)
@@ -549,15 +556,15 @@ class TradeLogger:
     
     def _log_error_to_file(self, event: TradeEvent, error: Exception):
         """에러를 별도 파일에 기록.
-        
+
         Args:
             event: 거래 이벤트
             error: 에러 객체
         """
         try:
-            error_file = self.log_dir / f"errors_{datetime.now().strftime('%Y-%m-%d')}.log"
+            error_file = self.log_dir / f"errors_{self._now_fn().strftime('%Y-%m-%d')}.log"
             with open(error_file, "a", encoding="utf-8") as f:
-                f.write(f"[{datetime.now().isoformat()}] ERROR: {type(error).__name__}: {error}\n")
+                f.write(f"[{self._now_fn().isoformat()}] ERROR: {type(error).__name__}: {error}\n")
                 f.write(f"Event: {event.to_dict()}\n")
                 f.write("-" * 80 + "\n")
         except Exception as e:
@@ -614,7 +621,7 @@ class TradeLogger:
         """
         event = TradeEvent(
             event_type="ENTRY",
-            timestamp=datetime.now(),
+            timestamp=self._now_fn(),
             action=action,
             price=price,
             size=size,
@@ -648,7 +655,7 @@ class TradeLogger:
         """
         event = TradeEvent(
             event_type="EXIT",
-            timestamp=datetime.now(),
+            timestamp=self._now_fn(),
             action=action,
             price=price,
             size=size,
@@ -675,7 +682,7 @@ class TradeLogger:
         """
         event = TradeEvent(
             event_type="TRAILING_STOP",
-            timestamp=datetime.now(),
+            timestamp=self._now_fn(),
             action="",
             price=current_price,
             size=0.0,
@@ -685,10 +692,10 @@ class TradeLogger:
             position_id=position_id,
             atr=atr
         )
-        
+
         # 트레일링 스탑 기록
         trailing_stop_record = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": self._now_fn().isoformat(),
             "new_stop": new_stop,
             "current_price": current_price,
             "atr": atr
@@ -710,7 +717,7 @@ class TradeLogger:
         """
         event = TradeEvent(
             event_type="ATR_SNAPSHOT",
-            timestamp=datetime.now(),
+            timestamp=self._now_fn(),
             action="",
             price=0.0,
             size=0.0,
@@ -755,7 +762,7 @@ class TradeLogger:
             confidence: 신뢰도
         """
         event = RiskMetricsEvent(
-            timestamp=datetime.now(),
+            timestamp=self._now_fn(),
             position_id=position_id,
             current_price=current_price,
             atr=atr,
@@ -771,7 +778,7 @@ class TradeLogger:
         )
         
         # 리스크 메트릭은 별도 파일에 저장
-        risk_log_file = self.log_dir / f"risk_metrics_{datetime.now().strftime('%Y-%m-%d')}.jsonl"
+        risk_log_file = self.log_dir / f"risk_metrics_{self._now_fn().strftime('%Y-%m-%d')}.jsonl"
         with open(risk_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
         

@@ -30,7 +30,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -139,6 +139,7 @@ class TransformerQualityTracker:
         alert_ece_threshold: float = ALERT_ECE_THRESHOLD,
         alert_cooldown_sec: float = ALERT_COOLDOWN_SEC,
         min_samples_for_alert: int = MIN_SAMPLES_FOR_ALERT,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self._notifier = notifier
         self._ece_window = max(10, int(ece_window))
@@ -147,6 +148,7 @@ class TransformerQualityTracker:
         self._alert_ece_threshold = float(alert_ece_threshold)
         self._alert_cooldown_sec = float(alert_cooldown_sec)
         self._min_samples = max(1, int(min_samples_for_alert))
+        self._now_fn = now_fn if now_fn is not None else datetime.now
 
         self._lock = threading.Lock()
 
@@ -308,7 +310,7 @@ class TransformerQualityTracker:
             alert, reason = self._check_alert_condition(d)
 
             return QualitySnapshot(
-                timestamp=datetime.now().isoformat(timespec="seconds"),
+                timestamp=self._now_fn().isoformat(timespec="seconds"),
                 today_accuracy=round(d.accuracy, 4),
                 today_total=d.total,
                 today_brier=round(d.mean_brier, 4),
