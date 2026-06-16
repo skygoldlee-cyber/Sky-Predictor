@@ -6,12 +6,15 @@ config.json의 target_date를 사용하여 해당 날짜의 분봉 데이터를 
 - t8418: KOSPI 지수 분봉 데이터
 
 사용법:
-    python scripts/fetch_daily_data.py              # 장마감 이후에만 실행
-    python scripts/fetch_daily_data.py --force      # 장마감 전에도 강제 실행
+    python scripts/fetch_daily_data.py                              # config.json의 target_date 사용
+    python scripts/fetch_daily_data.py --target-date 20260514       # 인자로 target_date 지정
+    python scripts/fetch_daily_data.py --force                       # 장마감 전에도 강제 실행
+    python scripts/fetch_daily_data.py --target-date 20260514 --force  # 인자 + 강제 실행
 
 요구사항:
     - config.secrets.json에 ebest 자격증명 (appkey, appsecretkey) 설정 필요
-    - config.json에 target_date 설정 필요 (kp200_upcode는 API에서 자동 조회, kospi_upcode는 '001' 고정)
+    - config.json에 target_date 설정 필요 (인자로 지정 시 생략 가능)
+    - kp200_upcode는 API에서 자동 조회, kospi_upcode는 '001' 고정
     - ebest 모듈 (ebest.OpenApi) 설치 필요
     - ebest API 연결 가능한 환경 필요
     - data/daily_bars/ 디렉토리에 CSV 저장
@@ -37,6 +40,7 @@ config.json 예시:
 """
 
 import asyncio
+import argparse
 import json
 import sys
 import warnings
@@ -77,8 +81,8 @@ for logger_name in ['aiohttp', 'aiohttp.client', 'aiohttp.internal', 'asyncio']:
 warnings.filterwarnings("ignore", category=ResourceWarning, message="Unclosed.*session")
 
 
-async def fetch_and_save_daily_data():
-    """config.json의 target_date로 t8415/t8418 데이터 수집 및 저장"""
+async def fetch_and_save_daily_data(target_date: str = None):
+    """config.json의 target_date 또는 인자로 받은 target_date로 t8415/t8418 데이터 수집 및 저장"""
     
     # config.json 로드 (target_date 등 일반 설정)
     config_path = Path(__file__).parent.parent / 'config.json'
@@ -97,7 +101,10 @@ async def fetch_and_save_daily_data():
     ebest_config = config.get('ebest', {})
     ebest_secrets = secrets.get('ebest', {})
     
-    target_date = ebest_config.get('target_date', datetime.now().strftime('%Y%m%d'))
+    # 인자로 target_date가 제공되면 우선 사용, 아니면 config.json 값 사용
+    if target_date is None:
+        target_date = ebest_config.get('target_date', datetime.now().strftime('%Y%m%d'))
+    
     kp200_upcode = ebest_config.get('kp200_upcode', 'A0166000')  # fallback
     kospi_upcode = '001'  # KOSPI 지수 코드는 항상 '001'
     
@@ -221,6 +228,20 @@ async def fetch_and_save_daily_data():
 
 def main():
     """메인 함수"""
+    parser = argparse.ArgumentParser(description='장마감 이후 t8415/t8418 데이터 수집')
+    parser.add_argument('--target-date', type=str, help='목표 날짜 (YYYYMMDD 형식)')
+    parser.add_argument('--force', action='store_true', help='장마감 전에도 강제 실행')
+    
+    args = parser.parse_args()
+    
+    # 인자로 target_date가 제공되면 형식 검증
+    if args.target_date:
+        try:
+            datetime.strptime(args.target_date, '%Y%m%d')
+        except ValueError:
+            logger.error(f"target_date 형식 오류: {args.target_date} (YYYYMMDD 형식 필요)")
+            return
+    
     logger.info("="*80)
     logger.info("장마감 이후 t8415/t8418 데이터 수집 시작")
     logger.info("="*80)
@@ -229,17 +250,15 @@ def main():
     now = datetime.now()
     market_close = now.replace(hour=15, minute=30, second=0, microsecond=0)
     
-    if now < market_close:
+    if now < market_close and not args.force:
         logger.warning(f"현재 시간: {now.strftime('%H:%M:%S')}")
         logger.warning("장마감 시간: 15:30")
         logger.warning("장마감 이후에 실행해야 합니다.")
         logger.warning("강제 실행하려면 --force 옵션을 사용하세요.")
-        
-        if '--force' not in sys.argv:
-            return
+        return
     
-    # 비동기 실행
-    asyncio.run(fetch_and_save_daily_data())
+    # 비동기 실행 (인자로 target_date 전달)
+    asyncio.run(fetch_and_save_daily_data(target_date=args.target_date))
 
 
 if __name__ == '__main__':
