@@ -371,26 +371,26 @@ class ParameterTuner:
         if not self.results:
             _logger.warning("[TUNER] 결과가 없습니다.")
             return
-        
-        print("\n" + "=" * 80)
-        print(f"파라미터 튜닝 결과 (상위 {top_n}개)")
-        print("=" * 80)
-        
+
+        _logger.info("=" * 80)
+        _logger.info(f"파라미터 튜닝 결과 (상위 {top_n}개)")
+        _logger.info("=" * 80)
+
         for i, result in enumerate(self.results[:top_n], 1):
-            print(f"\n#{i} (Score: {result.score:.4f})")
-            print("-" * 80)
-            print("파라미터:")
+            _logger.info(f"#{i} (Score: {result.score:.4f})")
+            _logger.info("-" * 80)
+            _logger.info("파라미터:")
             for key, value in result.params.items():
-                print(f"  {key}: {value}")
-            print("\n성능:")
-            print(f"  총 거래: {result.total_trades}")
-            print(f"  승률: {result.win_rate:.2%}")
-            print(f"  총 수익: {result.total_profit_pct:.2f}%")
-            print(f"  평균 수익/거래: {result.avg_profit_pct_per_trade:.2f}%")
-            print(f"  최대 낙폭: {result.max_drawdown_pct:.2f}%")
-            print(f"  Sharpe Ratio: {result.sharpe_ratio:.2f}")
-        
-        print("\n" + "=" * 80)
+                _logger.info(f"  {key}: {value}")
+            _logger.info("성능:")
+            _logger.info(f"  총 거래: {result.total_trades}")
+            _logger.info(f"  승률: {result.win_rate:.2%}")
+            _logger.info(f"  총 수익: {result.total_profit_pct:.2f}%")
+            _logger.info(f"  평균 수익/거래: {result.avg_profit_pct_per_trade:.2f}%")
+            _logger.info(f"  최대 낙폭: {result.max_drawdown_pct:.2f}%")
+            _logger.info(f"  Sharpe Ratio: {result.sharpe_ratio:.2f}")
+
+        _logger.info("=" * 80)
     
     def save_results(self, output_file: Path):
         """결과 저장.
@@ -518,15 +518,15 @@ def main():
     
     # 결과 저장
     tuner.save_results(Path(args.output))
-    
+
     # 최적 파라미터 출력
     best_params = tuner.get_best_params()
     if best_params:
-        print("\n" + "=" * 80)
-        print("최적 파라미터 (config.json에 적용):")
-        print("=" * 80)
-        print(json.dumps(best_params, indent=2, ensure_ascii=False))
-        print("=" * 80)
+        _logger.info("=" * 80)
+        _logger.info("최적 파라미터 (config.json에 적용):")
+        _logger.info("=" * 80)
+        _logger.info(json.dumps(best_params, indent=2, ensure_ascii=False))
+        _logger.info("=" * 80)
 
 
 if __name__ == "__main__":

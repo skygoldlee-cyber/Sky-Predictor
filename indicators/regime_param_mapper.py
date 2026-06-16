@@ -579,7 +579,7 @@ if __name__ == "__main__":
     # --- RegimeParamMapper 단독 테스트 ---
     mapper = RegimeParamMapper(symbol="futures", classify_interval_bars=5)
 
-    print("\n=== RegimeParamMapper 파라미터 출력 (최근 50봉 기준) ===")
+    logger.info("=== RegimeParamMapper 파라미터 출력 (최근 50봉 기준) ===")
     for i in [50, 100, 150, 199]:
         params = mapper.get_adaptive_params(
             df.iloc[max(0, i - 50): i + 1].copy(),
@@ -588,7 +588,7 @@ if __name__ == "__main__":
         state = mapper.current_state
         regime_str = mapper.stable_regime.value if state else "미분류"
         conf_str = f"{state.confidence:.2f}" if state else "N/A"
-        print(
+        logger.info(
             f"  봉={i:3d}  regime={regime_str:25s}  conf={conf_str}"
             f"  → atr_mult={params['atr_multiplier']:.3f}"
             f"  conf_bars={params['confirmation_bars']}"

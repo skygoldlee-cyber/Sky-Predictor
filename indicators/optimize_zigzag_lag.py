@@ -34,22 +34,22 @@ def load_saved_minute_data(symbol: str) -> pd.DataFrame:
 # ──────────────────────────────────────────────
 def print_data_summary(df: pd.DataFrame, symbol: str, atr_period: int = 14):
     """데이터프레임 요약 정보 출력"""
-    print(f"\n{'='*80}")
-    print(f"[데이터 요약] {symbol.upper()}")
-    print(f"{'='*80}")
+    logger.info(f"{'='*80}")
+    logger.info(f"[데이터 요약] {symbol.upper()}")
+    logger.info(f"{'='*80}")
 
     # 기본 정보
-    print("\n[기본 정보]")
-    print(f"  데이터 크기: {len(df):,} 봉")
-    print(f"  기간: {df.index[0]} ~ {df.index[-1]}")
-    print(f"  거래일 수: {len(df.index.date)}일")
+    logger.info("[기본 정보]")
+    logger.info(f"  데이터 크기: {len(df):,} 봉")
+    logger.info(f"  기간: {df.index[0]} ~ {df.index[-1]}")
+    logger.info(f"  거래일 수: {len(df.index.date)}일")
 
     # 가격 통계
-    print("\n[가격 통계]")
-    print(f"  종가 범위: {df['Close'].min():.2f} ~ {df['Close'].max():.2f}")
-    print(f"  종가 평균: {df['Close'].mean():.2f}")
-    print(f"  종가 표준편차: {df['Close'].std():.2f}")
-    print(f"  총 변동률: {(df['Close'].iloc[-1] / df['Close'].iloc[0] - 1) * 100:.2f}%")
+    logger.info("[가격 통계]")
+    logger.info(f"  종가 범위: {df['Close'].min():.2f} ~ {df['Close'].max():.2f}")
+    logger.info(f"  종가 평균: {df['Close'].mean():.2f}")
+    logger.info(f"  종가 표준편차: {df['Close'].std():.2f}")
+    logger.info(f"  총 변동률: {(df['Close'].iloc[-1] / df['Close'].iloc[0] - 1) * 100:.2f}%")
 
     # ATR 계산
     try:
@@ -65,31 +65,31 @@ def print_data_summary(df: pd.DataFrame, symbol: str, atr_period: int = 14):
         atr = pd.Series(tr).rolling(window=atr_period).mean().iloc[-1]
         atr_pct = atr / df['Close'].iloc[-1] * 100
 
-        print(f"\n[ATR 통계 (기간: {atr_period})]")
-        print(f"  ATR: {atr:.4f}")
-        print(f"  ATR (%): {atr_pct:.2f}%")
-        print(f"  평균 ATR (전체): {tr[atr_period:].mean():.4f}")
-        print(f"  ATR 표준편차: {tr[atr_period:].std():.4f}")
+        logger.info(f"[ATR 통계 (기간: {atr_period})]")
+        logger.info(f"  ATR: {atr:.4f}")
+        logger.info(f"  ATR (%): {atr_pct:.2f}%")
+        logger.info(f"  평균 ATR (전체): {tr[atr_period:].mean():.4f}")
+        logger.info(f"  ATR 표준편차: {tr[atr_period:].std():.4f}")
     except Exception as e:
-        print(f"\n[ATR 통계] 계산 실패: {e}")
+        logger.warning(f"[ATR 통계] 계산 실패: {e}")
 
     # 거래량 통계
     if 'Volume' in df.columns:
-        print("\n[거래량 통계]")
-        print(f"  평균 거래량: {df['Volume'].mean():,.0f}")
-        print(f"  최대 거래량: {df['Volume'].max():,.0f}")
-        print(f"  최소 거래량: {df['Volume'].min():,.0f}")
+        logger.info("[거래량 통계]")
+        logger.info(f"  평균 거래량: {df['Volume'].mean():,.0f}")
+        logger.info(f"  최대 거래량: {df['Volume'].max():,.0f}")
+        logger.info(f"  최소 거래량: {df['Volume'].min():,.0f}")
 
     # 결측치 확인
     missing = df.isnull().sum()
     if missing.sum() > 0:
-        print("\n[결측치]")
+        logger.info("[결측치]")
         for col, count in missing[missing > 0].items():
-            print(f"  {col}: {count}개 ({count/len(df)*100:.2f}%)")
+            logger.info(f"  {col}: {count}개 ({count/len(df)*100:.2f}%)")
     else:
-        print("\n[결측치] 없음")
+        logger.info("[결측치] 없음")
 
-    print(f"{'='*80}")
+    logger.info(f"{'='*80}")
 
 # ──────────────────────────────────────────────
 # Phase 1: 향상된 평가지표
