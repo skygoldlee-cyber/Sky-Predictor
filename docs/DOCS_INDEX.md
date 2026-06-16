@@ -6,7 +6,7 @@
 
 ### 시스템 아키텍처
 - **ARCHITECTURE.md** - 시스템 아키텍처 상세
-- **docs_README.md** - 프로젝트 개요 및 상세 사용 가이드
+- **DOCS_README.md** - 프로젝트 개요 및 상세 사용 가이드
 
 ### 기술 가이드
 - **ADAPTIVE_INDICATOR_GUIDE.md** - 적응형 지표 가이드
@@ -34,9 +34,9 @@
 - **OVERSEAS_FUTURES_RECOMMENDATIONS.md** - 해외 선물 권장사항
 
 ### 튜닝 가이드
-- **regime_zigzag_tuning.md** - 레짐 기반 ZigZag 튜닝
-- **zigzag_tuning.md** - ZigZag 파라미터 튜닝
-- **multi_timeframe_zigzag.md** - 멀티타임프레임 ZigZag
+- **REGIME_ZIGZAG_TUNING.md** - 레짐 기반 ZigZag 튜닝
+- **ZIGZAG_TUNING.md** - ZigZag 파라미터 튜닝
+- **MULTI_TIMEFRAME_ZIGZAG.md** - 멀티타임프레임 ZigZag
 
 ### 진단 문서
 - **CHART_FLICKERING_DIAGNOSIS.md** - 차트 플리커링 진단
