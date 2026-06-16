@@ -336,6 +336,7 @@ class PivotParameterDB:
         lookback_days: int = 30,
         min_pivots: int = 5,
         min_sample: int = 3,
+        as_of_date: Optional[str] = None,
     ) -> Dict[str, Any]:
         """세션·레짐 단위 최적 파라미터 조회 (복합 점수 기반).
         
@@ -346,14 +347,23 @@ class PivotParameterDB:
             lookback_days: 조회 기간 (일)
             min_pivots: 최소 피봇 수
             min_sample: 최소 샘플 수
+            as_of_date: 기준일(YYYY-MM-DD). 지정 시 '이 날짜 미만(<)'의 데이터만
+                조회하여 워크포워드 룩어헤드 누수를 차단한다. None이면 현재시각 기준.
         
         Returns:
             최적 파라미터 딕셔너리
         """
         cursor = self.conn.cursor()
         
-        # 날짜 범위 계산
-        end_date = datetime.now()
+        # 날짜 범위 계산 (as_of_date 지정 시 그 날짜 '미만'만 → 룩어헤드 차단)
+        if as_of_date:
+            try:
+                end_date = datetime.strptime(as_of_date, "%Y-%m-%d")
+            except ValueError:
+                _logger.warning("[PIVOT_PARAM_DB] as_of_date 파싱 실패(%s), 현재시각 사용", as_of_date)
+                end_date = datetime.now()
+        else:
+            end_date = datetime.now()
         start_date = end_date - timedelta(days=lookback_days)
         
         query = """
@@ -381,9 +391,10 @@ class PivotParameterDB:
             FROM pivot_parameters_session
             WHERE symbol = ?
               AND date >= ?
+              AND date < ?
               AND total_pivots >= ?
         """
-        params = [symbol, start_date.strftime("%Y-%m-%d"), min_pivots]
+        params = [symbol, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), min_pivots]
         
         if dominant_regime:
             query += " AND dominant_regime = ?"
@@ -822,8 +833,12 @@ class ParameterRecommender:
         indicator_type: str = "hybrid_adaptive_pivot",
         lookback_days: int = 30,
         min_sample: int = 3,
+        as_of_date: Optional[str] = None,
     ) -> dict:
-        """DB 조회 → 부족 시 폴백 → Config dict 반환."""
+        """DB 조회 → 부족 시 폴백 → Config dict 반환.
+
+        as_of_date 지정 시 그 날짜 '미만'의 데이터만으로 추천한다(룩어헤드 차단).
+        """
         result = self._db.query_best_parameters_session(
             symbol=symbol,
             dominant_regime=regime,
@@ -831,6 +846,7 @@ class ParameterRecommender:
             lookback_days=lookback_days,
             min_pivots=5,
             min_sample=min_sample,
+            as_of_date=as_of_date,
         )
 
         if result and result.get("sample_count", 0) >= min_sample:
@@ -871,17 +887,28 @@ class WalkForwardEvaluator:
 
     평가 구조
     ---------
-    훈련 윈도우 (lookback_days) → ParameterRecommender 추천
-    테스트 일 (test_day)        → 실제 composite_score 비교
+    훈련 윈도우 (test_date '미만' lookback_days) → ParameterRecommender 추천
+    테스트 일 (test_date)        → composite_score 비교
     슬라이딩                    → 하루씩 전진하며 N회 반복
+
+    [누수 수정] 추천은 항상 as_of_date=test_date 로 호출되어 test_date 이전
+    데이터만 사용한다(룩어헤드 차단).
+
+    두 가지 평가 모드
+    -----------------
+    - real 모드 (evaluator_fn 주입): test_date 봉 데이터에 각 파라미터로 검출을
+      '재실행'해 실제 성능을 측정한다. → 순환 강화/효과를 실증.
+    - estimate 모드 (evaluator_fn=None): 검출 재실행 없이 동일 지표에 선형
+      surrogate 보정만 적용한다. 이는 파라미터 차이의 닫힌 함수이므로 실증이
+      아니며, verdict 에 'ESTIMATE_ONLY' 로 명시한다.
 
     비교 대상
     ---------
-    A) DB 추천 (ParameterRecommender.recommend)
+    A) DB 추천 (ParameterRecommender.recommend, as_of_date=test_date)
     B) REGIME_FALLBACK 하드코딩 폴백
     C) 고정 파라미터 (base_pct=0.3, atr_weight=0.5)
 
-    판정 기준
+    판정 기준 (real 모드)
     ---------
     improvement_vs_fallback > 0.03  → DB 추천 유효
     improvement_vs_fallback < 0.00  → 순환 강화 의심
@@ -899,10 +926,30 @@ class WalkForwardEvaluator:
         "min_wave_pct":     0.15,
     }
 
-    def __init__(self, db: "PivotParameterDB", symbol: str = "KP200 선물") -> None:
+    def __init__(
+        self,
+        db: "PivotParameterDB",
+        symbol: str = "KP200 선물",
+        evaluator_fn=None,
+    ) -> None:
+        """초기화.
+
+        Parameters
+        ----------
+        evaluator_fn: callable | None
+            실측 평가 함수. 시그니처:
+                evaluator_fn(date: str, params: dict) -> dict | None
+            지정 시, 해당 날짜의 실제 봉 데이터에 params 로 피봇 검출을
+            '재실행'하여 성능 지표를 돌려줘야 한다. 반환 dict 키:
+                pivot_confirmation_rate, avg_lag_bars, pivot_quality_score,
+                alternation_rate, false_pivot_rate
+            None 이면 검출 재실행 없이 선형 surrogate(_estimate_composite)로
+            '추정'만 수행하며, 결과는 실증이 아님을 명시한다.
+        """
         self._db = db
         self._symbol = symbol
         self._recommender = ParameterRecommender(db)
+        self._evaluator_fn = evaluator_fn
 
     # ── 메인 실행 ────────────────────────────────────────────────────────────
 
@@ -983,8 +1030,12 @@ class WalkForwardEvaluator:
         # 파라미터 안정성 CV (변동 계수)
         stability_cv = self._calc_stability_cv(param_history)
 
+        mode = "real" if self._evaluator_fn is not None else "estimate"
+        is_estimate = (mode == "estimate")
+
         summary = {
             "symbol":                  self._symbol,
+            "mode":                    mode,
             "lookback_days":           lookback_days,
             "test_days":               n,
             "avg_improvement_vs_fallback": round(avg_improvement_f, 4),
@@ -993,14 +1044,14 @@ class WalkForwardEvaluator:
             "coverage_rate":           round(coverage_rate, 4),
             "stability_cv":            round(stability_cv, 4),
             "verdict":                 self._verdict(
-                avg_improvement_f, coverage_rate, stability_cv,
+                avg_improvement_f, coverage_rate, stability_cv, is_estimate,
             ),
             "daily_results":           daily_results,
         }
 
         _logger.info(
-            "[WalkForward] 완료: 개선률=%.3f coverage=%.2f CV=%.3f 판정=%s",
-            avg_improvement_f, coverage_rate, stability_cv, summary["verdict"],
+            "[WalkForward] 완료(mode=%s): 개선률=%.3f coverage=%.2f CV=%.3f 판정=%s",
+            mode, avg_improvement_f, coverage_rate, stability_cv, summary["verdict"],
         )
         return summary
 
@@ -1012,14 +1063,15 @@ class WalkForwardEvaluator:
         lookback_days: int,
         indicator_type: str,
     ) -> dict | None:
-        """test_date의 DB 기록을 꺼내 3가지 파라미터 소스와 composite_score 비교.
+        """test_date 에 대해 3가지 파라미터 소스의 composite_score 를 비교.
 
-        DB에 저장된 파라미터와 성능 지표를 사용해,
-        동일 레짐 조건에서 각 파라미터 소스의 예측 composite_score를 계산한다.
+        - 파라미터 추천은 as_of_date=test_date 로 호출 → test_date 이전만 사용.
+        - evaluator_fn 이 있으면 test_date 봉에 검출을 재실행한 '실측' 점수,
+          없으면 선형 surrogate '추정' 점수를 사용한다(실증 아님 표기).
         """
         cursor = self._db.conn.cursor()
 
-        # test_date 레코드 조회
+        # test_date 레코드 조회 (레짐/실제 성능 지표 확보)
         cursor.execute(
             """
             SELECT dominant_regime, composite_score,
@@ -1046,31 +1098,42 @@ class WalkForwardEvaluator:
         if actual_composite is None:
             return None
 
-        # lookback 훈련 구간 (test_date 이전)
-        train_end_date = test_date  # exclusive
+        regime = regime or "unknown"
+
+        # [누수 수정] 추천은 test_date '미만' 데이터만 사용
         db_params = self._recommender.recommend(
             symbol=self._symbol,
-            regime=regime or "unknown",
+            regime=regime,
             indicator_type=indicator_type,
             lookback_days=lookback_days,
+            as_of_date=test_date,
         )
         db_used_fallback = db_params.get("_source") != "db"
 
         fallback_params = ParameterRecommender.REGIME_FALLBACK.get(
-            regime or "unknown",
-            ParameterRecommender.REGIME_FALLBACK["unknown"],
+            regime, ParameterRecommender.REGIME_FALLBACK["unknown"],
         )
 
-        # 각 파라미터 소스의 "예측" composite_score 계산
-        # 실제 성능 지표는 test_date 레코드에서 가져오되,
-        # 파라미터 차이로 인한 composite 점수 추정
-        score_db       = self._estimate_composite(db_params,             conf_rate, lag_bars, quality, alt_rate, fp_rate)
-        score_fallback = self._estimate_composite(fallback_params,       conf_rate, lag_bars, quality, alt_rate, fp_rate)
-        score_fixed    = self._estimate_composite(self.FIXED_BASELINE,   conf_rate, lag_bars, quality, alt_rate, fp_rate)
+        if self._evaluator_fn is not None:
+            # ── real 모드: test_date 봉에 검출 재실행 ──────────────────────
+            is_estimate = False
+            score_db       = self._real_composite(test_date, db_params)
+            score_fallback = self._real_composite(test_date, fallback_params)
+            score_fixed    = self._real_composite(test_date, self.FIXED_BASELINE)
+            # 셋 중 하나라도 측정 실패면 비교 불가 → 해당 날 제외
+            if score_db is None or score_fallback is None or score_fixed is None:
+                return None
+        else:
+            # ── estimate 모드: surrogate (실증 아님) ──────────────────────
+            is_estimate = True
+            score_db       = self._estimate_composite(db_params,       conf_rate, lag_bars, quality, alt_rate, fp_rate)
+            score_fallback = self._estimate_composite(fallback_params,  conf_rate, lag_bars, quality, alt_rate, fp_rate)
+            score_fixed    = self._estimate_composite(self.FIXED_BASELINE, conf_rate, lag_bars, quality, alt_rate, fp_rate)
 
         return {
             "date":                     test_date,
             "regime":                   regime,
+            "is_estimate":              is_estimate,
             "actual_composite_score":   round(float(actual_composite), 4),
             "score_db":                 round(score_db, 4),
             "score_fallback":           round(score_fallback, 4),
@@ -1083,6 +1146,30 @@ class WalkForwardEvaluator:
             "db_param_atr_weight":      db_params.get("atr_weight"),
         }
 
+    # ── 실측 composite_score (real 모드) ─────────────────────────────────────
+
+    def _real_composite(self, test_date: str, params: dict):
+        """evaluator_fn 으로 test_date 에 params 검출을 재실행해 composite 산출.
+
+        Returns
+        -------
+        float | None : 측정 실패(데이터 없음 등) 시 None.
+        """
+        try:
+            metrics = self._evaluator_fn(test_date, params)
+        except Exception as e:
+            _logger.warning("[WalkForward] evaluator_fn 실패(%s, %s): %s", test_date, params, e)
+            return None
+        if not metrics:
+            return None
+        return self._db._calc_composite_score(
+            confirmation_rate = float(metrics.get("pivot_confirmation_rate", 0.0)),
+            avg_lag_bars      = float(metrics.get("avg_lag_bars", 10.0)),
+            pivot_quality     = float(metrics.get("pivot_quality_score", 0.0)),
+            alternation_rate  = float(metrics.get("alternation_rate", 0.0)),
+            false_pivot_rate  = float(metrics.get("false_pivot_rate", 0.0)),
+        )
+
     # ── composite_score 추정 ─────────────────────────────────────────────────
 
     @staticmethod
@@ -1094,12 +1181,15 @@ class WalkForwardEvaluator:
         alt_rate:  float,
         fp_rate:   float,
     ) -> float:
-        """파라미터 소스별 composite_score 추정.
+        """[surrogate] 파라미터 소스별 composite_score '추정' (실증 아님).
 
-        파라미터 차이는 주로 확정률과 래그에 영향을 미친다.
+        주의: 검출을 재실행하지 않고, 동일 test_date 지표에 confirmation_bars /
+        atr_weight 의 선형 보정만 적용한다. 따라서 score 차이는 파라미터 차이의
+        닫힌 함수이며 시장 반응을 반영하지 못한다. 실증이 필요하면
+        WalkForwardEvaluator(evaluator_fn=...) 의 real 모드를 사용할 것.
+
         - confirmation_bars 증가 → 래그 증가, 오탐 감소
-        - atr_weight 높음 → 변동성 장에서 확정률 증가
-        이 관계를 선형 보정으로 근사한다.
+        - atr_weight 높음 → 변동성 장에서 확정률 증가 (가정)
         """
         cb = float(params.get("confirmation_bars", 2))
         aw = float(params.get("atr_weight", 0.5))
@@ -1207,8 +1297,19 @@ class WalkForwardEvaluator:
         improvement: float,
         coverage:    float,
         stability:   float,
+        is_estimate: bool = False,
     ) -> str:
-        """4단계 판정 문자열 반환."""
+        """판정 문자열 반환.
+
+        estimate 모드(검출 재실행 없음)에서는 surrogate 계산이 파라미터 차이의
+        닫힌 함수이므로 '유효/순환강화'를 단정하지 않고 ESTIMATE_ONLY 로 표기한다.
+        """
+        if is_estimate:
+            return (
+                "ESTIMATE_ONLY — surrogate 추정값(검출 재실행 아님). "
+                "실증하려면 evaluator_fn 주입 필요. "
+                f"(추정 개선률={improvement:+.3f}, coverage={coverage:.2f})"
+            )
         if improvement > 0.03 and coverage >= 0.80 and stability < 0.20:
             return "PASS — DB 추천 유효"
         if improvement > 0.00 and coverage >= 0.60:
@@ -1217,10 +1318,10 @@ class WalkForwardEvaluator:
             return "FAIL — 순환 강화 의심, 폴백 우선 권장"
         return "INSUFFICIENT — 샘플 부족"
 
-    @staticmethod
-    def _empty_result(reason: str) -> dict:
+    def _empty_result(self, reason: str) -> dict:
         return {
             "verdict": f"ERROR — {reason}",
+            "mode": "real" if self._evaluator_fn is not None else "estimate",
             "avg_improvement_vs_fallback": 0.0,
             "coverage_rate": 0.0,
             "stability_cv":  0.0,

@@ -61,15 +61,18 @@ class LifespanPredictor:
         self,
         sequence: List[Dict[str, float]],
     ) -> Dict[str, float]:
-        """후보 수명 예측.
-        
+        """후보 '잔여' 수명 예측.
+
         Args:
-            sequence: 시계열 피처 리스트 (각 요소는 피처 딕셔너리)
-        
+            sequence: 등록~현재까지 관측된 부분 시퀀스 (각 요소는 피처 딕셔너리)
+
         Returns:
-            예측 결과 딕셔너리
+            예측 결과 딕셔너리.
+            - predicted_remaining_bars: 지금부터 확정/취소까지 남은 봉수(모델 출력)
+            - predicted_lifespan_bars: 전체 수명 추정 = 경과 봉수 + 잔여 봉수
+              (경과 ≈ 관측 스냅샷 수 - 1; 하위 호환용)
         """
-        # 시계열 피처 추출
+        # 시계열 피처 추출 (시간 순서 유지)
         seq_features = []
         for snapshot in sequence:
             feature_vector = []
@@ -80,27 +83,41 @@ class LifespanPredictor:
                 else:
                     feature_vector.append(0.0)
             seq_features.append(feature_vector)
-        
-        # 패딩/트리밍
+
+        if not seq_features:
+            return {
+                "predicted_remaining_bars": 0.0,
+                "predicted_lifespan_bars": 0.0,
+                "sequence_length": 0,
+                "confidence": 0.0,
+            }
+
+        # 트리밍 (최근 max_seq_len) + 실제 길이 기록 → packing 으로 패딩 무시
         if len(seq_features) > self.max_seq_len:
             seq_features = seq_features[-self.max_seq_len:]
-        else:
-            while len(seq_features) < self.max_seq_len:
-                seq_features.append([0.0] * len(ADAPT_KEYS))
-        
+        true_len = len(seq_features)
+        while len(seq_features) < self.max_seq_len:
+            seq_features.append([0.0] * len(ADAPT_KEYS))
+
         # 텐서 변환
         x = torch.tensor(seq_features, dtype=torch.float32).unsqueeze(0).to(self.device)
-        
-        # 예측
+        lengths = torch.tensor([true_len], dtype=torch.long)
+
+        # 예측 (학습과 동일하게 lengths 전달)
         with torch.no_grad():
-            lifespan_log = self.model.predict(x)
-            lifespan_log = lifespan_log.cpu().item()
-        
-        # 역정규화
-        lifespan = np.expm1(lifespan_log)
-        
+            remaining_log = self.model.predict(x, lengths)
+            remaining_log = remaining_log.cpu().item()
+
+        # 역정규화 (잔여 수명)
+        remaining = float(max(0.0, np.expm1(remaining_log)))
+
+        # 전체 수명 추정 = 경과(관측 봉수-1) + 잔여
+        elapsed = max(0, len(sequence) - 1)
+        total_lifespan = float(elapsed + remaining)
+
         return {
-            "predicted_lifespan_bars": float(lifespan),
+            "predicted_remaining_bars": remaining,
+            "predicted_lifespan_bars": total_lifespan,
             "sequence_length": len(sequence),
             "confidence": min(1.0, len(sequence) / 10.0),  # 시퀀스 길이 기반 신뢰도
         }
@@ -110,29 +127,24 @@ class LifespanPredictor:
         collector_record: Dict,
     ) -> Dict[str, float]:
         """Collector 레코드로부터 예측.
-        
+
         Args:
             collector_record: CandidateRecord 딕셔너리
-        
+
         Returns:
             예측 결과 딕셔너리
         """
         sequence = collector_record.get("sequence", [])
-        
-        # 스냅샷에서 피처 추출
-        seq_features = []
-        for snapshot in sequence:
-            features = snapshot.get("features", {})
-            feature_vector = []
-            for key in ADAPT_KEYS:
-                val = features.get(key, 0.0)
-                if isinstance(val, (int, float, np.number)):
-                    feature_vector.append(float(val))
-                else:
-                    feature_vector.append(0.0)
-            seq_features.append(features)
-        
-        return self.predict(seq_features)
+
+        # 각 스냅샷의 features 딕셔너리만 추출하여 predict 에 전달
+        # (predict 가 ADAPT_KEYS 순서로 벡터화하므로 여기서는 dict 그대로 넘긴다)
+        feature_dicts = [
+            snap.get("features", {})
+            for snap in sequence
+            if isinstance(snap.get("features"), dict) and len(snap["features"]) > 0
+        ]
+
+        return self.predict(feature_dicts)
 
 
 def main():

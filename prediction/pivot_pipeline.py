@@ -195,6 +195,7 @@ class PivotPredictionPipeline:
 
                         lifespan_result = self.lifespan_predictor.predict(seq_features)
                         result["predicted_lifespan_bars"] = lifespan_result["predicted_lifespan_bars"]
+                        result["predicted_remaining_bars"] = lifespan_result.get("predicted_remaining_bars")
                         result["lifespan_confidence"] = lifespan_result["confidence"]
             except Exception as e:
                 _logger.error(f"시계열 모델 예측 실패: {e}")
