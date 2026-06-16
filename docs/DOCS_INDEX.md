@@ -16,6 +16,9 @@
 - **PIVOT_ML_ALGORITHM_GUIDE.md** - 피봇 예측 ML 알고리즘 가이드 (v2.0)
 - **CONFIG_REFERENCE_GUIDE.md** - config.json 전체 설정 가이드
 - **DUAL_MODE_GUIDE.md** - 듀얼 모드 구조 가이드
+- **ZIGZAG_PIVOT_COMPREHENSIVE_GUIDE.md** - ZigZag 피봇 종합 가이드 (병합)
+- **PIVOT_DETECTION_COMPARISON_GUIDE.md** - 피봇 탐지 시스템 비교 가이드 (병합)
+- **PIVOT_INFO_PANEL_GUIDE.md** - 피봇 정보 패널 구현 및 배치 가이드 (병합)
 
 ### 해외 선물
 - **OVERSEAS_FUTURES_ADAPTIVE_ZIGZAG_APPLICABILITY.md** - 해외 선물 적응형 ZigZag 적용성
@@ -69,18 +72,10 @@
 - **hybrid_pivot_evaluation.md** - 하이브리드 피봇 평가
 - **pivot_confirmation_logic_merged.md** - 피봇 확정 로직 (병합)
 - **pivot_count_adjustment_guide.md** - 피봇 수 조정 가이드
-- **pivot_detection_comparison.md** - 피봇 검출 비교
-- **pivot_detector_comparison.md** - 피봇 디텍터 비교
-- **pivot_info_panel_chart_internal_placement.md** - 피봇 정보 패널 차트 내부 배치
-- **pivot_info_panel_implementation.md** - 피봇 정보 패널 구현
 
 ### ZigZag (중복/레거시)
-- **zigzag_pivot_configuration_guide.md** - ZigZag 피봇 설정 가이드
 - **zigzag_pivot_confirmation_lag.md** - ZigZag 피봇 확정 래그
-- **zigzag_pivot_improvement.md** - ZigZag 피봇 개선
-- **zigzag_pivot_logic.md** - ZigZag 피봇 로직
 - **zigzag_param_unification_report.md** - ZigZag 파라미터 통합 리포트
-- **percent_adaptive_pivot_guide.md** - 퍼센트 적응형 피봇 가이드
 
 ### 레짐
 - **market_regime_classifier.md** - 시장 레짐 분류기
@@ -180,10 +175,10 @@
 2. ✅ **CONFIG_REFERENCE_GUIDE.md** - archives/에서 docs/로 이동
 3. ✅ **DUAL_MODE_GUIDE.md** - archives/에서 docs/로 이동
 
-### 추가 병합 제안
-1. **ZigZag 관련 파일** - zigzag_pivot_improvement.md, zigzag_pivot_logic.md, zigzag_pivot_configuration_guide.md를 하나로 병합
-2. **피봇 검출 비교** - pivot_detection_comparison.md와 pivot_detector_comparison.md 병합
-3. **피봇 정보 패널** - pivot_info_panel_chart_internal_placement.md와 pivot_info_panel_implementation.md 병합
+### 병합 완료
+1. ✅ **ZigZag 관련 파일** - zigzag_pivot_improvement.md, zigzag_pivot_logic.md, zigzag_pivot_configuration_guide.md → ZIGZAG_PIVOT_COMPREHENSIVE_GUIDE.md
+2. ✅ **피봇 검출 비교** - pivot_detection_comparison.md, pivot_detector_comparison.md → PIVOT_DETECTION_COMPARISON_GUIDE.md
+3. ✅ **피봇 정보 패널** - pivot_info_panel_chart_internal_placement.md, pivot_info_panel_implementation.md → PIVOT_INFO_PANEL_GUIDE.md
 
 ---
 
