@@ -192,6 +192,19 @@ normalized = (value - min) / (max - min)
 
 ## 모델 아키텍처
 
+### 모델 아키텍처 개요
+
+```mermaid
+graph LR
+    A[입력 피처 32차원] --> B[분류 모델]
+    A --> C[회귀 모델]
+    B --> D[앙상블]
+    C --> D
+    D --> E[확정 확률]
+    A --> F[시계열 모델]
+    F --> G[잔여 수명]
+```
+
 ### 1. 분류 모델 (PivotConfirmationClassifier)
 
 ```
@@ -302,6 +315,24 @@ ensemble_prob = w * cls_prob + (1 - w) * reg_prob
 ---
 
 ## 학습 전략
+
+### 학습 파이프라인 흐름도
+
+```mermaid
+graph TD
+    A[완결 후보 레코드] --> B[시간순 정렬]
+    B --> C[레코드 단위 분할]
+    C --> D[Train/Val/Test]
+    D --> E[Prefix 확장]
+    E --> F[피처 벡터화]
+    F --> G[패딩/트리밍]
+    G --> H[잔여 수명 계산]
+    H --> I[로그 정규화]
+    I --> J[데이터로더]
+    J --> K[모델 학습]
+    K --> L[검증/테스트]
+    L --> M[체크포인트 저장]
+```
 
 ### 데이터 분할 (v2.0 변경)
 
@@ -461,6 +492,24 @@ mae_bars = mean_absolute_error(
 ---
 
 ## 추론 파이프라인
+
+### 전체 파이프라인 흐름도
+
+```mermaid
+graph TD
+    A[봉 수신] --> B[ZigZag 업데이트]
+    B --> C{후보 등록/확정/취소?}
+    C -->|후보 등록| D[피처 추출]
+    C -->|확정/취소| E[시계열 업데이트]
+    D --> F[분류 모델 예측]
+    D --> G[회귀 모델 예측]
+    F --> H[앙상블 계산]
+    G --> H
+    H --> I[Heuristic 확률 계산]
+    I --> J[시계열 모델 예측]
+    J --> K[결과 반환]
+    E --> J
+```
 
 ### PivotPredictionPipeline
 
