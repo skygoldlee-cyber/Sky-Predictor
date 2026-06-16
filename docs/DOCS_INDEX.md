@@ -46,83 +46,74 @@
 
 ## 아카이브 문서 (docs/archives/)
 
-### 시스템 설계
+카테고리별로 정리된 아카이브 문서입니다.
+
+### architecture/ (시스템 설계)
 - **Architecture.md** - 시스템 아키텍처 (레거시)
 - **EVENT_ARCHITECTURE_GUIDE.md** - 이벤트 아키텍처 가이드
 - **SYSTEM_ALGORITHM_OVERVIEW.md** - 시스템 알고리즘 개요
 
-### 설정
+### config/ (설정 및 운영)
 - **hardcoded_values.md** - 하드코딩된 값 목록
+- **PARAMETER_TUNING_GUIDE.md** - 파라미터 튜닝 가이드
+- **eBest_OpenAPI_Schema.md** - eBest OpenAPI 스키마
+- **RUNTIME_API_REFERENCE.md** - 런타임 API 레퍼런스
+- **RUNTIME_VS_BACKTEST_GUIDE.md** - 실시간 vs 백테스트 파이프라인
+- **t8415_minute_data_logic.md** - t8415 분봉 데이터 로직
+- **GITHUB_ACTIONS_GUIDE.md** - GitHub Actions 가이드
+- **INCIDENT_HANDLING_GUIDE.md** - 인시던트 핸들링 가이드
+- **REFACTORING_SRC_LAYOUT.md** - 소스 레이아웃 리팩토링
 
-### 머신러닝
+### ml/ (머신러닝)
 - **MODELS_GUIDE.md** - 모델 가이드
 - **MODEL_TRAINING_GUIDE.md** - 모델 학습 가이드
 - **dataset_training_guide.md** - 데이터셋 학습 가이드
 - **transformer_quality_measurement.md** - Transformer 품질 측정
-
-### 피처
 - **MULTITIMEFRAME_FEATURES.md** - 멀티타임프레임 피처
+- **prediction.md** - 예측 관련
 
-### LLM
+### llm/ (LLM)
 - **LLM_INPUT_TABLE.md** - LLM 입력 테이블
 - **LLM_RateLimit_Changes.md** - LLM Rate Limit 변경사항
 
-### 옵션
+### options/ (옵션)
 - **OPTION_SENTIMENT_INTEGRATION_GUIDE.md** - 옵션 센티먼트 통합 가이드
 - **call_put_parity_divergence_design.md** - 콜-풋 패리티 다이버전스 설계
 - **premium_bleed_design.md** - 프리미엄 블리드 설계
 
-### 피봇 (중복/레거시)
+### pivot/ (피봇)
 - **PIVOT_COLLECTOR_GUIDE.md** - 피봇 수집기 가이드
 - **hybrid_pivot_evaluation.md** - 하이브리드 피봇 평가
 - **pivot_confirmation_logic_merged.md** - 피봇 확정 로직 (병합)
 - **pivot_count_adjustment_guide.md** - 피봇 수 조정 가이드
 
-### ZigZag (중복/레거시)
+### zigzag/ (ZigZag)
 - **zigzag_pivot_confirmation_lag.md** - ZigZag 피봇 확정 래그
 - **zigzag_param_unification_report.md** - ZigZag 파라미터 통합 리포트
 
-### 레짐
+### regime/ (레짐)
 - **market_regime_classifier.md** - 시장 레짐 분류기
 - **regime_based_trading.md** - 레짐 기반 트레이딩
 
-### 트레이딩
+### trading/ (트레이딩)
 - **TRADE_LOGGING_GUIDE.md** - 트레이드 로깅 가이드
 - **POSITION_SIZING_GUIDE.md** - 포지션 사이징 가이드
 - **TradeExecutionGate_설계문서.md** - TradeExecutionGate 설계문서
 - **heuristic_signal_algorithm.md** - 휴리스틱 시그널 알고리즘
 
-### 파라미터 튜닝
-- **PARAMETER_TUNING_GUIDE.md** - 파라미터 튜닝 가이드
-
-### 성능
+### performance/ (성능)
 - **PERFORMANCE_ANALYSIS_GUIDE.md** - 성능 분석 가이드
 - **Rendering_Performance_Optimization.md** - 렌더링 성능 최적화
 
-### 런타임
-- **RUNTIME_API_REFERENCE.md** - 런타임 API 레퍼런스
-- **RUNTIME_VS_BACKTEST_GUIDE.md** - 실시간 vs 백테스트 파이프라인
-
-### eBest API
-- **eBest_OpenAPI_Schema.md** - eBest OpenAPI 스키마
-- **t8415_minute_data_logic.md** - t8415 분봉 데이터 로직
-
-### 운영
-- **GITHUB_ACTIONS_GUIDE.md** - GitHub Actions 가이드
-- **INCIDENT_HANDLING_GUIDE.md** - 인시던트 핸들링 가이드
-
-### 리팩토링
-- **REFACTORING_SRC_LAYOUT.md** - 소스 레이아웃 리팩토링
+### operations/ (운영)
+- **operations_telegram.md** - 텔레그램 연동 (중복)
 
 ### 기타
 - **DOCUMENTATION_STATUS.md** - 문서화 현황
-- **TODO.md** - TODO 목록
-- **prediction.md** - 예측 관련
-- **daily_train_patch_tst.md** - 일일 학습 패치 TST
 
 ---
 
-## 디자인 문서 (docs/design/)
+## 디자인 문서 (docs/archives/design/)
 
 - **HybridAdaptivePivot_Design_v1.1.md** - 하이브리드 적응형 피봇 설계 v1.1
 - **HybridAdaptivePivot_Design_v1.1.html** - 하이브리드 적응형 피봇 설계 v1.1 (HTML)
@@ -132,7 +123,6 @@
 ## 운영 문서 (docs/operations/)
 
 - **DAILY_TICK_TRAINING_RUNBOOK.md** - 일일 틱 학습 런북
-- **telegram.md** - 텔레그램 연동 가이드
 
 ---
 
@@ -140,12 +130,32 @@
 
 - **PIVOT_SIGNAL_IMPROVEMENTS.md** - 피봇 시그널 개선사항
 - **ZigZag_Pivot_Principles_BugFix.md** - ZigZag 피봇 원칙 버그픽스
+- **Transformer_보완_개선_리포트.md** - Transformer 보완 개선 리포트
+- **optimize_zigzag_lag_improvements.md** - ZigZag 래그 최적화
+- **transformer_improvement_report.md** - Transformer 개선 리포트
 
 ---
 
-## 리뷰 (docs/reviews/)
+## 리뷰 (docs/archives/reviews/)
 
 - **ZigZag_Pivot_Analysis.md** - ZigZag 피봇 분석
+- **Transformer_코드리뷰.md** - Transformer 코드 리뷰
+- **adaptive_indicator_analysis.md** - 적응형 지표 분석
+- **adaptive_indicator_deep_review.md** - 적응형 지표 심층 리뷰
+- **code_review_report.md** - 코드 리뷰 리포트
+- **prediction_algorithm_review.md** - 예측 알고리즘 리뷰
+- **prediction_code_review.md** - 예측 코드 리뷰
+- **source_review_v2.md** - 소스 리뷰 v2
+- **telegram_review.md** - 텔레그램 리뷰
+
+---
+
+## 아카이브 리포트 (docs/archives/reports/)
+
+- **BUG_FIXES.md** - 버그 수정 리포트
+- **SkyPredictor_개선사항.md** - SkyPredictor 개선사항
+- **adaptive_zigzag_fixes.md** - 적응형 ZigZag 수정
+- **improvement_report.md** - 개선 리포트
 
 ---
 
@@ -217,6 +227,9 @@
 1. ✅ **runtime/** 디렉토리 상세 목록 추가
 2. ✅ **training/** 디렉토리 상세 목록 추가
 3. ✅ **시스템 가이드** 섹션 추가 및 승격된 가이드 반영
+4. ✅ **archives/** 카테고리별 재분류 (architecture, config, ml, llm, options, pivot, zigzag, regime, trading, performance, operations)
+5. ✅ **reviews/** 섹션 상세 목록 추가
+6. ✅ **reports/** 섹션 상세 목록 추가
 
 ---
 
