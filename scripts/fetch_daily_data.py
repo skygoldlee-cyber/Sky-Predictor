@@ -112,13 +112,15 @@ async def fetch_and_save_daily_data(target_date: str = None, start_date: str = N
             start_dt = datetime.strptime(start_date, '%Y%m%d')
             end_dt = datetime.strptime(end_date, '%Y%m%d')
             
-            # 날짜 범위 생성
+            # 날짜 범위 생성 (주말 제외)
             current_dt = start_dt
             while current_dt <= end_dt:
-                date_list.append(current_dt.strftime('%Y%m%d'))
+                # 주말(토요일=5, 일요일=6) 제외
+                if current_dt.weekday() < 5:  # 월요일(0) ~ 금요일(4)
+                    date_list.append(current_dt.strftime('%Y%m%d'))
                 current_dt = current_dt + timedelta(days=1)
             
-            logger.info(f"날짜 범위: {start_date} ~ {end_date} (총 {len(date_list)}일)")
+            logger.info(f"날짜 범위: {start_date} ~ {end_date} (평일 {len(date_list)}일, 주말 제외)")
         except ValueError as e:
             logger.error(f"날짜 형식 오류: {e} (YYYYMMDD 형식 필요)")
             return
