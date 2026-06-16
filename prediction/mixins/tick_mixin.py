@@ -32,15 +32,16 @@ class TickMixin:
         self._metrics_inc("ticks_processed")
         try:
             self.tick_processor.process_tick(tick_data)
-        except Exception:
+        except Exception as e:
             # Tick processor should not block orderbook buffering (especially in replay).
-            pass
+            logger.debug("[tick_mixin] tick_processor 오류: %s", e)
 
         trcode = str((tick_data or {}).get("trcode") or "").strip().upper()
         if trcode == str(TRCode.FUTURES.value).strip().upper():
             try:
                 self._last_fc0_seen_epoch = float(time.time())
-            except Exception:
+            except Exception as e:
+                logger.debug("[tick_mixin] epoch 변환 오류: %s", e)
                 self._last_fc0_seen_epoch = self._last_fc0_seen_epoch
         if trcode == str(TRCode.FUTURES_BOOK.value).strip().upper():
             tick_raw = (tick_data or {}).get("tick") or {}
@@ -103,7 +104,8 @@ class TickMixin:
                             "bidrems",
                         )
                     )
-                except Exception:
+                except Exception as e:
+                    logger.debug("[tick_mixin] orderbook 구조 확인 실패: %s", e)
                     looks_like_orderbook = False
 
                 if not looks_like_orderbook:

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 _DATE_PAT = re.compile(r"^(?P<stem>.+)_(?P<date>\d{8})\.pt$")
@@ -37,7 +40,8 @@ def _find_latest_dated_weight(weights_dir: Path, base_name: str, *, on_or_before
             if d <= cutoff and d > best_date:
                 best_date = d
                 best_path = p
-        except Exception:
+        except Exception as e:
+            logger.debug("[weights_selector] 파일 파싱 실패: %s, %s", p, e)
             continue
 
     return best_path
@@ -71,7 +75,8 @@ def select_weights_for_datetime(
         info = get_expiry_week_info(now)
         is_expiry_week = bool(info.get("is_expiry_week"))
         expiry_dt = info.get("expiry_second_thursday")
-    except Exception:
+    except Exception as e:
+        logger.warning("[weights_selector] 만기 주 정보 조회 실패: %s, 기본값 사용", e)
         is_expiry_week = False
         expiry_dt = None
 

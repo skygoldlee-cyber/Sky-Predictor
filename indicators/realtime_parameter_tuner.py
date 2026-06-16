@@ -106,7 +106,8 @@ class RealTimeParameterTuner:
         try:
             import copy
             return copy.deepcopy(config)
-        except Exception:
+        except Exception as e:
+            logger.warning("[RealTimeParameterTuner] deepcopy 실패: %s, 얕은 복사 사용", e)
             # deepcopy 실패 시 얕은 복사
             return config
     
