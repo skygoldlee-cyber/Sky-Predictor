@@ -20,6 +20,15 @@
 - **PIVOT_DETECTION_COMPARISON_GUIDE.md** - 피봇 탐지 시스템 비교 가이드 (병합)
 - **PIVOT_INFO_PANEL_GUIDE.md** - 피봇 정보 패널 구현 및 배치 가이드 (병합)
 
+### 시스템 가이드
+- **LLM_JUDGE_SYSTEM_GUIDE.md** - LLM 판단 시스템 가이드
+- **OPTION_FLOW_ANALYSIS_GUIDE.md** - 옵션 흐름 분석 가이드
+- **FEEDBACK_SYSTEM_GUIDE.md** - 피드백 시스템 가이드
+- **GUARDRAIL_SYSTEM_GUIDE.md** - 가드레일 시스템 가이드
+- **TRADING_SIGNAL_GENERATION_GUIDE.md** - 트레이딩 시그널 생성 가이드
+- **CONFORMAL_PREDICTION_GUIDE.md** - Conformal Prediction 가이드
+- **MULTISCALE_FEATURES_GUIDE.md** - 멀티스케일 피처 가이드
+
 ### 해외 선물
 - **OVERSEAS_FUTURES_ADAPTIVE_ZIGZAG_APPLICABILITY.md** - 해외 선물 적응형 ZigZag 적용성
 - **OVERSEAS_FUTURES_RECOMMENDATIONS.md** - 해외 선물 권장사항
@@ -49,20 +58,16 @@
 - **MODELS_GUIDE.md** - 모델 가이드
 - **MODEL_TRAINING_GUIDE.md** - 모델 학습 가이드
 - **dataset_training_guide.md** - 데이터셋 학습 가이드
-- **CONFORMAL_PREDICTION_GUIDE.md** - Conformal Prediction 가이드
 - **transformer_quality_measurement.md** - Transformer 품질 측정
 
 ### 피처
-- **MULTISCALE_FEATURES_GUIDE.md** - 멀티스케일 피처 가이드
 - **MULTITIMEFRAME_FEATURES.md** - 멀티타임프레임 피처
 
 ### LLM
-- **LLM_JUDGE_SYSTEM_GUIDE.md** - LLM 판단 시스템 가이드
 - **LLM_INPUT_TABLE.md** - LLM 입력 테이블
 - **LLM_RateLimit_Changes.md** - LLM Rate Limit 변경사항
 
 ### 옵션
-- **OPTION_FLOW_ANALYSIS_GUIDE.md** - 옵션 흐름 분석 가이드
 - **OPTION_SENTIMENT_INTEGRATION_GUIDE.md** - 옵션 센티먼트 통합 가이드
 - **call_put_parity_divergence_design.md** - 콜-풋 패리티 다이버전스 설계
 - **premium_bleed_design.md** - 프리미엄 블리드 설계
@@ -82,15 +87,10 @@
 - **regime_based_trading.md** - 레짐 기반 트레이딩
 
 ### 트레이딩
-- **TRADING_SIGNAL_GENERATION_GUIDE.md** - 트레이딩 시그널 생성 가이드
 - **TRADE_LOGGING_GUIDE.md** - 트레이드 로깅 가이드
 - **POSITION_SIZING_GUIDE.md** - 포지션 사이징 가이드
 - **TradeExecutionGate_설계문서.md** - TradeExecutionGate 설계문서
 - **heuristic_signal_algorithm.md** - 휴리스틱 시그널 알고리즘
-
-### 피드백 & 가드레일
-- **FEEDBACK_SYSTEM_GUIDE.md** - 피드백 시스템 가이드
-- **GUARDRAIL_SYSTEM_GUIDE.md** - 가드레일 시스템 가이드
 
 ### 파라미터 튜닝
 - **PARAMETER_TUNING_GUIDE.md** - 파라미터 튜닝 가이드
@@ -210,10 +210,13 @@
 1. ✅ **design/** → archives/design/ 이동 (HybridAdaptivePivot_Design_v1.1.md/html)
 2. ✅ **reviews/** → archives/reviews/ 이동 (9개 코드 리뷰 파일)
 3. ✅ **reports/** 오래된 파일 → archives/reports/ 이동 (BUG_FIXES.md, SkyPredictor_개선사항.md, adaptive_zigzag_fixes.md, improvement_report.md)
+4. ✅ **7개 시스템 가이드** → docs/로 승격 (LLM_JUDGE_SYSTEM_GUIDE.md, OPTION_FLOW_ANALYSIS_GUIDE.md, FEEDBACK_SYSTEM_GUIDE.md, GUARDRAIL_SYSTEM_GUIDE.md, TRADING_SIGNAL_GENERATION_GUIDE.md, CONFORMAL_PREDICTION_GUIDE.md, MULTISCALE_FEATURES_GUIDE.md)
+5. ✅ **operations/telegram.md** → archives/operations_telegram.md 이동 (runtime/telegram.md와 중복)
 
 ### 인덱스 업데이트 완료
 1. ✅ **runtime/** 디렉토리 상세 목록 추가
 2. ✅ **training/** 디렉토리 상세 목록 추가
+3. ✅ **시스템 가이드** 섹션 추가 및 승격된 가이드 반영
 
 ---
 

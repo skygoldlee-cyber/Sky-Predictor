@@ -7,18 +7,18 @@
 | 문서 | 상태 | 설명 |
 |------|------|------|
 | ML_ENGINE_OVERVIEW.md | ✅ 최신 | 머신러닝 엔진 개요 (2026-04-25 작성) |
-| PIVOT_ML_ALGORITHM_GUIDE.md | ✅ 최신 | 피봇 예측 ML 알고리즘 상세 가이드 |
+| PIVOT_ML_ALGORITHM_GUIDE.md | ✅ 최신 (v2.0) | 피봇 예측 ML 알고리즘 상세 가이드 (docs/로 승격) |
 | PIVOT_COLLECTOR_GUIDE.md | ✅ 최신 | 피봇 수집기 사용 가이드 |
-| DUAL_MODE_GUIDE.md | ✅ 최신 | 듀얼 모드 구조 가이드 (2026-04-25 작성) |
-| LLM_JUDGE_SYSTEM_GUIDE.md | ✅ 최신 | LLM 판단 시스템 가이드 (2026-04-25 작성) |
-| TRADING_SIGNAL_GENERATION_GUIDE.md | ✅ 최신 | 트레이딩 시그널 생성 가이드 (2026-04-25 작성) |
-| CONFIG_REFERENCE_GUIDE.md | ✅ 최신 | config.json 전체 설정 가이드 (2026-04-25 작성) |
-| OPTION_FLOW_ANALYSIS_GUIDE.md | ✅ 최신 | 옵션 흐름 분석 시스템 (2026-04-25 작성) |
-| FEEDBACK_SYSTEM_GUIDE.md | ✅ 최신 | 피드백 시스템 가이드 (2026-04-25 작성) |
-| GUARDRAIL_SYSTEM_GUIDE.md | ✅ 최신 | 가드레일 시스템 가이드 (2026-04-25 작성) |
+| DUAL_MODE_GUIDE.md | ✅ 최신 | 듀얼 모드 구조 가이드 (2026-04-25 작성, docs/로 승격) |
+| LLM_JUDGE_SYSTEM_GUIDE.md | ✅ 최신 | LLM 판단 시스템 가이드 (2026-04-25 작성, docs/로 승격) |
+| TRADING_SIGNAL_GENERATION_GUIDE.md | ✅ 최신 | 트레이딩 시그널 생성 가이드 (2026-04-25 작성, docs/로 승격) |
+| CONFIG_REFERENCE_GUIDE.md | ✅ 최신 | config.json 전체 설정 가이드 (2026-04-25 작성, docs/로 승격) |
+| OPTION_FLOW_ANALYSIS_GUIDE.md | ✅ 최신 | 옵션 흐름 분석 시스템 (2026-04-25 작성, docs/로 승격) |
+| FEEDBACK_SYSTEM_GUIDE.md | ✅ 최신 | 피드백 시스템 가이드 (2026-04-25 작성, docs/로 승격) |
+| GUARDRAIL_SYSTEM_GUIDE.md | ✅ 최신 | 가드레일 시스템 가이드 (2026-04-25 작성, docs/로 승격) |
 | RUNTIME_VS_BACKTEST_GUIDE.md | ✅ 최신 | 실시간 vs 백테스트 파이프라인 (2026-04-25 작성) |
-| CONFORMAL_PREDICTION_GUIDE.md | ✅ 최신 | Conformal Prediction 가이드 (2026-04-25 작성) |
-| MULTISCALE_FEATURES_GUIDE.md | ✅ 최신 | 멀티스케일 피처 가이드 (2026-04-25 작성) |
+| CONFORMAL_PREDICTION_GUIDE.md | ✅ 최신 | Conformal Prediction 가이드 (2026-04-25 작성, docs/로 승격) |
+| MULTISCALE_FEATURES_GUIDE.md | ✅ 최신 | 멀티스케일 피처 가이드 (2026-04-25 작성, docs/로 승격) |
 | TRANSFORMER_GUIDE.md | ✅ 완료 | Transformer 가이드 |
 | TFT_DUAL_MODEL_DESIGN_GUIDE.md | ✅ 완료 | TFT 설계 가이드 |
 | ADAPTIVE_INDICATOR_GUIDE.md | ✅ 완료 | 적응형 지표 가이드 |
