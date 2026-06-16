@@ -21,7 +21,7 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Callable, List, Optional, Dict, Any
 
 
 # ── 상수 ─────────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ class TradeSlot(str, Enum):
 
 # ── trade_id 생성 유틸 ───────────────────────────────────────────────────────
 
-def _make_trade_id(dt: Optional[datetime] = None) -> str:
+def _make_trade_id(dt: Optional[datetime] = None, now_fn: Optional[Callable[[], datetime]] = None) -> str:
     """마이크로초 기반 고유 거래 ID를 생성한다.
 
     형식: ``YYYYMMDD_HHMMSS_ffffff``
@@ -58,8 +58,16 @@ def _make_trade_id(dt: Optional[datetime] = None) -> str:
     같은 마이크로초에 두 건이 생성될 확률은 극히 낮으나,
     충돌 가능성이 우려되면 suffix 에 int(time.monotonic_ns() % 1_000_000)
     를 추가할 수 있다.
+
+    Args:
+        dt: 직접 주입할 datetime (테스트용)
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
     """
-    ts = dt if dt is not None else datetime.now()
+    if dt is not None:
+        ts = dt
+    else:
+        _now = now_fn if now_fn is not None else datetime.now
+        ts = _now()
     return ts.strftime("%Y%m%d_%H%M%S_") + f"{ts.microsecond:06d}"
 
 

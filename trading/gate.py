@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .state import (
     ActivePosition,
@@ -404,13 +404,17 @@ class TradeExecutionGate:
         notifier: Any,
         config: Optional[TradeGateConfig] = None,
         event_bus: Optional[Any] = None,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self._notifier = notifier
         self._cfg = config if isinstance(config, TradeGateConfig) else TradeGateConfig()
         self._state = TradeStateManager()
-        
+
         # 이벤트 버스 (선택적)
         self._event_bus = event_bus if EVENTS_AVAILABLE else None
+
+        # 시간 함수 (테스트/백테스트용 주입 가능)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
 
         # 일일 결산 전송 여부 (장 종료 후 1회만)
         self._daily_summary_sent: bool = False
@@ -531,7 +535,7 @@ class TradeExecutionGate:
         consensus = bool(result.get("consensus", False))
 
         price = float(current_price or result.get("current_price") or 0.0)
-        now = datetime.now()
+        now = self._now_fn()
         today_str = now.strftime("%Y-%m-%d")
 
         # Phase 3 — opt_context: result["options"] (opt_snap 전체)
@@ -750,7 +754,7 @@ class TradeExecutionGate:
             logger.warning("[GATE] 진입 차단 — 연속 손실 한도 초과 (%d회)", state.consecutive_losses)
             if self._event_bus:
                 self._event_bus.publish(RiskLimitEvent(
-                    timestamp=datetime.now(),
+                    timestamp=self._now_fn(),
                     limit_type="CONSECUTIVE_LOSS",
                     current_value=float(state.consecutive_losses),
                     limit_value=float(cfg.max_consecutive_losses),
@@ -760,11 +764,11 @@ class TradeExecutionGate:
 
         # ── 리스크 관리: 일일 최대 손실 제한 ──
         if cfg.max_daily_loss_pt > 0 and state.total_pnl_pt <= -cfg.max_daily_loss_pt:
-            logger.warning("[GATE] 진입 차단 — 일일 손실 한도 초과 (%.2fpt / %.2fpt)", 
+            logger.warning("[GATE] 진입 차단 — 일일 손실 한도 초과 (%.2fpt / %.2fpt)",
                           state.total_pnl_pt, cfg.max_daily_loss_pt)
             if self._event_bus:
                 self._event_bus.publish(RiskLimitEvent(
-                    timestamp=datetime.now(),
+                    timestamp=self._now_fn(),
                     limit_type="DAILY_LOSS",
                     current_value=abs(state.total_pnl_pt),
                     limit_value=cfg.max_daily_loss_pt,
@@ -907,7 +911,7 @@ class TradeExecutionGate:
 
         pos = state.active
         price = float(current_price or 0.0)
-        now = datetime.now()
+        now = self._now_fn()
         today_str = now.strftime("%Y-%m-%d")
 
         # ── 강제청산 시각 도달 여부 (force_close_time 이후인지만 판단) ──
@@ -1092,10 +1096,10 @@ class TradeExecutionGate:
             import json as _json
             import os as _os
             from pathlib import Path
-            
+
             date_str = (
                 record.entry_time.strftime("%Y-%m-%d")
-                if record.entry_time else datetime.now().strftime("%Y-%m-%d")
+                if record.entry_time else self._now_fn().strftime("%Y-%m-%d")
             )
             
             # 1. 기본 history_dir에 저장
@@ -1202,7 +1206,7 @@ class TradeExecutionGate:
         self._send_daily_summary_inner()
 
     def _send_daily_summary_inner(self, *, force: bool = False) -> bool:
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        today_str = self._now_fn().strftime("%Y-%m-%d")
         with self._summary_lock:
             if not force and self._last_summary_date == today_str:
                 return False

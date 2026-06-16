@@ -35,7 +35,7 @@ import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, time
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .state import (
     ActivePosition,
@@ -84,19 +84,24 @@ class PivotExecutionGate:
         self,
         notifier,
         config: PivotGateConfig,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ):
         """초기화.
-        
+
         Args:
             notifier: 텔레그램 알림 객체
             config: 게이트 설정
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self._notifier = notifier
         self._cfg = config
         self._lock = threading.RLock()
         self._state = TradeStateManager(lock=self._lock)  # 동일 락 공유 (데드락 방지)
         self._futures_index_ratio: float = 1.0  # 선물/지수 비율 (기본값: 1.0)
-        
+
+        # 시간 함수 (테스트/백테스트용 주입 가능)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
+
         # 시간 파싱 캐싱 (__init__에서 한 번만 파싱)
         self._force_close_time_cache: Optional[time] = self._parse_time(config.force_close_time)
         self._market_open_time_cache: Optional[time] = self._parse_time(config.market_open_time)
@@ -200,7 +205,7 @@ class PivotExecutionGate:
                     "type": pivot_type,
                     "price": pivot_price,
                     "futures_price": current_price,
-                    "time": datetime.now().strftime("%H:%M"),
+                    "time": self._now_fn().strftime("%H:%M"),
                 })
                 
                 pivots = self._backtest_state["pivots"]
@@ -361,13 +366,13 @@ class PivotExecutionGate:
         current_price: float,
     ) -> None:
         """피봇 확정 내부 로직.
-        
+
         Args:
             pivot_type: 피봇 타입 (KOSPI 지수)
             pivot_price: 피봇 가격 (KOSPI 지수)
             current_price: 현재 가격 (KP200 선물)
         """
-        now = datetime.now()
+        now = self._now_fn()
         today_str = now.strftime("%Y-%m-%d")
         
         with self._lock:
@@ -431,11 +436,11 @@ class PivotExecutionGate:
     
     def _check_price_breakout_inner(self, current_price: float) -> None:
         """가격 돌파 체크 내부 로직.
-        
+
         Args:
             current_price: 현재 KP200 선물 가격
         """
-        now = datetime.now()
+        now = self._now_fn()
         today_str = now.strftime("%Y-%m-%d")
         
         with self._lock:
@@ -485,7 +490,7 @@ class PivotExecutionGate:
     
     def _check_close_inner(self, *, current_price: float) -> None:
         """강제청산 체크 내부 로직."""
-        now = datetime.now()
+        now = self._now_fn()
         today_str = now.strftime("%Y-%m-%d")
         
         with self._lock:
@@ -806,14 +811,14 @@ class PivotExecutionGate:
                     "commission_rate": self._cfg.commission_rate,
                     "sizing_method": self._cfg.sizing.method.value,
                 },
-                "saved_at": datetime.now().isoformat(),
+                "saved_at": self._now_fn().isoformat(),
             }
-            
+
             # 파일 경로 결정
             if file_path is None:
                 from pathlib import Path
                 history_dir = Path(self._cfg.history_dir)
-                today_str = datetime.now().strftime("%Y-%m-%d")
+                today_str = self._now_fn().strftime("%Y-%m-%d")
                 file_path = str(history_dir / f"{today_str}_summary.json")
             
             # JSON 파일로 저장

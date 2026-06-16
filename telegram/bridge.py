@@ -9,7 +9,7 @@ import threading
 import time
 from collections import deque
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ class PipelineTelegramBridge(CommandsMixin, MonitorsMixin):
         predict_interval_sec: float = 60.0,
         only_consensus: bool = False,
         only_actionable: bool = False,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ) -> None:
         """
         Args:
@@ -60,12 +61,14 @@ class PipelineTelegramBridge(CommandsMixin, MonitorsMixin):
             predict_interval_sec: 예측 주기 (초). 기본 60초.
             only_consensus: True면 Transformer와 LLM이 합의한 경우에만 전송.
             only_actionable: True면 HOLD 신호는 전송 생략.
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self._pipeline = pipeline
         self._notifier = notifier
         self._interval = float(predict_interval_sec)
         self._only_consensus = bool(only_consensus)
         self._only_actionable = bool(only_actionable)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
 
         self._run_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -557,7 +560,7 @@ class PipelineTelegramBridge(CommandsMixin, MonitorsMixin):
                 lines.append("💰 *백테스팅 시뮬레이션*")
                 lines.append("- 거래 없음")
                 backtest_data = {
-                    "date": datetime.now().strftime("%Y-%m-%d"),
+                    "date": self._now_fn().strftime("%Y-%m-%d"),
                     "total_pivots": 0,
                     "confirmed_pivots": 0,
                     "total_trades": 0,
@@ -762,7 +765,7 @@ class PipelineTelegramBridge(CommandsMixin, MonitorsMixin):
 
             # 백테스트 데이터 구성
             backtest_data = {
-                "date": datetime.now().strftime("%Y-%m-%d"),
+                "date": self._now_fn().strftime("%Y-%m-%d"),
                 "total_pivots": len(all_swings),
                 "confirmed_pivots": len(confirmed_swings),
                 "high_count": high_count if total_trades > 0 else 0,
@@ -881,7 +884,7 @@ class PipelineTelegramBridge(CommandsMixin, MonitorsMixin):
             os.makedirs(history_dir, exist_ok=True)
             
             # 파일명: pivot_backtest_YYYYMMDD.json
-            today = datetime.now().strftime("%Y%m%d")
+            today = self._now_fn().strftime("%Y%m%d")
             filename = f"pivot_backtest_{today}.json"
             filepath = os.path.join(history_dir, filename)
             
@@ -1054,9 +1057,14 @@ def create_bridge_from_config(
 # 시나리오별 더미 결과 생성
 _SCENARIOS: Dict[str, Any] = {}   # 아래 _build_scenarios()로 채워짐
 
-def _build_scenarios() -> Dict[str, Dict[str, Any]]:
-    """테스트 시나리오별 더미 예측 결과 딕셔너리를 반환합니다."""
-    now   = datetime.now().isoformat()
+def _build_scenarios(now_fn: Optional[Callable[[], datetime]] = None) -> Dict[str, Dict[str, Any]]:
+    """테스트 시나리오별 더미 예측 결과 딕셔너리를 반환합니다.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+    now   = _now().isoformat()
     base  = dict(
         prediction_time=now, target_time=now,
         prediction_minutes=5,

@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import threading
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +210,7 @@ class CommandsMixin:
                     side_str = "매수" if pos.side.value == "LONG" else "매도"
                     eff_target = pos.record.entry_target_pt if pos.record.entry_target_pt > 0 else cfg.target_profit_pt
                     eff_stop   = pos.record.entry_stop_pt   if pos.record.entry_stop_pt   > 0 else cfg.stop_loss_pt
-                    hold_min   = (datetime.now() - pos.entry_time).total_seconds() / 60
+                    hold_min   = (self._now_fn() - pos.entry_time).total_seconds() / 60
                     iv_line = (
                         f"\nIV: {pos.record.entry_atm_iv:.1%}  목표: {eff_target:.2f}pt  손절: {eff_stop:.2f}pt"
                         if pos.record.entry_atm_iv > 0.0 else ""

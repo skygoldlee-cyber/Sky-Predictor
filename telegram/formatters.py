@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import math
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 # ──────────────────────────────────────────────
 _TG_MAX_LEN = 4096
@@ -852,6 +852,7 @@ def format_premium_bleed_alert(
     current_price: float,
     *,
     dte_days: Optional[float] = None,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> str:
     """선물 상승 중 옵션 프리미엄 수축 감지 → 텔레그램 MarkdownV2 독립 알림 메시지.
 
@@ -876,7 +877,8 @@ def format_premium_bleed_alert(
     except Exception:
         score = dte_w = decay = iv_crush = fut_ret = straddle_n = straddle_p = 0.0
 
-    now_str = datetime.now().strftime("%H:%M:%S")
+    _now = now_fn if now_fn is not None else datetime.now
+    now_str = _now().strftime("%H:%M:%S")
 
     # 강도 이모지
     if abs(score) >= 0.7:
@@ -964,6 +966,8 @@ def format_premium_bleed_alert(
 def format_price_level_touch_alert(
     opt_snap: Dict[str, Any],
     current_price: float,
+    *,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> str:
     """옵션 가격 레벨 터치 감지 → 텔레그램 MarkdownV2 독립 알림 메시지.
 
@@ -975,6 +979,7 @@ def format_price_level_touch_alert(
     Args:
         opt_snap:      build_option_snapshot() 반환 dict.
         current_price: 현재 선물 가격(pt).
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능).
     """
     scan = opt_snap.get("_price_level_scan")
     if not isinstance(scan, dict) or not scan.get("has_hit"):
@@ -986,7 +991,8 @@ def format_price_level_touch_alert(
     put_hits:  list = scan.get("put_hits")  or []
     levels:    list = scan.get("levels_used") or []
 
-    now_str = datetime.now().strftime("%H:%M:%S")
+    _now = now_fn if now_fn is not None else datetime.now
+    now_str = _now().strftime("%H:%M:%S")
     lv_str  = " \\| ".join(esc(f"{lv:.2f}") for lv in sorted(levels))
 
     lines = [
@@ -1067,6 +1073,7 @@ def format_futures_call_divergence_alert(
     atm_strike: float,
     *,
     dte_days: Optional[float] = None,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> str:
     """선물-ATM 콜 추적 이탈(CDS) 감지 → 텔레그램 MarkdownV2 독립 알림 메시지.
 
@@ -1077,6 +1084,7 @@ def format_futures_call_divergence_alert(
         current_price: 현재 선물가.
         atm_strike:    ATM 행사가.
         dte_days:      만기 잔존일 (None 가능).
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능).
     """
     esc = _esc_mdv2
 
@@ -1092,7 +1100,8 @@ def format_futures_call_divergence_alert(
         beta = 0.5
         n_samp = 0
 
-    now_str = datetime.now().strftime("%H:%M:%S")
+    _now = now_fn if now_fn is not None else datetime.now
+    now_str = _now().strftime("%H:%M:%S")
 
     # 강도 등급
     if cds >= 0.7:
@@ -1150,11 +1159,12 @@ def format_futures_call_divergence_alert(
     return "\n".join(lines)
 
 
-def format_error_message(result: Dict[str, Any]) -> str:
+def format_error_message(result: Dict[str, Any], *, now_fn: Optional[Callable[[], datetime]] = None) -> str:
     """에러 결과 dict → 텔레그램 메시지."""
     error = str(result.get("error", "unknown"))
     message = str(result.get("message", ""))
-    now = datetime.now().strftime("%H:%M:%S")
+    _now = now_fn if now_fn is not None else datetime.now
+    now = _now().strftime("%H:%M:%S")
     return (
         f"🚨 *예측 오류* \\| {now}\n"
         f"`{_esc_mdv2(error)}`\n"

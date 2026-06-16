@@ -5,7 +5,7 @@ t8415: 선물/옵션 분봉 OHLCV 데이터 조회
 t8418: KOSPI 지수 분봉 데이터 조회
 """
 import pandas as pd
-from typing import Optional, Dict, Any, Tuple
+from typing import Callable, Optional, Dict, Any, Tuple
 from datetime import datetime, time
 import logging
 
@@ -15,12 +15,14 @@ logger = logging.getLogger(__name__)
 class FetchMarketDataService:
     """eBest OpenAPI 분봉 데이터 수집 서비스"""
 
-    def __init__(self, api_client=None):
+    def __init__(self, api_client=None, now_fn: Optional[Callable[[], datetime]] = None):
         """
         Args:
             api_client: eBest API 클라이언트 인스턴스 (필요한 경우)
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self.api_client = api_client
+        self._now_fn = now_fn if now_fn is not None else datetime.now
 
     async def fetch_market_data(
         self,
@@ -64,8 +66,8 @@ class FetchMarketDataService:
             # 장 시작 전 옵션 데이터 스킵
             if query_type == "t8415" and (not bool(getattr(view, "use_replay", False))):
                 if self._is_option_symbol(upcode):
-                    today = datetime.now().strftime("%Y%m%d")
-                    now_time = datetime.now().time()
+                    today = self._now_fn().strftime("%Y%m%d")
+                    now_time = self._now_fn().time()
                     market_open = time(8, 45)  # 선물 개장 시간
                     if date == today and now_time < market_open:
                         logger.debug(f"[FetchMarketData] 장 시작 전: 옵션 분봉 스킵 {upcode}")

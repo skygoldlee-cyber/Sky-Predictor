@@ -99,11 +99,13 @@ class TelegramNotifier:
         only_actionable: bool = False,
         timeout: float = 30.0,
         proxy_url: Optional[str] = None,
+        now_fn: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self._token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
         self._chat_id = str(chat_id or os.environ.get("TELEGRAM_CHAT_ID", ""))
         self._only_actionable = bool(only_actionable)
         self._timeout = float(timeout)
+        self._now_fn = now_fn if now_fn is not None else datetime.now
 
         # 프록시 설정: proxy_url 지정 시 해당 프록시를 통해 요청
         # 예) "http://127.0.0.1:7890"  또는  "socks5://127.0.0.1:1080"
@@ -913,7 +915,7 @@ class TelegramNotifier:
             else:
                 time_str = str(event_timestamp)
         else:
-            time_str = datetime.now().strftime("%H:%M:%S")
+            time_str = self._now_fn().strftime("%H:%M:%S")
 
         lines = [
             f"{direction_emoji} <b>옵션 센티먼트 이벤트</b> {event_emoji}",
@@ -1448,9 +1450,14 @@ def create_bridge_from_config(
 # 시나리오별 더미 결과 생성
 _SCENARIOS: Dict[str, Any] = {}   # 아래 _build_scenarios()로 채워짐
 
-def _build_scenarios() -> Dict[str, Dict[str, Any]]:
-    """테스트 시나리오별 더미 예측 결과 딕셔너리를 반환합니다."""
-    now   = datetime.now().isoformat()
+def _build_scenarios(now_fn: Optional[Callable[[], datetime]] = None) -> Dict[str, Dict[str, Any]]:
+    """테스트 시나리오별 더미 예측 결과 딕셔너리를 반환합니다.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+    now   = _now().isoformat()
     base  = dict(
         prediction_time=now, target_time=now,
         prediction_minutes=5,
