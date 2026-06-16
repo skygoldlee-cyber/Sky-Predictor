@@ -21,6 +21,7 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Callable, Optional
 import shutil
 
 import numpy as np
@@ -94,12 +95,15 @@ def load_data(path: str):
     return X, y, meta
 
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = None) -> None:
     """run.
 
 Args:
     args:
+    now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
 """
+    _now = now_fn if now_fn is not None else datetime.now
+
     try:
         import torch
         import torch.nn as nn
@@ -321,7 +325,7 @@ Args:
         tag_date = ""
     if not tag_date:
         try:
-            tag_date = datetime.now().strftime("%Y%m%d")
+            tag_date = _now().strftime("%Y%m%d")
         except Exception:
             tag_date = ""
 
@@ -472,7 +476,7 @@ Args:
 
             payload = {
                 "out": str(args.out),
-                "created_at": datetime.now().isoformat(),
+                "created_at": _now().isoformat(),
                 "dataset": str(getattr(args, "data", "")),
                 "config": str(getattr(args, "config", "config.json")),
                 "schema_version": (meta.get("schema_version") if isinstance(meta, dict) else None),
@@ -539,9 +543,12 @@ Args:
         logger.warning("failed to save dated checkpoint: %s", e)
 
 
-def main() -> None:
+def main(now_fn: Optional[Callable[[], datetime]] = None) -> None:
     """main.
-"""
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
     parser = argparse.ArgumentParser(description="Train PriceTransformer")
     parser.add_argument("--config", default="config.json", help="config.json path (used to derive expected feature set)")
     parser.add_argument("--data", required=True, help="dataset.npz path")
@@ -568,7 +575,7 @@ def main() -> None:
     )
     parser.add_argument("--no-report", action="store_true")
     args = parser.parse_args()
-    run(args)
+    run(args, now_fn)
 
 
 if __name__ == "__main__":

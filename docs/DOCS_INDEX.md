@@ -41,6 +41,7 @@ graph TD
 ### 시스템 아키텍처
 - **ARCHITECTURE.md** - 시스템 아키텍처 상세
 - **DOCS_README.md** - 프로젝트 개요 및 상세 사용 가이드
+- **TIME_HANDLING_REFACTORING.md** - 시간 함수 주입 패턴 리팩토링 (새로 추가)
 
 ### 기술 가이드
 - **ADAPTIVE_INDICATOR_GUIDE.md** - 적응형 지표 가이드

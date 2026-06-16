@@ -14,7 +14,7 @@ import logging
 import math
 import re
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
@@ -276,28 +276,30 @@ def _is_business_day(d: date) -> bool:
         return True
 
 
-def get_previous_business_day(target_date: Optional[date] = None, days_back: int = 1) -> Optional[date]:
+def get_previous_business_day(target_date: Optional[date] = None, days_back: int = 1, now_fn: Optional[Callable[[], datetime]] = None) -> Optional[date]:
     """특정 날짜 기준 이전 영업일 계산.
-    
+
     토요일, 일요일, 공휴일을 제외하고 이전 영업일을 반환한다.
-    
+
     Args:
         target_date: 기준 날짜 (기본: 오늘)
         days_back: 몇 영업일 전 (기본: 1)
-    
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+
     Returns:
         이전 영업일 (계산 불가능 시 None)
-    
+
     Example:
         # 어제 영업일
         prev_day = get_previous_business_day()
-        
+
         # 3 영업일 전
         prev_3_day = get_previous_business_day(days_back=3)
     """
     try:
         if target_date is None:
-            target_date = datetime.now().date()
+            _now = now_fn if now_fn is not None else datetime.now
+            target_date = _now().date()
         
         current = target_date
         business_days_found = 0
@@ -398,13 +400,14 @@ def get_option_expiry_date(year: int, month: int) -> datetime:
     return datetime.combine(d, datetime.min.time())
 
 
-def get_expiry_week_info(now: Optional[datetime] = None) -> Dict[str, Any]:
+def get_expiry_week_info(now: Optional[datetime] = None, now_fn: Optional[Callable[[], datetime]] = None) -> Dict[str, Any]:
     """
     옵션 만기주 정보 반환
-    
+
     Args:
         now: 기준 시각 (None이면 현재)
-        
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+
     Returns:
         {
             'is_expiry_week': bool,
@@ -413,7 +416,8 @@ def get_expiry_week_info(now: Optional[datetime] = None) -> Dict[str, Any]:
         }
     """
     if now is None:
-        now = datetime.now()
+        _now = now_fn if now_fn is not None else datetime.now
+        now = _now()
     
     expiry_dt = get_option_expiry_date(now.year, now.month)
     
@@ -440,29 +444,31 @@ def get_expiry_week_info(now: Optional[datetime] = None) -> Dict[str, Any]:
     }
 
 
-def get_option_month_yyyymm(now: Optional[datetime] = None) -> str:
+def get_option_month_yyyymm(now: Optional[datetime] = None, now_fn: Optional[Callable[[], datetime]] = None) -> str:
     """
     현재 또는 다음 옵션 만기월 반환
-    
+
     Args:
         now: 기준 시각 (None이면 현재)
-        
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+
     Returns:
         만기월 (YYYYMM 형식)
-        
+
     Example:
         >>> # 2월 10일 (만기 전)
         >>> month = get_option_month_yyyymm(datetime(2025, 2, 10))
         >>> print(month)
         '202502'
-        
+
         >>> # 2월 14일 (만기 후)
         >>> month = get_option_month_yyyymm(datetime(2025, 2, 14))
         >>> print(month)
         '202503'
     """
     if now is None:
-        now = datetime.now()
+        _now = now_fn if now_fn is not None else datetime.now
+        now = _now()
     
     expiry_dt = get_option_expiry_date(now.year, now.month)
     
@@ -480,27 +486,29 @@ def get_option_month_yyyymm(now: Optional[datetime] = None) -> str:
     return f"{year:04d}{month:02d}"
 
 
-def parse_chetime(chetime: str, reference: Optional[datetime] = None) -> datetime:
+def parse_chetime(chetime: str, reference: Optional[datetime] = None, now_fn: Optional[Callable[[], datetime]] = None) -> datetime:
     """
     체결시간 파싱 (HHMMSS → datetime)
-    
+
     Args:
         chetime: 체결시간 (HHMMSS 형식)
         reference: 기준 시각 (None이면 현재)
-        
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+
     Returns:
         파싱된 datetime
-        
+
     Note:
         - 기준 시각과 12시간 이상 차이나면 날짜 자동 조정
-        
+
     Example:
         >>> dt = parse_chetime("130430")
         >>> print(dt.time())
         13:04:30
     """
     if reference is None:
-        reference = datetime.now()
+        _now = now_fn if now_fn is not None else datetime.now
+        reference = _now()
     
     # chetime=None 은 장 시작/종료 경계 및 데이터 공백 구간에서 정상 수신됨.
     # 예측 흐름에 영향 없는 정상 케이스이므로 WARNING 대신 DEBUG 로 처리한다.
@@ -542,9 +550,11 @@ def parse_ebest_tick_datetime(
     time_val: Any,
     *,
     reference: Optional[datetime] = None,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> datetime:
     """eBest IJ_ 등 지수 틱의 time 필드를 분봉 버킷용 datetime으로 (FC0 chetime과 동일 분 정렬)."""
-    ref = reference if isinstance(reference, datetime) else datetime.now()
+    _now = now_fn if now_fn is not None else datetime.now
+    ref = reference if isinstance(reference, datetime) else _now()
     ref = ref.replace(microsecond=0)
     if time_val is None:
         return ref
@@ -700,18 +710,20 @@ def write_jsonl_line(file_handle, obj: Any) -> None:
 # 파일 경로 유틸리티
 # ============================================================================
 
-def get_default_ticks_output_path(now: Optional[datetime] = None) -> str:
+def get_default_ticks_output_path(now: Optional[datetime] = None, now_fn: Optional[Callable[[], datetime]] = None) -> str:
     """
     기본 틱 저장 파일명 생성
-    
+
     Args:
         now: 기준 시각 (None이면 현재)
-        
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+
     Returns:
         파일명 (ticks_replay_YYYYMMDD_HHMMSS.jsonl)
     """
     if now is None:
-        now = datetime.now()
+        _now = now_fn if now_fn is not None else datetime.now
+        now = _now()
     return f"ticks_replay_{now.strftime('%Y%m%d_%H%M%S')}.jsonl"
 
 

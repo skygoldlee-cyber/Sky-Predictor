@@ -39,6 +39,12 @@ All notable changes to SkyPredictor will be documented in this file.
   - `tests/test_trade_gate.py`: Added missing import and relaxed trailing stop assertions
 
 ### Refactored
+- **Time Handling**: Implemented injectable time function pattern for better testability
+  - Added `now_fn` parameter to training scripts (`train_tft.py`, `train_patch_tst.py`, `train_mamba.py`, `train.py`)
+  - Added `now_fn` parameter to indicator classes (`AdaptiveSessionTable`, `AdaptiveParameterAdjuster`)
+  - Added `now_fn` parameter to core utility functions (`get_previous_business_day`, `get_expiry_week_info`, `get_option_month_yyyymm`, `parse_chetime`, `parse_ebest_tick_datetime`, `get_default_ticks_output_path`)
+  - Added `now_fn` parameter to data processing (`merge_datasets.py`)
+  - Replaced direct `datetime.now()` calls with injectable `_now()` or `self._now_fn()` for testing/backtesting support
 - **Code Organization**: 
   - Implemented `_init_numeric_predictor` and `_init_adaptive_manager` methods for better initialization flow
   - Removed adaptive manager and numeric predictor initialization from `_init_state`

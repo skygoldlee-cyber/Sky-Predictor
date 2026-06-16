@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -248,7 +248,12 @@ def merge(files: List[Path], *, tft: bool, out: Path, max_samples: int = 0) -> N
     print(f"saved: {out} X={X.shape} y={y.shape}")
 
 
-def main() -> None:
+def main(now_fn: Optional[Callable[[], datetime]] = None) -> None:
+    """Merge daily dataset files.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
     parser = argparse.ArgumentParser(description="Merge daily dataset_*.npz files into one training dataset")
     parser.add_argument("--pattern", required=True, help="Glob pattern for input NPZ files (e.g. dataset_tft_*.npz)")
     parser.add_argument("--last", type=int, default=20, help="Select last N dates from matched files (default: 20)")
@@ -275,13 +280,14 @@ def main() -> None:
         raise SystemExit(f"No files matched pattern: {args.pattern}")
 
     # Rollover reset: from the first trading day after expiry (observed), invalidate all prior training days.
-    now = datetime.now()
+    _now = now_fn if now_fn is not None else datetime.now
+    now = _now()
     asof = str(getattr(args, "asof", "") or "").strip()
     if asof and _DATE_FULL_RE.fullmatch(asof):
         try:
             now = datetime.strptime(asof, "%Y%m%d")
         except Exception:
-            now = datetime.now()
+            now = _now()
 
     marker_arg = str(getattr(args, "rollover_marker", "") or "").strip()
     marker_path = Path(marker_arg) if marker_arg else _default_monthly_marker(now)

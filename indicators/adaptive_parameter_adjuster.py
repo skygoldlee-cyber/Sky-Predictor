@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 from collections import deque
-from typing import Optional, Dict, Any, List, Tuple, Union
+from typing import Optional, Dict, Any, List, Tuple, Union, Callable
 from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
@@ -152,15 +152,17 @@ class AdaptiveParameterAdjuster:
     # 조정 폭 제한 (최대 ±30%)
     MAX_ADJUSTMENT_RATIO = 0.3
     
-    def __init__(self, base_params: Optional[AdaptiveParams] = None, config: Optional[Dict[str, Any]] = None, symbol: str = "futures"):
+    def __init__(self, base_params: Optional[AdaptiveParams] = None, config: Optional[Dict[str, Any]] = None, symbol: str = "futures", now_fn: Optional[Callable[[], datetime]] = None):
         """초기화
-        
+
         Args:
             base_params: 기준 파라미터 (None이면 config에서 읽음)
             config: config.json 딕셔너리 (None이면 기본값 사용)
             symbol: 심볼 ("futures" 또는 "kospi")
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self._symbol = symbol
+        self._now_fn = now_fn if now_fn is not None else datetime.now
         
         # [SSOT] config에서 기본 파라미터 읽기 — zigzag_settings_from_dict 경유
         if base_params is None and config is not None:
@@ -668,7 +670,7 @@ class AdaptiveParameterAdjuster:
         # timezone-naive datetime 사용 (한국 로컬 시간 기준)
         # timezone-aware datetime이 전달되어도 .hour/.minute 접근은 정상
         if current_time is None:
-            current_time = datetime.now()
+            current_time = self.adjuster._now_fn()
         
         hour = current_time.hour
         minute = current_time.minute
@@ -678,14 +680,14 @@ class AdaptiveParameterAdjuster:
         
         # JIF 기반 장 상태 판단 (초기화 시 임포트한 constants 사용)
         # [FIX-TIME-FALLBACK] constants 없을 때 시간 범위로 장중 여부 대략 판단
-        if self._is_market_closed is None:
+        if self.adjuster._is_market_closed is None:
             # 09:00~15:30 범위이면 장 중으로 간주 (폴백)
             is_closed = not (540 <= time_minutes < 930)
             logger.debug("[AdaptiveParameterAdjuster] constants 없음, 시간 기반 폴백: time_min=%d, is_closed=%s",
                          time_minutes, is_closed)
         else:
             try:
-                is_closed = self._is_market_closed(use_jif=True)
+                is_closed = self.adjuster._is_market_closed(use_jif=True)
             except Exception:
                 # 안전 폴백: 시간 범위로 판단
                 is_closed = not (540 <= time_minutes < 930)

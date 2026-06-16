@@ -34,7 +34,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -91,20 +91,22 @@ class AdaptiveSessionTable:
         ("15:20", "15:30", 0.5),   # 마감: 최고 민감도
     ]
     
-    def __init__(self, base_config: Any) -> None:
+    def __init__(self, base_config: Any, now_fn: Optional[Callable[[], datetime]] = None) -> None:
         """세션 테이블 초기화.
-        
+
         Args:
             base_config: AdaptiveZigZagConfig 인스턴스
+            now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
         """
         self._base_config = base_config
         self._state = SessionTableState()
-        
+        self._now_fn = now_fn if now_fn is not None else datetime.now
+
         # 시간대별 통계 (hour → HourlyStats)
         self._hourly_stats: Dict[int, HourlyStats] = defaultdict(
             lambda: HourlyStats()
         )
-        
+
         logger.info("[AdaptiveSessionTable] 초기화 완료")
     
     def update(
@@ -131,7 +133,7 @@ class AdaptiveSessionTable:
         stats.pivot_count += pivot_count
         stats.quality_sum += pivot_quality * pivot_count
         stats.quality_avg = stats.quality_sum / stats.pivot_count if stats.pivot_count > 0 else 0.0
-        stats.last_updated = datetime.now().strftime("%H:%M:%S")
+        stats.last_updated = self._now_fn().strftime("%H:%M:%S")
         
         self._state.total_updates += 1
         

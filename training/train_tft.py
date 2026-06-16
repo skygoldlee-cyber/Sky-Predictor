@@ -20,6 +20,7 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Callable, Optional
 import shutil
 
 import numpy as np
@@ -56,7 +57,15 @@ def load_data(path: str):
     return X, PK, FK, y, meta
 
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = None) -> None:
+    """학습 실행 함수.
+
+    Args:
+        args: 명령줄 인자
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+
     try:
         import torch
         from torch.utils.data import DataLoader, TensorDataset
@@ -249,7 +258,7 @@ def run(args: argparse.Namespace) -> None:
         tag_date = ""
     if not tag_date:
         try:
-            tag_date = datetime.now().strftime("%Y%m%d")
+            tag_date = _now().strftime("%Y%m%d")
         except Exception:
             tag_date = ""
 
@@ -329,7 +338,12 @@ def run(args: argparse.Namespace) -> None:
         logger.warning("failed to save dated checkpoint: %s", e)
 
 
-def main() -> None:
+def main(now_fn: Optional[Callable[[], datetime]] = None) -> None:
+    """메인 함수.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
     parser = argparse.ArgumentParser(description="Train TemporalFusionTransformer (TFT)")
     parser.add_argument("--config", default="config.json", help="config.json path (used to derive expected feature set)")
     parser.add_argument("--data", required=True, help="dataset_tft_*.npz path (must contain X, past_known, future_known, y)")
@@ -344,7 +358,7 @@ def main() -> None:
     parser.add_argument("--min-delta", type=float, default=0.0,
                         help="Early stopping 최소 개선량 (퍼센트포인트). 기본값: 0.0")
     args = parser.parse_args()
-    run(args)
+    run(args, now_fn)
 
 
 if __name__ == "__main__":

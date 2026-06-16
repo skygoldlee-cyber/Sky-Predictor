@@ -37,6 +37,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Callable, Optional
 
 import numpy as np
 
@@ -88,7 +89,15 @@ def load_data(path: str):
 # 훈련 메인 루프
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = None) -> None:
+    """학습 실행 함수.
+
+    Args:
+        args: 명령줄 인자
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
+
     try:
         import torch
         import torch.nn as nn
@@ -295,7 +304,7 @@ def run(args: argparse.Namespace) -> None:
     tag_date = str(getattr(args, "tag_date", "") or "").strip()
     if not tag_date:
         try:
-            tag_date = datetime.now().strftime("%Y%m%d")
+            tag_date = _now().strftime("%Y%m%d")
         except Exception:
             tag_date = ""
 
@@ -510,5 +519,15 @@ def _parse_args() -> argparse.Namespace:
     return args
 
 
+def main(now_fn: Optional[Callable[[], datetime]] = None) -> None:
+    """메인 함수.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    args = _parse_args()
+    run(args, now_fn)
+
+
 if __name__ == "__main__":
-    run(_parse_args())
+    main()
