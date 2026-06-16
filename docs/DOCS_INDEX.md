@@ -151,13 +151,39 @@
 
 ## 런타임 문서 (docs/runtime/)
 
-(14개 항목 - 런타임 API 레퍼런스)
+런타임 API 레퍼런스 및 트러블슈팅 가이드입니다.
+
+### 핵심 모듈
+- **adaptive_indicator.md** - 적응형 지표 런타임 가이드
+- **config.md** - 설정 로드 및 검증
+- **prediction.md** - 예측 파이프라인 런타임
+- **main.md** - 메인 진입점
+- **ebest.md** - eBest API 런타임
+
+### 트러블슈팅
+- **live_run_troubleshooting.md** - 실시간 실행 문제 해결
+- **runtime_README.md** - 런타임 개요
+
+### 기타
+- **Market_Open_Subscription_Flow.md** - 장 시작 구독 흐름
+- **adaptive_indicator_improvements.md** - 적응형 지표 개선사항
+- **adaptive_indicator_parameters.md** - 적응형 지표 파라미터
+- **runtime_telegram.md** - 런타임 텔레그램
+- **telegram.md** - 텔레그램 연동
+- **ticks.md** - 틱 데이터 처리
+- **volume_imbalance.md** - 거래량 불균형
 
 ---
 
-## 트레이닝 문서 (docs/tring/)
+## 트레이닝 문서 (docs/training/)
 
-(5개 항목 - 학습 레퍼런스)
+오프라인 데이터셋 생성 및 학습 가이드입니다.
+
+- **README.md** - 트레이닝 문서 인덱스
+- **data_builder.md** - 데이터셋 생성 (ticks JSONL → dataset NPZ)
+- **train_transformer.md** - Transformer 학습
+- **train_tft.md** - TFT 학습
+- **datasets.md** - 데이터셋 병합 및 검증
 
 ---
 
@@ -179,6 +205,15 @@
 1. ✅ **ZigZag 관련 파일** - zigzag_pivot_improvement.md, zigzag_pivot_logic.md, zigzag_pivot_configuration_guide.md → ZIGZAG_PIVOT_COMPREHENSIVE_GUIDE.md
 2. ✅ **피봇 검출 비교** - pivot_detection_comparison.md, pivot_detector_comparison.md → PIVOT_DETECTION_COMPARISON_GUIDE.md
 3. ✅ **피봇 정보 패널** - pivot_info_panel_chart_internal_placement.md, pivot_info_panel_implementation.md → PIVOT_INFO_PANEL_GUIDE.md
+
+### 아카이브 이동 완료
+1. ✅ **design/** → archives/design/ 이동 (HybridAdaptivePivot_Design_v1.1.md/html)
+2. ✅ **reviews/** → archives/reviews/ 이동 (9개 코드 리뷰 파일)
+3. ✅ **reports/** 오래된 파일 → archives/reports/ 이동 (BUG_FIXES.md, SkyPredictor_개선사항.md, adaptive_zigzag_fixes.md, improvement_report.md)
+
+### 인덱스 업데이트 완료
+1. ✅ **runtime/** 디렉토리 상세 목록 추가
+2. ✅ **training/** 디렉토리 상세 목록 추가
 
 ---
 
