@@ -2,6 +2,40 @@
 
 전체 문서 목록 및 설명입니다.
 
+## 문서 구조 (Mermaid)
+
+```mermaid
+graph TD
+    A[docs/] --> B[메인 문서]
+    A --> C[아카이브 문서]
+    A --> D[운영 문서]
+    A --> E[리포트]
+    A --> F[런타임 문서]
+    A --> G[트레이닝 문서]
+
+    B --> B1[시스템 아키텍처]
+    B --> B2[기술 가이드]
+    B --> B3[시스템 가이드]
+    B --> B4[해외 선물]
+    B --> B5[튜닝 가이드]
+    B --> B6[진단 문서]
+
+    C --> C1[architecture/]
+    C --> C2[config/]
+    C --> C3[ml/]
+    C --> C4[llm/]
+    C --> C5[options/]
+    C --> C6[pivot/]
+    C --> C7[zigzag/]
+    C --> C8[regime/]
+    C --> C9[trading/]
+    C --> C10[performance/]
+    C --> C11[operations/]
+    C --> C12[design/]
+    C --> C13[reviews/]
+    C --> C14[reports/]
+```
+
 ## 메인 문서 (docs/)
 
 ### 시스템 아키텍처
