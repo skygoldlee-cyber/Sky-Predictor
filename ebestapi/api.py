@@ -164,6 +164,44 @@ async def _ebest_fetch_kp200_symbol(api: Any) -> Optional[str]:
         return None
 
 
+async def _ebest_fetch_kp200_symbol_t8467(api: Any) -> Optional[str]:
+    """Fetch the KP200 futures symbol via `t8467` (best-effort).
+
+    Args:
+        api: eBest wrapper client.
+
+    Returns:
+        Futures symbol code (e.g. "101V3000") when available; otherwise None.
+    """
+    try:
+        res = await api.request("t8467", {"t8467InBlock": {"gubun": ""}})
+        items = (getattr(res, "body", None) or {}).get("t8467OutBlock") or []
+        shcode = str(items[0].get("shcode") or "").strip() if items else ""
+        return shcode or None
+    except Exception as e:
+        logger.warning("[KP200_SYMBOL_T8467] fetch failed: %s", e)
+        return None
+
+
+async def _ebest_fetch_kp200_symbol_t9943(api: Any) -> Optional[str]:
+    """Fetch the KP200 futures symbol via `t9943` (best-effort).
+
+    Args:
+        api: eBest wrapper client.
+
+    Returns:
+        Futures symbol code (e.g. "A0169000") when available; otherwise None.
+    """
+    try:
+        res = await api.request("t9943", {"t9943InBlock": {"gubun": ""}})
+        items = (getattr(res, "body", None) or {}).get("t9943OutBlock") or []
+        shcode = str(items[0].get("shcode") or "").strip() if items else ""
+        return shcode or None
+    except Exception as e:
+        logger.warning("[KP200_SYMBOL_T9943] fetch failed: %s", e)
+        return None
+
+
 async def _ebest_fetch_kp200_symbol_and_prev_close(api: Any) -> Tuple[Optional[str], Optional[float]]:
     """Fetch the KP200 futures symbol and previous close via `t8432` (best-effort).
 
@@ -277,7 +315,7 @@ async def _ebest_fetch_kp200_price_t8415(api: Any, *, symbol: str, yyyymmdd: Opt
 
 
 async def _ebest_fetch_kp200_ohlcv_t8415(api: Any, *, symbol: str, yyyymmdd: Optional[str] = None, ncnt: int = 1) -> Optional[List[Dict[str, Any]]]:
-    """Fetch OHLCV data via `t8415` for a specific date.
+    """Fetch OHLCV data via `t8465` for a specific date.
 
     Args:
         api: eBest wrapper client.
@@ -292,23 +330,21 @@ async def _ebest_fetch_kp200_ohlcv_t8415(api: Any, *, symbol: str, yyyymmdd: Opt
     try:
         date = str(yyyymmdd) if yyyymmdd else datetime.now().strftime("%Y%m%d")
         req = {
-            "t8415InBlock": {
+            "t8465InBlock": {
                 "shcode": str(symbol),
-                "ncnt": ncnt,      # 분봉 단위 (숫자)
-                "qrycnt": 1,       # 최대 조회 수
-                "nday": "",        # 일수 (빈 문자열)
-                "sdate": date,     # 시작 날짜
-                "stime": "",       # 시작 시간 (빈 문자열)
-                "edate": date,     # 종료 날짜
-                "etime": "",       # 종료 시간 (빈 문자열)
-                "cts_date": "",    # 연속 조회 날짜 (빈 문자열)
-                "cts_time": "",    # 연속 조회 시간 (빈 문자열)
-                "comp_yn": "N",    # 압축 여부 (미압축)
+                "ncnt": ncnt,      # 단위(n분)
+                "qrycnt": 500,     # 요청건수(비압축 최대 500)
+                "nday": "1",       # 조회영업일수(1>=사용)
+                "sdate": date,     # 시작일자
+                "edate": date,     # 종료일자
+                "cts_date": "",    # 연속일자
+                "cts_time": "",    # 연속시간
+                "comp_yn": "N",    # 압축여부(Y:압축, N:비압축)
             }
         }
-        res = await api.request("t8415", req)
+        res = await api.request("t8465", req)
         body = getattr(res, "body", None) or {}
-        items = body.get("t8415OutBlock1") or []
+        items = body.get("t8465OutBlock1") or []
 
         # 디버깅: API 응답 로깅
         import logging

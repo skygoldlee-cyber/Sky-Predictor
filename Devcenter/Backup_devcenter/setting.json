@@ -1,0 +1,52 @@
+{
+    "Profile 1": {
+        "name": "Profile 1",
+        "remember": true,
+        "appkey": "gAAAAABqMWCjbSU8OaD205mlTDqbv94GGLpOb_zY4fCXd2P1xBAeu9nLyA9GlQp10K9YwKv1lQvaUWqjfbITH4asq1yA8UCu-MsdIwJVSKRtLMGiQ9rhZ53NLQbrCQJUEpcr1pPRPPbn",
+        "appsecretkey": "gAAAAABqMWCjPOZJOJVzUONcEYpEtqi1IsSZq6EXR2A-PzvKOScRRruyFVJkF631UR9YthJXc0T_ncpIy17SlVAaeGhFqug2AgcxQnGgVcQTQjdWaihQnJHDdHIzI2opbxabRKi58d9V"
+    },
+    "Profile 2": {
+        "name": "Profile 2",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 3": {
+        "name": "Profile 3",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 4": {
+        "name": "Profile 4",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 5": {
+        "name": "Profile 5",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 6": {
+        "name": "Profile 6",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 7": {
+        "name": "Profile 7",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "Profile 8": {
+        "name": "Profile 8",
+        "remember": false,
+        "appkey": "",
+        "appsecretkey": ""
+    },
+    "window_width": 1450,
+    "window_height": 960
+}

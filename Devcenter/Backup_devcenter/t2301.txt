@@ -1,0 +1,11 @@
+async def sample(api):
+    inputs = {
+        't2301InBlock': {
+            'yyyymm': '', # 월물
+            'gubun': '', # 미니구분(M:미니G:정규)
+        },
+    }
+    response = await api.request('t2301', inputs)
+    if not response: return print(f'요청 실패: {api.last_message}')
+    
+    print(response)
