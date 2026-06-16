@@ -164,6 +164,7 @@ SkyPredictor/
 ## 문서
 
 ### 메인 문서
+- [CHANGELOG.md](CHANGELOG.md) - 변경 로그
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - 시스템 아키텍처 상세
 - [docs_README.md](docs/docs_README.md) - 프로젝트 개요 및 상세 사용 가이드
 
