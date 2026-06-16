@@ -66,21 +66,27 @@ X = [feature_vector_1, feature_vector_2, ...]  # (N, 32)
 y = [1.0, 0.0, 1.0, 1.0, 0.0, ...]  # (N,) - 실제 확정 여부
 ```
 
-### 문제 3: 후보 수명 시계열 예측
+### 문제 3: 후보 잔여 수명 시계열 예측
 
-**입력**: 후보 등록 후 매 봉마다의 피처 변화 (seq_len, 32)
-**출력**: 예상 수명(봉수)
+**입력**: 후보 등록 후 '지금까지' 관측된 부분 시퀀스 (seq_len, 32)
+**출력**: 지금 시점부터 확정/취소까지의 '잔여' 봉수 (log1p 스케일)
 **유형**: 시계열 회귀
 
 **학습 데이터**:
 ```python
 X = [
-    [f_t0, f_t1, f_t2, ...],  # 시퀀스 1
-    [f_t0, f_t1, f_t2, ...],  # 시퀀스 2
+    [f_t0, f_t1, f_t2, ...],  # 시퀀스 1 (부분 시퀀스)
+    [f_t0, f_t1, f_t2, ...],  # 시퀀스 2 (부분 시퀀스)
     ...
 ]  # (N, seq_len, 32)
-y = [2, 3, 1, 4, 2, ...]  # (N,) - 실제 수명(봉수)
+y = [2, 3, 1, 4, 2, ...]  # (N,) - 잔여 수명(봉수, log1p 스케일)
 ```
+
+**중요 변경사항 (v2.0)**:
+- 타겟을 '전체 수명'에서 '잔여 수명'으로 변경하여 데이터 누수 방지
+- 추론 시 진행 중인 부분 시퀀스와 학습 분포 일치
+- 시퀀스 길이가 곧 정답이 되는 누수 방지
+- `pack_padded_sequence` 사용으로 패딩 무시
 
 ---
 
@@ -236,22 +242,25 @@ criterion = nn.MSELoss()
 ### 3. 시계열 모델 (PivotLifespanPredictor)
 
 ```
-Input (seq_len, 32)
+Input (seq_len, 32) + lengths (batch,)
+    ↓
+pack_padded_sequence (패딩 무시)
     ↓
 LSTM(64, 2 layers)
     ↓
-Last timestep output
+Last real hidden state (실제 마지막 스텝)
     ↓
 Linear(1)
     ↓
-Output (lifespan)
+Output (remaining_lifespan, log1p scale)
 ```
 
 **특징**:
 - LSTM으로 시계열 패턴 학습
 - 2층 LSTM으로 깊은 패턴 학습
-- 마지막 타임스텝만 사용 (many-to-one)
-- 로그 정규화된 수명 예측
+- `pack_padded_sequence`로 패딩 무시 및 실제 마지막 스텝 은닉 상태 사용
+- 잔여 수명 예측 (log1p 스케일)
+- lengths 파라미터로 실제 시퀀스 길이 전달
 
 **코드**:
 ```python
@@ -260,7 +269,25 @@ class PivotLifespanPredictor(nn.Module):
         super().__init__()
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x: torch.Tensor, lengths=None) -> torch.Tensor:
+        if lengths is not None:
+            lengths_cpu = lengths.detach().to("cpu").long().clamp(min=1)
+            packed = nn.utils.rnn.pack_padded_sequence(
+                x, lengths_cpu, batch_first=True, enforce_sorted=False
+            )
+            _, (h_n, _) = self.lstm(packed)
+        else:
+            _, (h_n, _) = self.lstm(x)
+        last_output = h_n[-1]  # 최종 레이어의 실제 마지막 스텝 은닉 상태
+        output = self.fc(last_output)
+        return output
 ```
+
+**중요 변경사항 (v2.0)**:
+- `lengths` 파라미터 추가로 패딩 처리 개선
+- `pack_padded_sequence` 사용으로 패딩 0벡터에서 출력 읽는 문제 해결
+- 타겟을 잔여 수명으로 변경 (전체 수명이 아님)
 
 ### 4. 앙상블 모델 (PivotEnsemble)
 
@@ -276,13 +303,28 @@ ensemble_prob = w * cls_prob + (1 - w) * reg_prob
 
 ## 학습 전략
 
-### 데이터 분할
+### 데이터 분할 (v2.0 변경)
 
+**이전 방식 (v1.0)**:
 ```python
-Train: 70%
-Validation: 15%
-Test: 15%
+Train: 70% (무작위)
+Validation: 15% (무작위)
+Test: 15% (무작위)
 ```
+
+**현재 방식 (v2.0)**:
+```python
+# 레코드 단위 시간순 분할 (데이터 누수 방지)
+Train: 70% (과거 레코드)
+Validation: 15% (중간 레코드)
+Test: 15% (최근 레코드)
+```
+
+**중요 변경사항**:
+- 무작위 분할에서 시간순 분할로 변경
+- 레코드 단위 분할로 같은 후보의 prefix들이 train/val/test에 흩어지는 것 방지
+- 시계열 평가 원칙(과거 학습/미래 검증) 준수
+- prefix 확장: 한 완결 후보에서 여러 부분 시퀀스 샘플 생성
 
 ### 학습 하이퍼파라미터
 
@@ -323,21 +365,40 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(
 )
 ```
 
-### 시계열 데이터 전처리
+### 시계열 데이터 전처리 (v2.0 변경)
 
 **패딩/트리밍**:
 ```python
-if len(sequence) > max_seq_len:
-    sequence = sequence[-max_seq_len:]
-else:
-    while len(sequence) < max_seq_len:
-        sequence.append([0.0] * feature_dim)
+# 트리밍 (최근 max_seq_len) + 실제 길이 기록
+if len(seq_features) > self.max_seq_len:
+    seq_features = seq_features[-self.max_seq_len:]
+true_len = len(seq_features)
+
+# 후방 패딩 (packing으로 무시됨)
+while len(seq_features) < self.max_seq_len:
+    seq_features.append([0.0] * len(ADAPT_KEYS))
 ```
 
 **로그 정규화**:
 ```python
-lifespan_log = np.log1p(lifespan)  # log(1 + x)
+# 잔여 수명 정규화 (로그 스케일)
+remaining = terminal_bar - last_bar
+y = np.log1p(remaining)  # log(1 + x)
 ```
+
+**Prefix 확장 (v2.0)**:
+```python
+# 한 완결 후보에서 여러 부분 시퀀스 샘플 생성
+for t in range(min_prefix, len(real_snaps) + 1):
+    prefix = real_snaps[:t]
+    remaining = terminal_bar - int(prefix[-1]["bar_idx"])
+    # prefix → 학습 샘플, remaining → 타겟
+```
+
+**중요 변경사항**:
+- 전체 수명 대신 잔여 수명을 타겟으로 사용
+- 실제 길이 기록으로 `pack_padded_sequence`에 전달
+- prefix 확장으로 학습 샘플 수 증가
 
 ---
 
@@ -436,7 +497,7 @@ class PivotPredictionPipeline:
 8. 결과 반환
 ```
 
-### 예측 결과
+### 예측 결과 (v2.0 변경)
 
 ```python
 {
@@ -449,10 +510,16 @@ class PivotPredictionPipeline:
     "ensemble_prediction": 1,
     "ensemble_confidence": 0.53,
     "heuristic_prob": 0.72,
-    "predicted_lifespan_bars": 2.3,
+    "predicted_remaining_bars": 1.5,  # v2.0 추가: 잔여 수명
+    "predicted_lifespan_bars": 2.3,   # 전체 수명 = 경과 + 잔여
     "lifespan_confidence": 0.8,
 }
 ```
+
+**중요 변경사항 (v2.0)**:
+- `predicted_remaining_bars` 필드 추가 (지금부터 확정/취소까지 남은 봉수)
+- `predicted_lifespan_bars`는 전체 수명 추정 (경과 봉수 + 잔여 봉수)
+- 하위 호환성 유지를 위해 `predicted_lifespan_bars` 유지
 
 ---
 
@@ -563,6 +630,70 @@ Epoch 15/50 - Train Loss: 0.4123 - Val Loss: 0.4234 - Val Acc: 0.8234 - Val F1: 
 [INFO] PivotPredictionPipeline: 회귀 모델 예측: prob=0.75
 [INFO] PivotPredictionPipeline: 앙상블 확률: 0.765
 [INFO] PivotPredictionPipeline: 시계열 예측: lifespan=2.3봉
+```
+
+---
+
+## WalkForward 평가 (v2.0 추가)
+
+### WalkForwardEvaluator
+
+DB 파라미터 추천 시스템의 실증 평가를 위한 WalkForward 평가기입니다.
+
+**평가 모드**:
+
+1. **Estimate 모드 (기본)**:
+   - 검출을 재실행하지 않고 surrogate 계산 사용
+   - 동일 test_date 지표에 파라미터 선형 보정만 적용
+   - 빠르지만 실증 아님
+
+2. **Real 모드**:
+   - `evaluator_fn`으로 test_date 봉에 검출 재실행
+   - 실제 파라미터 성능 측정
+   - 느리지만 실증 가능
+
+**사용 예시**:
+```python
+from prediction.pivot_parameter_db import WalkForwardEvaluator
+
+# Estimate 모드 (빠름, 실증 아님)
+evaluator = WalkForwardEvaluator(symbol="KP200")
+results = evaluator.evaluate(
+    start_date="2024-01-01",
+    end_date="2024-03-31",
+    lookback_days=30,
+)
+
+# Real 모드 (느림, 실증)
+def my_evaluator_fn(test_date: str, params: dict):
+    # test_date 봉에 params로 검출 재실행
+    # metrics 반환: pivot_confirmation_rate, avg_lag_bars, ...
+    return metrics
+
+evaluator = WalkForwardEvaluator(
+    symbol="KP200",
+    evaluator_fn=my_evaluator_fn
+)
+results = evaluator.evaluate(
+    start_date="2024-01-01",
+    end_date="2024-03-31",
+    lookback_days=30,
+)
+```
+
+**판정 기준**:
+- `PASS — DB 추천 유효`: 개선률 > 3%, 커버리지 ≥ 80%, 안정성 < 20%
+- `PASS — 순환 강화`: 개선률 > 0%, 커버리지 ≥ 60%
+- `FAIL — 순환 강화 의심`: 개선률 < 0%
+- `ESTIMATE_ONLY`: surrogate 추정값 (real 모드에서 실증 필요)
+
+**스크립트**:
+```bash
+python prediction/pivot_walkforward_eval.py \
+    --symbol KP200 \
+    --start_date 2024-01-01 \
+    --end_date 2024-03-31 \
+    --lookback_days 30
 ```
 
 ---
@@ -687,6 +818,11 @@ python prediction/pivot_lifespan_inference.py \
 
 ---
 
-**문서 버전**: 1.0  
+**문서 버전**: 2.0  
 **작성일**: 2026-04-25  
-**마지막 수정**: 2026-04-25
+**마지막 수정**: 2026-06-16  
+**변경사항**:
+- v2.0: PivotLifespanPredictor 타겟을 '전체 수명'에서 '잔여 수명'으로 변경
+- v2.0: 데이터 분할을 무작위에서 시간순 레코드 단위로 변경
+- v2.0: pack_padded_sequence 지원 추가
+- v2.0: WalkForwardEvaluator 및 pivot_walkforward_eval.py 추가
