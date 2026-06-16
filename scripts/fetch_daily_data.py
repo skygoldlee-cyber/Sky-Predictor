@@ -8,8 +8,10 @@ config.json의 target_date를 사용하여 해당 날짜의 분봉 데이터를 
 사용법:
     python scripts/fetch_daily_data.py                              # config.json의 target_date 사용
     python scripts/fetch_daily_data.py --target-date 20260514       # 인자로 target_date 지정
+    python scripts/fetch_daily_data.py --start-date 20260501 --end-date 20260514  # 날짜 범위 지정
     python scripts/fetch_daily_data.py --force                       # 장마감 전에도 강제 실행
     python scripts/fetch_daily_data.py --target-date 20260514 --force  # 인자 + 강제 실행
+    python scripts/fetch_daily_data.py --start-date 20260501 --end-date 20260514 --force  # 범위 + 강제 실행
 
 요구사항:
     - config.secrets.json에 ebest 자격증명 (appkey, appsecretkey) 설정 필요
@@ -44,7 +46,7 @@ import argparse
 import json
 import sys
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
 import logging
@@ -81,8 +83,8 @@ for logger_name in ['aiohttp', 'aiohttp.client', 'aiohttp.internal', 'asyncio']:
 warnings.filterwarnings("ignore", category=ResourceWarning, message="Unclosed.*session")
 
 
-async def fetch_and_save_daily_data(target_date: str = None):
-    """config.json의 target_date 또는 인자로 받은 target_date로 t8415/t8418 데이터 수집 및 저장"""
+async def fetch_and_save_daily_data(target_date: str = None, start_date: str = None, end_date: str = None):
+    """config.json의 target_date 또는 인자로 받은 target_date/start_date/end_date로 t8415/t8418 데이터 수집 및 저장"""
     
     # config.json 로드 (target_date 등 일반 설정)
     config_path = Path(__file__).parent.parent / 'config.json'
@@ -101,14 +103,37 @@ async def fetch_and_save_daily_data(target_date: str = None):
     ebest_config = config.get('ebest', {})
     ebest_secrets = secrets.get('ebest', {})
     
-    # 인자로 target_date가 제공되면 우선 사용, 아니면 config.json 값 사용
-    if target_date is None:
+    # 날짜 리스트 생성
+    date_list = []
+    
+    if start_date and end_date:
+        # 날짜 범위 처리
+        try:
+            start_dt = datetime.strptime(start_date, '%Y%m%d')
+            end_dt = datetime.strptime(end_date, '%Y%m%d')
+            
+            # 날짜 범위 생성
+            current_dt = start_dt
+            while current_dt <= end_dt:
+                date_list.append(current_dt.strftime('%Y%m%d'))
+                current_dt = current_dt + timedelta(days=1)
+            
+            logger.info(f"날짜 범위: {start_date} ~ {end_date} (총 {len(date_list)}일)")
+        except ValueError as e:
+            logger.error(f"날짜 형식 오류: {e} (YYYYMMDD 형식 필요)")
+            return
+    elif target_date:
+        # 단일 날짜 처리
+        date_list = [target_date]
+        logger.info(f"단일 날짜: {target_date}")
+    else:
+        # config.json의 target_date 사용
         target_date = ebest_config.get('target_date', datetime.now().strftime('%Y%m%d'))
+        date_list = [target_date]
+        logger.info(f"config.json target_date 사용: {target_date}")
     
     kp200_upcode = ebest_config.get('kp200_upcode', 'A0166000')  # fallback
     kospi_upcode = '001'  # KOSPI 지수 코드는 항상 '001'
-    
-    logger.info(f"목표 날짜: {target_date}")
     
     # ebest API 클라이언트 연결
     try:
@@ -150,66 +175,79 @@ async def fetch_and_save_daily_data(target_date: str = None):
         return
     
     try:
-        # t8415: KOSPI200 선물 분봉 데이터 수집 (1분봉)
-        logger.info(f"KOSPI200 선물 코드: {kp200_upcode}")
-        logger.info(f"t8415 요청: {kp200_upcode} ({target_date})")
-        kp200_bars = await _ebest_fetch_kp200_ohlcv_t8415(
-            api_client,
-            symbol=kp200_upcode,
-            yyyymmdd=target_date,
-            ncnt=1  # 1분봉
-        )
+        # 날짜별 데이터 수집 루프
+        success_count = 0
+        fail_count = 0
         
-        if kp200_bars:
-            kp200_df = pd.DataFrame(kp200_bars)
-            # target_date와 time 결합하여 KST 기준 datetime 생성
-            kp200_df['Datetime'] = pd.to_datetime(target_date + kp200_df['time'], format='%Y%m%d%H%M%S')
+        for idx, current_date in enumerate(date_list, 1):
+            logger.info(f"날짜 {idx}/{len(date_list)}: {current_date}")
             
-            # 불필요한 컬럼 제거 (date, time)
-            kp200_df = kp200_df.drop(columns=['date', 'time'], errors='ignore')
+            # t8415: KOSPI200 선물 분봉 데이터 수집 (1분봉)
+            logger.info(f"KOSPI200 선물 코드: {kp200_upcode}")
+            logger.info(f"t8415 요청: {kp200_upcode} ({current_date})")
+            kp200_bars = await _ebest_fetch_kp200_ohlcv_t8415(
+                api_client,
+                symbol=kp200_upcode,
+                yyyymmdd=current_date,
+                ncnt=1  # 1분봉
+            )
             
-            # 컬럼명 첫 글자 대문자로 변경
-            kp200_df.columns = [col.capitalize() for col in kp200_df.columns]
-            kp200_df = kp200_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            if kp200_bars:
+                kp200_df = pd.DataFrame(kp200_bars)
+                # current_date와 time 결합하여 KST 기준 datetime 생성
+                kp200_df['Datetime'] = pd.to_datetime(current_date + kp200_df['time'], format='%Y%m%d%H%M%S')
+                
+                # 불필요한 컬럼 제거 (date, time)
+                kp200_df = kp200_df.drop(columns=['date', 'time'], errors='ignore')
+                
+                # 컬럼명 첫 글자 대문자로 변경
+                kp200_df.columns = [col.capitalize() for col in kp200_df.columns]
+                kp200_df = kp200_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # CSV 저장
+                output_dir = Path('data/daily_bars')
+                output_dir.mkdir(parents=True, exist_ok=True)
+                kp200_file = output_dir / f'minute_bars_kp200_{current_date}.csv'
+                kp200_df.to_csv(kp200_file, index=False)
+                logger.info(f"KOSPI200 선물 데이터 저장 완료: {kp200_file} ({len(kp200_df)} rows)")
+            else:
+                logger.warning(f"KOSPI200 선물 데이터 수집 실패: {current_date}")
+                fail_count += 1
+                continue
             
-            # CSV 저장
-            output_dir = Path('data/daily_bars')
-            output_dir.mkdir(parents=True, exist_ok=True)
-            kp200_file = output_dir / f'minute_bars_kp200_{target_date}.csv'
-            kp200_df.to_csv(kp200_file, index=False)
-            logger.info(f"KOSPI200 선물 데이터 저장 완료: {kp200_file} ({len(kp200_df)} rows)")
-        else:
-            logger.warning("KOSPI200 선물 데이터 수집 실패")
+            # t8418: KOSPI 지수 분봉 데이터 수집 (1분봉)
+            logger.info(f"t8418 요청: {kospi_upcode} ({current_date})")
+            kospi_bars = await _ebest_fetch_kospi_ohlcv_t8418(
+                api_client,
+                symbol=kospi_upcode,
+                yyyymmdd=current_date,
+                ncnt=1  # 1분봉
+            )
+            
+            if kospi_bars:
+                kospi_df = pd.DataFrame(kospi_bars)
+                # current_date와 time 결합하여 KST 기준 datetime 생성
+                kospi_df['Datetime'] = pd.to_datetime(current_date + kospi_df['time'], format='%Y%m%d%H%M%S')
+                
+                # 불필요한 컬럼 제거 (date, time)
+                kospi_df = kospi_df.drop(columns=['date', 'time'], errors='ignore')
+                
+                # 컬럼명 첫 글자 대문자로 변경
+                kospi_df.columns = [col.capitalize() for col in kospi_df.columns]
+                kospi_df = kospi_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # CSV 저장
+                kospi_file = output_dir / f'minute_bars_kospi_{current_date}.csv'
+                kospi_df.to_csv(kospi_file, index=False)
+                logger.info(f"KOSPI 지수 데이터 저장 완료: {kospi_file} ({len(kospi_df)} rows)")
+                success_count += 1
+            else:
+                logger.warning(f"KOSPI 지수 데이터 수집 실패: {current_date}")
+                fail_count += 1
         
-        # t8418: KOSPI 지수 분봉 데이터 수집 (1분봉)
-        logger.info(f"t8418 요청: {kospi_upcode} ({target_date})")
-        kospi_bars = await _ebest_fetch_kospi_ohlcv_t8418(
-            api_client,
-            symbol=kospi_upcode,
-            yyyymmdd=target_date,
-            ncnt=1  # 1분봉
-        )
-        
-        if kospi_bars:
-            kospi_df = pd.DataFrame(kospi_bars)
-            # target_date와 time 결합하여 KST 기준 datetime 생성
-            kospi_df['Datetime'] = pd.to_datetime(target_date + kospi_df['time'], format='%Y%m%d%H%M%S')
-            
-            # 불필요한 컬럼 제거 (date, time)
-            kospi_df = kospi_df.drop(columns=['date', 'time'], errors='ignore')
-            
-            # 컬럼명 첫 글자 대문자로 변경
-            kospi_df.columns = [col.capitalize() for col in kospi_df.columns]
-            kospi_df = kospi_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
-            
-            # CSV 저장
-            kospi_file = output_dir / f'minute_bars_kospi_{target_date}.csv'
-            kospi_df.to_csv(kospi_file, index=False)
-            logger.info(f"KOSPI 지수 데이터 저장 완료: {kospi_file} ({len(kospi_df)} rows)")
-        else:
-            logger.warning("KOSPI 지수 데이터 수집 실패")
-        
-        logger.info("데이터 수집 완료")
+        logger.info("="*80)
+        logger.info(f"데이터 수집 완료: 성공 {success_count}일, 실패 {fail_count}일 (총 {len(date_list)}일)")
+        logger.info("="*80)
         
     except Exception as e:
         logger.error(f"데이터 수집 중 오류 발생: {e}", exc_info=True)
@@ -230,17 +268,30 @@ def main():
     """메인 함수"""
     parser = argparse.ArgumentParser(description='장마감 이후 t8415/t8418 데이터 수집')
     parser.add_argument('--target-date', type=str, help='목표 날짜 (YYYYMMDD 형식)')
+    parser.add_argument('--start-date', type=str, help='시작 날짜 (YYYYMMDD 형식)')
+    parser.add_argument('--end-date', type=str, help='종료 날짜 (YYYYMMDD 형식)')
     parser.add_argument('--force', action='store_true', help='장마감 전에도 강제 실행')
     
     args = parser.parse_args()
     
-    # 인자로 target_date가 제공되면 형식 검증
-    if args.target_date:
-        try:
-            datetime.strptime(args.target_date, '%Y%m%d')
-        except ValueError:
-            logger.error(f"target_date 형식 오류: {args.target_date} (YYYYMMDD 형식 필요)")
-            return
+    # 인자 유효성 검증
+    if args.target_date and (args.start_date or args.end_date):
+        logger.error("--target-date와 --start-date/--end-date는 동시에 사용할 수 없습니다.")
+        return
+    
+    if (args.start_date and not args.end_date) or (args.end_date and not args.start_date):
+        logger.error("--start-date와 --end-date는 함께 사용해야 합니다.")
+        return
+    
+    # 날짜 형식 검증
+    for date_arg in ['target_date', 'start_date', 'end_date']:
+        date_value = getattr(args, date_arg)
+        if date_value:
+            try:
+                datetime.strptime(date_value, '%Y%m%d')
+            except ValueError:
+                logger.error(f"{date_arg.replace('_', '-')} 형식 오류: {date_value} (YYYYMMDD 형식 필요)")
+                return
     
     logger.info("="*80)
     logger.info("장마감 이후 t8415/t8418 데이터 수집 시작")
@@ -257,8 +308,12 @@ def main():
         logger.warning("강제 실행하려면 --force 옵션을 사용하세요.")
         return
     
-    # 비동기 실행 (인자로 target_date 전달)
-    asyncio.run(fetch_and_save_daily_data(target_date=args.target_date))
+    # 비동기 실행 (인자로 날짜 전달)
+    asyncio.run(fetch_and_save_daily_data(
+        target_date=args.target_date,
+        start_date=args.start_date,
+        end_date=args.end_date
+    ))
 
 
 if __name__ == '__main__':
