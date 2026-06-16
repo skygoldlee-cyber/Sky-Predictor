@@ -8,7 +8,7 @@ config.json의 target_date를 사용하여 해당 날짜의 분봉 데이터를 
 사용법:
     python scripts/fetch_daily_data.py                              # config.json의 target_date 사용
     python scripts/fetch_daily_data.py --target-date 20260514       # 인자로 target_date 지정
-    python scripts/fetch_daily_data.py --start-date 20260501 --end-date 20260514  # 날짜 범위 지정
+    python scripts/fetch_daily_data.py --start-date 20260501 --end-date 20260514  # 날짜 범위 지정 (연속 조회)
     python scripts/fetch_daily_data.py --force                       # 장마감 전에도 강제 실행
     python scripts/fetch_daily_data.py --target-date 20260514 --force  # 인자 + 강제 실행
     python scripts/fetch_daily_data.py --start-date 20260501 --end-date 20260514 --force  # 범위 + 강제 실행
@@ -22,8 +22,8 @@ config.json의 target_date를 사용하여 해당 날짜의 분봉 데이터를 
     - data/daily_bars/ 디렉토리에 CSV 저장
 
 출력 파일:
-    - data/daily_bars/minute_bars_kp200_{target_date}.csv
-    - data/daily_bars/minute_bars_kospi_{target_date}.csv
+    - 단일 날짜: data/daily_bars/minute_bars_kp200_{target_date}.csv
+    - 날짜 범위: data/daily_bars/minute_bars_kp200_{start_date}_{end_date}.csv
 
 config.secrets.json 예시:
     {
@@ -46,6 +46,7 @@ import argparse
 import json
 import sys
 import warnings
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
@@ -81,6 +82,126 @@ for logger_name in ['aiohttp', 'aiohttp.client', 'aiohttp.internal', 'asyncio']:
 
 # ResourceWarning 억제 (aiohttp Unclosed session 경고)
 warnings.filterwarnings("ignore", category=ResourceWarning, message="Unclosed.*session")
+
+
+async def fetch_kp200_continuous(api_client, symbol: str, start_date: str, end_date: str, ncnt: int = 1):
+    """연속 조회로 KOSPI200 선물 분봉 데이터 수집 (날짜 범위)"""
+    all_rows = []
+    cts_date = ""
+    cts_time = ""
+    page = 1
+    
+    while True:
+        logger.info(f"KP200 연속 조회... page={page}")
+        
+        # ebest API 요청
+        req = {
+            "t8415InBlock": {
+                "shcode": symbol,
+                "ncnt": ncnt,
+                "qrycnt": 500,  # 최대 조회 건수
+                "nday": "0",
+                "sdate": start_date,
+                "edate": end_date,
+                "cts_date": cts_date,
+                "cts_time": cts_time,
+                "comp_yn": "N"
+            }
+        }
+        
+        try:
+            res = await api_client.request("t8415", req)
+            body = res.get("body", {})
+            rows = body.get("t8415OutBlock1", [])
+            
+            if len(rows) == 0:
+                logger.info("KP200 연속 조회 완료 (더 이상 데이터 없음)")
+                break
+            
+            all_rows.extend(rows)
+            logger.info(f"KP200 수신={len(rows)} 누적={len(all_rows)}")
+            
+            # 연속 조회 파라미터 업데이트
+            outblock = body.get("t8415OutBlock", {})
+            next_cts_date = outblock.get("cts_date", "")
+            next_cts_time = outblock.get("cts_time", "")
+            
+            if next_cts_date == "":
+                logger.info("KP200 연속 조회 완료 (cts_date 비어있음)")
+                break
+            
+            cts_date = next_cts_date
+            cts_time = next_cts_time
+            page += 1
+            
+            # API 요청 간 딜레이
+            await asyncio.sleep(0.3)
+            
+        except Exception as e:
+            logger.error(f"KP200 연속 조회 오류: {e}")
+            break
+    
+    return all_rows
+
+
+async def fetch_kospi_continuous(api_client, symbol: str, start_date: str, end_date: str, ncnt: int = 1):
+    """연속 조회로 KOSPI 지수 분봉 데이터 수집 (날짜 범위)"""
+    all_rows = []
+    cts_date = ""
+    cts_time = ""
+    page = 1
+    
+    while True:
+        logger.info(f"KOSPI 연속 조회... page={page}")
+        
+        # ebest API 요청
+        req = {
+            "t8418InBlock": {
+                "idxcode": symbol,
+                "ncnt": ncnt,
+                "qrycnt": 500,  # 최대 조회 건수
+                "nday": "0",
+                "sdate": start_date,
+                "edate": end_date,
+                "cts_date": cts_date,
+                "cts_time": cts_time,
+                "comp_yn": "N"
+            }
+        }
+        
+        try:
+            res = await api_client.request("t8418", req)
+            body = res.get("body", {})
+            rows = body.get("t8418OutBlock1", [])
+            
+            if len(rows) == 0:
+                logger.info("KOSPI 연속 조회 완료 (더 이상 데이터 없음)")
+                break
+            
+            all_rows.extend(rows)
+            logger.info(f"KOSPI 수신={len(rows)} 누적={len(all_rows)}")
+            
+            # 연속 조회 파라미터 업데이트
+            outblock = body.get("t8418OutBlock", {})
+            next_cts_date = outblock.get("cts_date", "")
+            next_cts_time = outblock.get("cts_time", "")
+            
+            if next_cts_date == "":
+                logger.info("KOSPI 연속 조회 완료 (cts_date 비어있음)")
+                break
+            
+            cts_date = next_cts_date
+            cts_time = next_cts_time
+            page += 1
+            
+            # API 요청 간 딜레이
+            await asyncio.sleep(0.3)
+            
+        except Exception as e:
+            logger.error(f"KOSPI 연속 조회 오류: {e}")
+            break
+    
+    return all_rows
 
 
 async def fetch_and_save_daily_data(target_date: str = None, start_date: str = None, end_date: str = None):
@@ -177,79 +298,162 @@ async def fetch_and_save_daily_data(target_date: str = None, start_date: str = N
         return
     
     try:
-        # 날짜별 데이터 수집 루프
-        success_count = 0
-        fail_count = 0
-        
-        for idx, current_date in enumerate(date_list, 1):
-            logger.info(f"날짜 {idx}/{len(date_list)}: {current_date}")
+        # 날짜 범위인 경우 연속 조회 사용
+        if start_date and end_date:
+            logger.info(f"연속 조회 모드: {start_date} ~ {end_date}")
             
-            # t8415: KOSPI200 선물 분봉 데이터 수집 (1분봉)
-            logger.info(f"KOSPI200 선물 코드: {kp200_upcode}")
-            logger.info(f"t8415 요청: {kp200_upcode} ({current_date})")
-            kp200_bars = await _ebest_fetch_kp200_ohlcv_t8415(
+            # KP200 연속 조회
+            logger.info("KOSPI200 선물 연속 조회 시작...")
+            kp200_rows = await fetch_kp200_continuous(
                 api_client,
                 symbol=kp200_upcode,
-                yyyymmdd=current_date,
-                ncnt=1  # 1분봉
+                start_date=start_date,
+                end_date=end_date,
+                ncnt=1
             )
             
-            if kp200_bars:
-                kp200_df = pd.DataFrame(kp200_bars)
-                # current_date와 time 결합하여 KST 기준 datetime 생성
-                kp200_df['Datetime'] = pd.to_datetime(current_date + kp200_df['time'], format='%Y%m%d%H%M%S')
+            if kp200_rows:
+                kp200_df = pd.DataFrame(kp200_rows)
+                # datetime 컬럼 생성
+                kp200_df['Datetime'] = pd.to_datetime(
+                    kp200_df['date'] + kp200_df['time'],
+                    format='%Y%m%d%H%M%S'
+                )
                 
-                # 불필요한 컬럼 제거 (date, time)
+                # 불필요한 컬럼 제거
                 kp200_df = kp200_df.drop(columns=['date', 'time'], errors='ignore')
                 
                 # 컬럼명 첫 글자 대문자로 변경
                 kp200_df.columns = [col.capitalize() for col in kp200_df.columns]
                 kp200_df = kp200_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
                 
+                # 정렬 및 중복 제거
+                kp200_df = kp200_df.sort_values('Datetime')
+                kp200_df = kp200_df.drop_duplicates(subset=['Datetime'], keep='first')
+                
                 # CSV 저장
                 output_dir = Path('data/daily_bars')
                 output_dir.mkdir(parents=True, exist_ok=True)
-                kp200_file = output_dir / f'minute_bars_kp200_{current_date}.csv'
+                kp200_file = output_dir / f'minute_bars_kp200_{start_date}_{end_date}.csv'
                 kp200_df.to_csv(kp200_file, index=False)
                 logger.info(f"KOSPI200 선물 데이터 저장 완료: {kp200_file} ({len(kp200_df)} rows)")
             else:
-                logger.warning(f"KOSPI200 선물 데이터 수집 실패: {current_date}")
-                fail_count += 1
-                continue
+                logger.warning("KOSPI200 선물 데이터 수집 실패")
             
-            # t8418: KOSPI 지수 분봉 데이터 수집 (1분봉)
-            logger.info(f"t8418 요청: {kospi_upcode} ({current_date})")
-            kospi_bars = await _ebest_fetch_kospi_ohlcv_t8418(
+            # KOSPI 연속 조회
+            logger.info("KOSPI 지수 연속 조회 시작...")
+            kospi_rows = await fetch_kospi_continuous(
                 api_client,
                 symbol=kospi_upcode,
-                yyyymmdd=current_date,
-                ncnt=1  # 1분봉
+                start_date=start_date,
+                end_date=end_date,
+                ncnt=1
             )
             
-            if kospi_bars:
-                kospi_df = pd.DataFrame(kospi_bars)
-                # current_date와 time 결합하여 KST 기준 datetime 생성
-                kospi_df['Datetime'] = pd.to_datetime(current_date + kospi_df['time'], format='%Y%m%d%H%M%S')
+            if kospi_rows:
+                kospi_df = pd.DataFrame(kospi_rows)
+                # datetime 컬럼 생성
+                kospi_df['Datetime'] = pd.to_datetime(
+                    kospi_df['date'] + kospi_df['time'],
+                    format='%Y%m%d%H%M%S'
+                )
                 
-                # 불필요한 컬럼 제거 (date, time)
+                # 불필요한 컬럼 제거
                 kospi_df = kospi_df.drop(columns=['date', 'time'], errors='ignore')
                 
                 # 컬럼명 첫 글자 대문자로 변경
                 kospi_df.columns = [col.capitalize() for col in kospi_df.columns]
                 kospi_df = kospi_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
                 
+                # 정렬 및 중복 제거
+                kospi_df = kospi_df.sort_values('Datetime')
+                kospi_df = kospi_df.drop_duplicates(subset=['Datetime'], keep='first')
+                
                 # CSV 저장
-                kospi_file = output_dir / f'minute_bars_kospi_{current_date}.csv'
+                kospi_file = output_dir / f'minute_bars_kospi_{start_date}_{end_date}.csv'
                 kospi_df.to_csv(kospi_file, index=False)
                 logger.info(f"KOSPI 지수 데이터 저장 완료: {kospi_file} ({len(kospi_df)} rows)")
-                success_count += 1
             else:
-                logger.warning(f"KOSPI 지수 데이터 수집 실패: {current_date}")
-                fail_count += 1
-        
-        logger.info("="*80)
-        logger.info(f"데이터 수집 완료: 성공 {success_count}일, 실패 {fail_count}일 (총 {len(date_list)}일)")
-        logger.info("="*80)
+                logger.warning("KOSPI 지수 데이터 수집 실패")
+            
+            logger.info("="*80)
+            logger.info(f"연속 조회 완료: {start_date} ~ {end_date}")
+            logger.info("="*80)
+        else:
+            # 단일 날짜인 경우 기존 방식 사용
+            logger.info("단일 날짜 모드")
+            success_count = 0
+            fail_count = 0
+            
+            for idx, current_date in enumerate(date_list, 1):
+                logger.info(f"날짜 {idx}/{len(date_list)}: {current_date}")
+                
+                # t8415: KOSPI200 선물 분봉 데이터 수집 (1분봉)
+                logger.info(f"KOSPI200 선물 코드: {kp200_upcode}")
+                logger.info(f"t8415 요청: {kp200_upcode} ({current_date})")
+                kp200_bars = await _ebest_fetch_kp200_ohlcv_t8415(
+                    api_client,
+                    symbol=kp200_upcode,
+                    yyyymmdd=current_date,
+                    ncnt=1  # 1분봉
+                )
+                
+                if kp200_bars:
+                    kp200_df = pd.DataFrame(kp200_bars)
+                    # current_date와 time 결합하여 KST 기준 datetime 생성
+                    kp200_df['Datetime'] = pd.to_datetime(current_date + kp200_df['time'], format='%Y%m%d%H%M%S')
+                    
+                    # 불필요한 컬럼 제거 (date, time)
+                    kp200_df = kp200_df.drop(columns=['date', 'time'], errors='ignore')
+                    
+                    # 컬럼명 첫 글자 대문자로 변경
+                    kp200_df.columns = [col.capitalize() for col in kp200_df.columns]
+                    kp200_df = kp200_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                    
+                    # CSV 저장
+                    output_dir = Path('data/daily_bars')
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    kp200_file = output_dir / f'minute_bars_kp200_{current_date}.csv'
+                    kp200_df.to_csv(kp200_file, index=False)
+                    logger.info(f"KOSPI200 선물 데이터 저장 완료: {kp200_file} ({len(kp200_df)} rows)")
+                else:
+                    logger.warning(f"KOSPI200 선물 데이터 수집 실패: {current_date}")
+                    fail_count += 1
+                    continue
+                
+                # t8418: KOSPI 지수 분봉 데이터 수집 (1분봉)
+                logger.info(f"t8418 요청: {kospi_upcode} ({current_date})")
+                kospi_bars = await _ebest_fetch_kospi_ohlcv_t8418(
+                    api_client,
+                    symbol=kospi_upcode,
+                    yyyymmdd=current_date,
+                    ncnt=1  # 1분봉
+                )
+                
+                if kospi_bars:
+                    kospi_df = pd.DataFrame(kospi_bars)
+                    # current_date와 time 결합하여 KST 기준 datetime 생성
+                    kospi_df['Datetime'] = pd.to_datetime(current_date + kospi_df['time'], format='%Y%m%d%H%M%S')
+                    
+                    # 불필요한 컬럼 제거 (date, time)
+                    kospi_df = kospi_df.drop(columns=['date', 'time'], errors='ignore')
+                    
+                    # 컬럼명 첫 글자 대문자로 변경
+                    kospi_df.columns = [col.capitalize() for col in kospi_df.columns]
+                    kospi_df = kospi_df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                    
+                    # CSV 저장
+                    kospi_file = output_dir / f'minute_bars_kospi_{current_date}.csv'
+                    kospi_df.to_csv(kospi_file, index=False)
+                    logger.info(f"KOSPI 지수 데이터 저장 완료: {kospi_file} ({len(kospi_df)} rows)")
+                    success_count += 1
+                else:
+                    logger.warning(f"KOSPI 지수 데이터 수집 실패: {current_date}")
+                    fail_count += 1
+            
+            logger.info("="*80)
+            logger.info(f"데이터 수집 완료: 성공 {success_count}일, 실패 {fail_count}일 (총 {len(date_list)}일)")
+            logger.info("="*80)
         
     except Exception as e:
         logger.error(f"데이터 수집 중 오류 발생: {e}", exc_info=True)
