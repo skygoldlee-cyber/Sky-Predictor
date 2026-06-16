@@ -231,6 +231,7 @@
 5. ✅ **reviews/** 섹션 상세 목록 추가
 6. ✅ **reports/** 섹션 상세 목록 추가
 7. ✅ **모든 MD 파일명 대문자로 변경** (archives/, runtime/, training/, reports/)
+8. ✅ **한글 파일명 유지** (Transformer_코드리뷰.md, Transformer_보완_개선_리포트.md, SkyPredictor_개선사항.md, TradeExecutionGate_설계문서.md)
 
 ---
 
