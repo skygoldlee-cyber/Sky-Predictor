@@ -98,7 +98,7 @@
 ### trading/ (트레이딩)
 - **TRADE_LOGGING_GUIDE.md** - 트레이드 로깅 가이드
 - **POSITION_SIZING_GUIDE.md** - 포지션 사이징 가이드
-- **TradeExecutionGate_설계문서.md** - TradeExecutionGate 설계문서
+- **TRADEEXECUTIONGATE_설계문서.md** - TradeExecutionGate 설계문서 (한글 파일명 유지)
 - **HEURISTIC_SIGNAL_ALGORITHM.md** - 휴리스틱 시그널 알고리즘
 
 ### performance/ (성능)
@@ -129,8 +129,8 @@
 ## 리포트 (docs/reports/)
 
 - **PIVOT_SIGNAL_IMPROVEMENTS.md** - 피봇 시그널 개선사항
-- **ZigZag_Pivot_Principles_BugFix.md** - ZigZag 피봇 원칙 버그픽스
-- **Transformer_보완_개선_리포트.md** - Transformer 보완 개선 리포트
+- **ZIGZAG_PIVOT_PRINCIPLES_BUGFIX.md** - ZigZag 피봇 원칙 버그픽스
+- **TRANSFORMER_보완_개선_리포트.md** - Transformer 보완 개선 리포트 (한글 파일명 유지)
 - **OPTIMIZE_ZIGZAG_LAG_IMPROVEMENTS.md** - ZigZag 래그 최적화
 - **TRANSFORMER_IMPROVEMENT_REPORT.md** - Transformer 개선 리포트
 
@@ -138,8 +138,8 @@
 
 ## 리뷰 (docs/archives/reviews/)
 
-- **ZigZag_Pivot_Analysis.md** - ZigZag 피봇 분석
-- **Transformer_코드리뷰.md** - Transformer 코드 리뷰
+- **ZIGZAG_PIVOT_ANALYSIS.md** - ZigZag 피봇 분석
+- **TRANSFORMER_코드리뷰.md** - Transformer 코드 리뷰 (한글 파일명 유지)
 - **ADAPTIVE_INDICATOR_ANALYSIS.md** - 적응형 지표 분석
 - **ADAPTIVE_INDICATOR_DEEP_REVIEW.md** - 적응형 지표 심층 리뷰
 - **CODE_REVIEW_REPORT.md** - 코드 리뷰 리포트
@@ -153,7 +153,7 @@
 ## 아카이브 리포트 (docs/archives/reports/)
 
 - **BUG_FIXES.md** - 버그 수정 리포트
-- **SkyPredictor_개선사항.md** - SkyPredictor 개선사항
+- **SkyPredictor_개선사항.md** - SkyPredictor 개선사항 (한글 파일명 유지)
 - **ADAPTIVE_ZIGZAG_FIXES.md** - 적응형 ZigZag 수정
 - **IMPROVEMENT_REPORT.md** - 개선 리포트
 
