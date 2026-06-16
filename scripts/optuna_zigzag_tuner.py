@@ -17,6 +17,7 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Callable, Optional
 
 import optuna
 
@@ -29,8 +30,13 @@ logging.basicConfig(
 _logger = logging.getLogger(__name__)
 
 
-def main():
-    """메인 함수."""
+def main(now_fn: Optional[Callable[[], datetime]] = None):
+    """메인 함수.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     parser = argparse.ArgumentParser(description="ZigZag 파라미터 Optuna 최적화")
     
     parser.add_argument(
@@ -101,7 +107,7 @@ def main():
     
     # 최적화 실행
     _logger.info("최적화 시작 (n_trials=%d, n_jobs=%d)...", args.n_trials, args.n_jobs)
-    start_time = datetime.now()
+    start_time = _now()
     
     study.optimize(
         objective,
@@ -110,7 +116,7 @@ def main():
         show_progress_bar=True
     )
     
-    elapsed = (datetime.now() - start_time).total_seconds()
+    elapsed = (_now() - start_time).total_seconds()
     _logger.info("최적화 완료 (소요 시간: %.1f초)", elapsed)
     
     # 결과 출력
@@ -141,7 +147,7 @@ def main():
             "best_value": study.best_value,
             "n_trials": len(study.trials),
             "elapsed_seconds": elapsed,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": _now().isoformat(),
             "top_trials": [
                 {
                     "params": t.params,

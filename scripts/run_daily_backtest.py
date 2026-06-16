@@ -8,7 +8,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -26,17 +26,20 @@ logger = logging.getLogger(__name__)
 
 def run_daily_backtest(
     initial_capital: float = 10000000.0,
-    output_dir: Optional[Path] = None
+    output_dir: Optional[Path] = None,
+    now_fn: Optional[Callable[[], datetime]] = None
 ) -> bool:
     """당일 매매 백테스트 실행.
 
     Args:
         initial_capital: 초기 자본 (기본 1000만원)
         output_dir: 결과 저장 디렉토리 (기본: logs/backtest/results)
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
 
     Returns:
         실행 성공 여부
     """
+    _now = now_fn if now_fn is not None else datetime.now
     try:
         logger.info("[DAILY_BACKTEST] 당일 매매 백테스트 시작")
 
@@ -46,7 +49,7 @@ def run_daily_backtest(
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # 1) 거래 로그 파일 경로 확인
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = _now().strftime("%Y-%m-%d")
         log_file = Path("logs/trades") / f"trades_{today}.jsonl"
 
         if not log_file.exists():
@@ -65,7 +68,7 @@ def run_daily_backtest(
         backtester.print_results(results)
 
         # 5) 결과 저장
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = _now().strftime("%Y%m%d_%H%M%S")
         paths = backtester.save_all(results, output_dir=output_dir, timestamp=timestamp)
 
         logger.info("[DAILY_BACKTEST] 백테스트 완료")
@@ -96,17 +99,20 @@ def run_daily_backtest(
 
 def run_daily_backtest_with_ohlcv(
     initial_capital: float = 10000000.0,
-    output_dir: Optional[Path] = None
+    output_dir: Optional[Path] = None,
+    now_fn: Optional[Callable[[], datetime]] = None
 ) -> bool:
     """당일 매매 백테스트 실행 (OHLCV 데이터 포함).
 
     Args:
         initial_capital: 초기 자본 (기본 1000만원)
         output_dir: 결과 저장 디렉토리 (기본: logs/backtest/results)
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
 
     Returns:
         실행 성공 여부
     """
+    _now = now_fn if now_fn is not None else datetime.now
     try:
         logger.info("[DAILY_BACKTEST] 당일 매매 백테스트 시작 (OHLCV 포함)")
 
@@ -116,7 +122,7 @@ def run_daily_backtest_with_ohlcv(
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # 1) 거래 로그 파일 경로 확인
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = _now().strftime("%Y-%m-%d")
         log_file = Path("logs/trades") / f"trades_{today}.jsonl"
 
         if not log_file.exists():
@@ -124,13 +130,13 @@ def run_daily_backtest_with_ohlcv(
             return False
 
         # 2) OHLCV 데이터 파일 경로 확인 (futures 우선)
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        ohlcv_file = Path("data/backtesting/futures") / datetime.now().strftime("%Y") / f"{today_str}_futures_1m.csv"
+        today_str = _now().strftime("%Y-%m-%d")
+        ohlcv_file = Path("data/backtesting/futures") / _now().strftime("%Y") / f"{today_str}_futures_1m.csv"
 
         if not ohlcv_file.exists():
             logger.warning("[DAILY_BACKTEST] OHLCV 데이터 파일 없음: %s", ohlcv_file)
             # OHLCV 없으면 일반 로그 기반 백테스트로 폴백
-            return run_daily_backtest(initial_capital, output_dir)
+            return run_daily_backtest(initial_capital, output_dir, now_fn)
 
         # 3) OHLCV 데이터 로드
         df = pd.read_csv(ohlcv_file, index_col=0, parse_dates=True)
@@ -148,7 +154,7 @@ def run_daily_backtest_with_ohlcv(
         backtester.print_results(results)
 
         # 7) 결과 저장
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = _now().strftime("%Y%m%d_%H%M%S")
         paths = backtester.save_all(results, output_dir=output_dir, timestamp=timestamp)
 
         logger.info("[DAILY_BACKTEST] 백테스트 완료")
@@ -375,8 +381,19 @@ def run_walk_forward_evaluation(
     lookback_days: int = 30,
     test_days: int = 20,
     output_dir: Optional[Path] = None,
+    now_fn: Optional[Callable[[], datetime]] = None,
 ) -> dict:
-    """Walk-forward 평가를 실행하고 결과를 저장한다."""
+    """Walk-forward 평가를 실행하고 결과를 저장한다.
+
+    Args:
+        symbol: 심볼명
+        db_path: DB 경로
+        lookback_days: 룩백 기간 (일)
+        test_days: 테스트 기간 (일)
+        output_dir: 결과 저장 디렉토리
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     if output_dir is None:
         output_dir = Path("logs/evaluation")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -392,7 +409,7 @@ def run_walk_forward_evaluation(
         cov_result = evaluator.measure_coverage(lookback_days=lookback_days)
 
         full_result = {
-            "timestamp":     datetime.now().isoformat(),
+            "timestamp":     _now().isoformat(),
             "symbol":        symbol,
             "lookback_days": lookback_days,
             "test_days":     test_days,
@@ -400,7 +417,7 @@ def run_walk_forward_evaluation(
             "coverage":      cov_result,
         }
 
-        today = datetime.now().strftime("%Y%m%d")
+        today = _now().strftime("%Y%m%d")
         json_path   = output_dir / f"walkforward_{today}.json"
         latest_path = output_dir / "walkforward_latest.json"
 

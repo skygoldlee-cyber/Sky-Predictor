@@ -19,7 +19,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Any
 import pandas as pd
 from itertools import product
 import random
@@ -434,8 +434,13 @@ class ParameterTuner:
         return self.results[0].params
 
 
-def main():
-    """메인 함수."""
+def main(now_fn: Optional[Callable[[], datetime]] = None):
+    """메인 함수.
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     parser = argparse.ArgumentParser(description="파라미터 튜닝 스크립트")
     
     parser.add_argument(
@@ -469,7 +474,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default=f"tuning_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        default=f"tuning_results_{_now().strftime('%Y%m%d_%H%M%S')}.json",
         help="결과 출력 파일"
     )
     

@@ -54,6 +54,7 @@ import warnings
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Callable, Optional
 import pandas as pd
 import logging
 
@@ -209,8 +210,21 @@ async def fetch_kospi_continuous(api_client, symbol: str, start_date: str, end_d
     return all_rows
 
 
-async def fetch_and_save_daily_data(target_date: str = None, start_date: str = None, end_date: str = None):
-    """config.json의 target_date 또는 인자로 받은 target_date/start_date/end_date로 t8415/t8418 데이터 수집 및 저장"""
+async def fetch_and_save_daily_data(
+    target_date: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    now_fn: Optional[Callable[[], datetime]] = None
+):
+    """config.json의 target_date 또는 인자로 받은 target_date/start_date/end_date로 t8415/t8418 데이터 수집 및 저장
+
+    Args:
+        target_date: 단일 타겟 날짜 (YYYYMMDD)
+        start_date: 시작 날짜 (YYYYMMDD)
+        end_date: 종료 날짜 (YYYYMMDD)
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     
     # config.json 로드 (target_date 등 일반 설정)
     config_path = Path(__file__).parent.parent / 'config.json'
@@ -256,7 +270,7 @@ async def fetch_and_save_daily_data(target_date: str = None, start_date: str = N
         logger.info(f"단일 날짜: {target_date}")
     else:
         # config.json의 target_date 사용
-        target_date = ebest_config.get('target_date', datetime.now().strftime('%Y%m%d'))
+        target_date = ebest_config.get('target_date', _now().strftime('%Y%m%d'))
         date_list = [target_date]
         logger.info(f"config.json target_date 사용: {target_date}")
     
@@ -475,8 +489,13 @@ async def fetch_and_save_daily_data(target_date: str = None, start_date: str = N
                 logger.warning(f"API 클라이언트 종료 중 오류: {e}")
 
 
-def main():
-    """메인 함수"""
+def main(now_fn: Optional[Callable[[], datetime]] = None):
+    """메인 함수
+
+    Args:
+        now_fn: 시간 함수 (테스트/백테스트용 주입 가능)
+    """
+    _now = now_fn if now_fn is not None else datetime.now
     parser = argparse.ArgumentParser(description='장마감 이후 t8415/t8418 데이터 수집')
     parser.add_argument('--target-date', type=str, help='목표 날짜 (YYYYMMDD 형식)')
     parser.add_argument('--start-date', type=str, help='시작 날짜 (YYYYMMDD 형식)')
@@ -509,7 +528,7 @@ def main():
     logger.info("="*80)
     
     # 장마감 확인 (15:30 이후)
-    now = datetime.now()
+    now = _now()
     market_close = now.replace(hour=15, minute=30, second=0, microsecond=0)
     
     if now < market_close and not args.force:
@@ -523,7 +542,8 @@ def main():
     asyncio.run(fetch_and_save_daily_data(
         target_date=args.target_date,
         start_date=args.start_date,
-        end_date=args.end_date
+        end_date=args.end_date,
+        now_fn=now_fn
     ))
 
 
