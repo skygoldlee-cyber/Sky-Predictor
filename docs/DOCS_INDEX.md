@@ -34,8 +34,6 @@
 - **OVERSEAS_FUTURES_RECOMMENDATIONS.md** - 해외 선물 권장사항
 
 ### 튜닝 가이드
-- **REGIME_ZIGZAG_TUNING.md** - 레짐 기반 ZigZag 튜닝
-- **ZIGZAG_TUNING.md** - ZigZag 파라미터 튜닝
 - **MULTI_TIMEFRAME_ZIGZAG.md** - 멀티타임프레임 ZigZag
 
 ### 진단 문서
@@ -110,6 +108,8 @@
 
 ### 기타
 - **DOCUMENTATION_STATUS.md** - 문서화 현황
+- **ZIGZAG_TUNING.md** - ZigZag 파라미터 튜닝 (레거시 - min_wave_atr_ratio 파라미터 사용 중단)
+- **REGIME_ZIGZAG_TUNING.md** - 레짐 기반 ZigZag 튜닝 (레거시 - regime_param_mapper 사용 여부 확인 필요)
 
 ---
 
@@ -232,6 +232,7 @@
 6. ✅ **reports/** 섹션 상세 목록 추가
 7. ✅ **모든 MD 파일명 대문자로 변경** (archives/, runtime/, training/, reports/)
 8. ✅ **한글 파일명 유지** (Transformer_코드리뷰.md, Transformer_보완_개선_리포트.md, SkyPredictor_개선사항.md, TradeExecutionGate_설계문서.md)
+9. ✅ **오래된 문서 아카이브 이동** (ZIGZAG_TUNING.md, REGIME_ZIGZAG_TUNING.md - 현 소스와 불일치)
 
 ---
 
