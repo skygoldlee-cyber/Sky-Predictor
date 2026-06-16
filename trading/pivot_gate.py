@@ -138,7 +138,8 @@ class PivotExecutionGate:
         try:
             h, m = time_str.split(":")
             return time(int(h), int(m))
-        except Exception:
+        except Exception as e:
+            logger.warning("[PIVOT_GATE] time_str 파싱 오류: %s, None 반환", e)
             return None
     
     def on_pivot_confirmed(

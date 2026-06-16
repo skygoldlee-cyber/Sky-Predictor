@@ -551,7 +551,8 @@ class TradeExecutionGate:
             try:
                 _mo_h, _mo_m = int(_mo_str.split(":")[0]), int(_mo_str.split(":")[1])
                 _after_open = (now.hour, now.minute) >= (_mo_h, _mo_m)
-            except Exception:
+            except Exception as e:
+                logger.warning("[GATE] market_open_time 파싱 오류: %s, 기본값 사용", e)
                 _after_open = True
             if _after_open:
                 def _record_open(s: DailyState) -> None:
@@ -706,7 +707,8 @@ class TradeExecutionGate:
             try:
                 a_end = _time_cls(*map(int, cfg.slot_a_end.split(":")))
                 b_end = _time_cls(*map(int, cfg.slot_b_end.split(":")))
-            except Exception:
+            except Exception as e:
+                logger.warning("[GATE] slot_end_time 파싱 오류: %s, 기본값 사용", e)
                 a_end = _time_cls(10, 30)
                 b_end = _time_cls(13, 0)
 
@@ -1002,7 +1004,8 @@ class TradeExecutionGate:
             h, m = self._cfg.force_close_time.split(":")
             fc = _time_cls(int(h), int(m))
             return now.time() >= fc
-        except Exception:
+        except Exception as e:
+            logger.warning("[GATE] force_close_time 파싱 오류: %s, 기본값 False 반환", e)
             return False
 
     def _calc_dynamic_targets(
@@ -1073,7 +1076,8 @@ class TradeExecutionGate:
                 )
             
             return target, stop
-        except Exception:
+        except Exception as e:
+            logger.warning("[GATE] 동적 목표 계산 오류: %s, 기본값 사용", e)
             return cfg.target_profit_pt, cfg.stop_loss_pt
 
     def _save_history(self, record: "TradeRecord") -> None:
