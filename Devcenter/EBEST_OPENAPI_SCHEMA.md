@@ -6,20 +6,22 @@
 
 ## 목차
 
-1. [t8432 — 지수선물 마스터조회 API용](#t8432--지수선물-마스터조회-api용)
+1. [t8467 — 지수선물 마스터조회 API용](#t8467--지수선물-마스터조회-api용)
 2. [t8433 — 지수옵션 마스터조회 API용](#t8433--지수옵션-마스터조회-api용)
-3. [t2101 — 선물/옵션 현재가 조회](#t2101--선물옵션-현재가-조회)
+3. [t2111 — 선물/옵션 현재가 조회](#t2111--선물옵션-현재가-조회)
 4. [t2301 — 옵션전광판](#t2301--옵션-일람-조회)
-5. [t8415 — 선물/옵션 차트 (분/일봉)](#t8415--선물옵션-차트-분일봉)
-6. [IJ / IJ_ — 지수 종합주가 (REST/Push)](#ij--지수-종합주가-rest)
-7. [JIF — 실시간 장운영 정보 (WebSocket)](#jif--실시간-장운영-정보-websocket)
-8. [FC0 / OC0 — 실시간 체결 (WebSocket)](#fc0--oc0--실시간-체결-websocket)
-9. [FH0 / OH0 — 실시간 호가 (WebSocket)](#fh0--oh0--실시간-호가-websocket)
-10. [실시간 Tick 표준화(`tick_norm`)](#실시간-tick-표준화tick_norm)
+5. [t8465 — 선물/옵션 차트 (N분)](#t8465--선물옵션-차트-n분)
+6. [t8418 — 업종 차트 (N분)](#t8418--업종-차트-n분)
+7. [t8466 — 선물/옵션 차트 (일주월)](#t8466--선물옵션-차트-일주월)
+8. [IJ / IJ_ — 지수 종합주가 (REST/Push)](#ij--지수-종합주가-rest)
+9. [JIF — 실시간 장운영 정보 (WebSocket)](#jif--실시간-장운영-정보-websocket)
+10. [FC9 / OC0 — 실시간 체결 (WebSocket)](#fc9--oc0--실시간-체결-websocket)
+11. [FH9 / OH0 — 실시간 호가 (WebSocket)](#fh9--oh0--실시간-호가-websocket)
+12. [실시간 Tick 표준화(`tick_norm`)](#실시간-tick-표준화tick_norm)
 
 ---
 
-## t8432 — 지수선물 마스터조회 API용
+## t8467 — 지수선물 마스터조회 API용
 
 **방식:** REST (Request / Response)
 
@@ -71,7 +73,7 @@
 
 ---
 
-## t2101 — 선물/옵션 현재가 조회
+## t2111 — 선물/옵션 현재가 조회
 
 **방식:** REST (Request / Response)  
 **설명:** 선물·옵션 종목의 현재가, 호가, 그리스(Greeks) 등 상세 정보를 조회합니다.
@@ -271,25 +273,25 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 
 ---
 
-## t8415 — 선물/옵션 차트 (분/일봉)
+## t8465 — 선물/옵션 차트 (N분)
 
-**방식:** REST (Request / Response)  
-**설명:** 선물·옵션 종목의 분봉 또는 일봉 OHLCV 데이터를 조회합니다.
+**방식:** REST (Request / Response)
+**설명:** 선물·옵션 종목의 N분봉 OHLCV 데이터를 조회합니다. (구 t8415 폐지, 신규 t8465 사용)
 
 ### InBlock (요청)
 
 | 필드 | 한글명 | 타입 | 크기 | 비고 |
 |------|--------|------|------|------|
 | `shcode` | 단축코드 | str | 8 | |
-| `ncnt` | 단위(n분) | number | 4 | 0:30초 1:1분 2:2분 … n:n분 |
-| `qrycnt` | 요청건수 | number | 4 | 압축:최대 2000건 / 비압축:최대 500건 |
+| `ncnt` | 단위(n분) | number | 4 | 1:1분 2:2분 … n:n분 |
+| `qrycnt` | 요청건수 | number | 4 | 최대 500건 |
 | `nday` | 조회영업일수 사용여부 | str | 1 | 0:미사용 1이상:사용 |
 | `sdate` | 시작일자 | str | 8 | 기본값: Space (edate 기준으로 qrycnt만큼 조회) |
-| `stime` | 시작시간 | str | 6 | 현재 미사용 |
+| `stime` | 시작시간 | str | 6 | |
 | `edate` | 종료일자 | str | 8 | 처음조회기준일(LE). `99999999` 또는 `당일` 입력 가능 |
-| `etime` | 종료시간 | str | 6 | 현재 미사용 |
+| `etime` | 종료시간 | str | 6 | |
 | `cts_date` | 연속일자 | str | 8 | 처음 조회 시 Space, 연속 조회 시 이전 OutBlock의 `cts_date` 값 |
-| `cts_time` | 연속시간 | str | 10 | |
+| `cts_time` | 연속시간 | str | 6 | 분봉은 시각까지 필요 |
 | `comp_yn` | 압축여부 | str | 1 | Y:압축 N:비압축 |
 
 ### OutBlock (응답 — 헤더)
@@ -309,7 +311,7 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 | `highend` | 상한가 | number | 6.2 |
 | `lowend` | 하한가 | number | 6.2 |
 | `cts_date` | 연속일자 | str | 8 |
-| `cts_time` | 연속시간 | str | 10 |
+| `cts_time` | 연속시간 | str | 6 |
 | `s_time` | 장시작시간 (HHMMSS) | str | 6 |
 | `e_time` | 장종료시간 (HHMMSS) | str | 6 |
 | `dshmin` | 동시호가처리시간 (MM:분) | str | 2 |
@@ -320,7 +322,7 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 | 필드 | 한글명 | 타입 | 크기 |
 |------|--------|------|------|
 | `date` | 날짜 | str | 8 |
-| `time` | 시간 | str | 10 |
+| `time` | 시간 | str | 6 |
 | `open` | 시가 | number | 6.2 |
 | `high` | 고가 | number | 6.2 |
 | `low` | 저가 | number | 6.2 |
@@ -328,6 +330,119 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 | `jdiff_vol` | 누적거래량 | number | 12 |
 | `value` | 거래대금 | number | 12 |
 | `openyak` | 미결제약정 | number | 12 |
+
+---
+
+## t8466 — 선물/옵션 차트 (일주월)
+
+**방식:** REST (Request / Response)
+**설명:** 선물·옵션 종목의 일봉/주봉/월봉 OHLCV 데이터를 조회합니다. (구 t8416 폐지, 신규 t8466 사용)
+
+### InBlock (요청)
+
+| 필드 | 한글명 | 타입 | 크기 | 비고 |
+|------|--------|------|------|------|
+| `shcode` | 단축코드 | str | 8 | |
+| `ncnt` | 주기구분 | str | 1 | 1:일봉 2:주봉 3:월봉 |
+| `qrycnt` | 요청건수 | number | 4 | 최대 500건 |
+| `nday` | 조회영업일수 사용여부 | str | 1 | 0:미사용 1이상:사용 |
+| `sdate` | 시작일자 | str | 8 | 기본값: Space (edate 기준으로 qrycnt만큼 조회) |
+| `edate` | 종료일자 | str | 8 | 처음조회기준일(LE). `99999999` 또는 `당일` 입력 가능 |
+| `cts_date` | 연속일자 | str | 8 | 처음 조회 시 Space, 연속 조회 시 이전 OutBlock의 `cts_date` 값 |
+| `comp_yn` | 압축여부 | str | 1 | Y:압축 N:비압축 |
+
+### OutBlock (응답 — 헤더)
+
+| 필드 | 한글명 | 타입 | 크기 |
+|------|--------|------|------|
+| `shcode` | 단축코드 | str | 8 |
+| `jisiga` | 전일시가 | number | 6.2 |
+| `jihigh` | 전일고가 | number | 6.2 |
+| `jilow` | 전일저가 | number | 6.2 |
+| `jiclose` | 전일종가 | number | 6.2 |
+| `jivolume` | 전일거래량 | number | 12 |
+| `disiga` | 당일시가 | number | 6.2 |
+| `dihigh` | 당일고가 | number | 6.2 |
+| `dilow` | 당일저가 | number | 6.2 |
+| `diclose` | 당일종가 | number | 6.2 |
+| `highend` | 상한가 | number | 6.2 |
+| `lowend` | 하한가 | number | 6.2 |
+| `cts_date` | 연속일자 | str | 8 |
+| `s_time` | 장시작시간 (HHMMSS) | str | 6 |
+| `e_time` | 장종료시간 (HHMMSS) | str | 6 |
+| `dshmin` | 동시호가처리시간 (MM:분) | str | 2 |
+| `rec_count` | 레코드카운트 | number | 7 |
+
+### OutBlock1 (응답 — 봉 배열)
+
+| 필드 | 한글명 | 타입 | 크기 |
+|------|--------|------|------|
+| `date` | 날짜 | str | 8 |
+| `open` | 시가 | number | 6.2 |
+| `high` | 고가 | number | 6.2 |
+| `low` | 저가 | number | 6.2 |
+| `close` | 종가 | number | 6.2 |
+| `jdiff_vol` | 누적거래량 | number | 12 |
+| `value` | 거래대금 | number | 12 |
+| `openyak` | 미결제약정 | number | 12 |
+
+---
+
+## t8418 — 업종 차트 (N분)
+
+**방식:** REST (Request / Response)
+**설명:** 업종 종목의 N분봉 OHLCV 데이터를 조회합니다.
+
+### InBlock (요청)
+
+| 필드 | 한글명 | 타입 | 크기 | 비고 |
+|------|--------|------|------|------|
+| `shcode` | 단축코드 | str | 8 | |
+| `ncnt` | 단위(n분) | number | 4 | 1:1분 2:2분 … n:n분 |
+| `qrycnt` | 요청건수 | number | 4 | 최대 2000건(압축), 500건(비압축) |
+| `nday` | 조회영업일수 사용여부 | str | 1 | 0:미사용 1이상:사용 |
+| `sdate` | 시작일자 | str | 8 | 기본값: Space (edate 기준으로 qrycnt만큼 조회) |
+| `stime` | 시작시간 | str | 6 | 현재 미사용 |
+| `edate` | 종료일자 | str | 8 | 처음조회기준일(LE). `99999999` 또는 `당일` 입력 가능 |
+| `etime` | 종료시간 | str | 6 | 현재 미사용 |
+| `cts_date` | 연속일자 | str | 8 | 처음 조회 시 Space, 연속 조회 시 이전 OutBlock의 `cts_date` 값 |
+| `cts_time` | 연속시간 | str | 6 | 분봉은 시각까지 필요 |
+| `comp_yn` | 압축여부 | str | 1 | Y:압축 N:비압축 |
+
+### OutBlock (응답 — 헤더)
+
+| 필드 | 한글명 | 타입 | 크기 |
+|------|--------|------|------|
+| `shcode` | 단축코드 | str | 8 |
+| `jisiga` | 전일시가 | number | 6.2 |
+| `jihigh` | 전일고가 | number | 6.2 |
+| `jilow` | 전일저가 | number | 6.2 |
+| `jiclose` | 전일종가 | number | 6.2 |
+| `jivolume` | 전일거래량 | number | 12 |
+| `disiga` | 당일시가 | number | 6.2 |
+| `dihigh` | 당일고가 | number | 6.2 |
+| `dilow` | 당일저가 | number | 6.2 |
+| `diclose` | 당일종가 | number | 6.2 |
+| `disvalue` | 당일거래대금 | number | 12 |
+| `cts_date` | 연속일자 | str | 8 |
+| `cts_time` | 연속시간 | str | 6 |
+| `s_time` | 장시작시간 (HHMMSS) | str | 6 |
+| `e_time` | 장종료시간 (HHMMSS) | str | 6 |
+| `dshmin` | 동시호가처리시간 (MM:분) | str | 2 |
+| `rec_count` | 레코드카운트 | number | 7 |
+
+### OutBlock1 (응답 — 봉 배열)
+
+| 필드 | 한글명 | 타입 | 크기 |
+|------|--------|------|------|
+| `date` | 날짜 | str | 8 |
+| `time` | 시간 | str | 6 |
+| `open` | 시가 | number | 6.2 |
+| `high` | 고가 | number | 6.2 |
+| `low` | 저가 | number | 6.2 |
+| `close` | 종가 | number | 6.2 |
+| `jdiff_vol` | 누적거래량 | number | 12 |
+| `value` | 거래대금 | number | 12 |
 
 ---
 
@@ -511,10 +626,10 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 
 ---
 
-## FC0 / OC0 — 실시간 체결 (WebSocket)
+## FC9 / OC0 — 실시간 체결 (WebSocket)
 
-**방식:** WebSocket (실시간 스트리밍)  
-**FC0:** 선물 실시간 체결  
+**방식:** WebSocket (실시간 스트리밍)
+**FC9:** 선물 실시간 체결
 **OC0:** 옵션 실시간 체결
 
 ### InBlock (구독 요청)
@@ -524,7 +639,7 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 | `tr_cd` | 거래 CD | str | 3 | LS증권 거래코드 |
 | `tr_key` | 단축코드 | str | 8 | 6자리 또는 8자리 |
 
-### OutBlock (FC0 — 선물 체결)
+### OutBlock (FC9 — 선물 체결)
 
 | 필드 | 한글명 | 타입 | 크기 |
 |------|--------|------|------|
@@ -560,7 +675,7 @@ OutBlock1과 동일한 필드 구조 (`optcode`는 풋옵션코드).
 
 ### OutBlock (OC0 — 옵션 체결)
 
-FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optcode`로 변경됩니다.
+FC9와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optcode`로 변경됩니다.
 
 | 필드 | 한글명 | 타입 | 크기 |
 |------|--------|------|------|
@@ -571,10 +686,10 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 ---
 
-## FH0 / OH0 — 실시간 호가 (WebSocket)
+## FH9 / OH0 — 실시간 호가 (WebSocket)
 
-**방식:** WebSocket (실시간 스트리밍)  
-**FH0:** 선물 실시간 5단계 호가  
+**방식:** WebSocket (실시간 스트리밍)
+**FH9:** 선물 실시간 5단계 호가
 **OH0:** 옵션 실시간 5단계 호가
 
 ### InBlock (구독 요청)
@@ -584,10 +699,10 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 | `tr_cd` | 거래 CD | str | 3 | LS증권 거래코드 |
 | `tr_key` | 단축코드 | str | 8 | 6자리 또는 8자리 |
 
-### OutBlock (FH0 / OH0 공통 구조)
+### OutBlock (FH9 / OH0 공통 구조)
 
-> 각 호가 단계(1~5)마다 `offerhoN`, `bidhoN`, `offerremN`, `bidremN`, `offercntN`, `bidcntN` 필드가 반복됩니다.  
-> FH0의 호가수량 크기는 6자리, OH0는 7자리입니다.
+> 각 호가 단계(1~5)마다 `offerhoN`, `bidhoN`, `offerremN`, `bidremN`, `offercntN`, `bidcntN` 필드가 반복됩니다.
+> FH9의 호가수량 크기는 6자리, OH0는 7자리입니다.
 
 #### 호가 시간
 
@@ -597,7 +712,7 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 #### 매도·매수 호가 (1~5단계)
 
-| 필드 패턴 | 설명 | 타입 | 크기 (FH0 / OH0) |
+| 필드 패턴 | 설명 | 타입 | 크기 (FH9 / OH0) |
 |-----------|------|------|-----------------|
 | `offerhoN` | 매도호가N | str | 6.2 |
 | `bidhoN` | 매수호가N | str | 6.2 |
@@ -608,7 +723,7 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 #### 호가 합계
 
-| 필드 | 한글명 | 타입 | 크기 (FH0 / OH0) |
+| 필드 | 한글명 | 타입 | 크기 (FH9 / OH0) |
 |------|--------|------|-----------------|
 | `totofferrem` | 매도호가총수량 | str | 6 / 7 |
 | `totbidrem` | 매수호가총수량 | str | 6 / 7 |
@@ -619,7 +734,7 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 | 필드 | 한글명 | 타입 | 크기 | 비고 |
 |------|--------|------|------|------|
-| `futcode` / `optcode` | 단축코드 | str | 8 | FH0: futcode / OH0: optcode |
+| `futcode` / `optcode` | 단축코드 | str | 8 | FH9: futcode / OH0: optcode |
 | `danhochk` | 단일가호가여부 | str | 1 | |
 | `alloc_gubun` | 배분적용구분 | str | 1 | |
 
@@ -629,15 +744,17 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 | TR | 구분 | 방식 | 호가 단계 | 주요 특징 |
 |----|------|------|-----------|-----------|
-| `t2101` | 선물·옵션 현재가 | REST | 없음 (단순 현재가) | Greeks, 지수, 가격제한 등 상세 |
+| `t2111` | 선물·옵션 현재가 | REST | 없음 (단순 현재가) | Greeks, 지수, 가격제한 등 상세 |
 | `t2301` | 옵션 일람 | REST | 매도·매수 1단계 | 전 행사가 콜·풋 일괄 조회 |
-| `t8415` | 선물·옵션 차트 | REST | 없음 | OHLCV 분/일봉, 압축 옵션 |
-| `FC0` | 선물 실시간 체결 | WebSocket | 매도·매수 1단계 | 실시간 체결 스트리밍 |
+| `t8465` | 선물·옵션 차트(N분) | REST | 없음 | OHLCV N분봉, 연속조회 지원 |
+| `t8418` | 업종 차트(N분) | REST | 없음 | OHLCV N분봉, 연속조회 지원, 압축 지원 |
+| `t8466` | 선물·옵션 차트(일주월) | REST | 없음 | OHLCV 일/주/월봉, 연속조회 지원 |
+| `FC9` | 선물 실시간 체결 | WebSocket | 매도·매수 1단계 | 실시간 체결 스트리밍 |
 | `OC0` | 옵션 실시간 체결 | WebSocket | 매도·매수 1단계 | 실시간 체결 + 내재변동성 |
-| `FH0` | 선물 실시간 호가 | WebSocket | **5단계** | 단계별 수량·건수 포함 |
+| `FH9` | 선물 실시간 호가 | WebSocket | **5단계** | 단계별 수량·건수 포함 |
 | `OH0` | 옵션 실시간 호가 | WebSocket | **5단계** | 단계별 수량·건수 포함 |
 
-> **다단계 호가(5단계)**는 `FH0`(선물), `OH0`(옵션) WebSocket TR을 통해 수신합니다.
+> **다단계 호가(5단계)**는 `FH9`(선물), `OH0`(옵션) WebSocket TR을 통해 수신합니다.
 
 ---
 
@@ -668,11 +785,11 @@ FC0와 동일한 구조에 아래 필드가 추가되며, `futcode` 대신 `optc
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `trcode` | str | TR 코드 (`FC0`, `OC0`, `FH0`, `OH0`) |
+| `trcode` | str | TR 코드 (`FC9`, `OC0`, `FH9`, `OH0`) |
 | `symbol` | str | 구독 심볼 |
 | `chetime` | str | 체결시간(HHMMSS), 제공 시 |
 
-#### FC0 / OC0 (체결)
+#### FC9 / OC0 (체결)
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
@@ -698,13 +815,13 @@ OC0 추가:
 | `timevalue` | float | 시간가치 |
 | `eqva` | float | KOSPI 등가 |
 
-FC0 추가:
+FC9 추가:
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `futcode` | str | 단축코드 |
 
-#### FH0 / OH0 (호가 5단계)
+#### FH9 / OH0 (호가 5단계)
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
@@ -722,4 +839,4 @@ FC0 추가:
 | `danhochk` | str | 단일가호가여부 |
 | `alloc_gubun` | str | 배분적용구분 |
 
-FH0 추가: `futcode` / OH0 추가: `optcode`
+FH9 추가: `futcode` / OH0 추가: `optcode`

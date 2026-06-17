@@ -45,12 +45,11 @@ appkey = secrets.get('ebest', {}).get('appkey', '')
 appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 
 async def test_t8465(api):
-    """t8465 TR 코드 테스트"""
+    """t8465 TR 코드 테스트 - 실제 선물 코드 단일 조회"""
     # t9943로 선물 심볼 조회
     print("=== t9943 선물 심볼 조회 ===")
     try:
         res = await api.request("t9943", {"t9943InBlock": {"gubun": ""}})
-        print(f"t9943 응답: {res}")
         body = getattr(res, "body", None) or {}
         items = body.get("t9943OutBlock") or []
         if items:
@@ -62,61 +61,38 @@ async def test_t8465(api):
     except Exception as e:
         print(f"t9943 실패: {e}")
         return
-    
-    # t2111로 현재 선물 시세 조회
-    print(f"\n=== t2111 현재 선물 시세 조회 ({symbol}) ===")
-    try:
-        inputs = {
-            't2111InBlock': {
-                'focode': symbol,  # 단축코드
-            },
+
+    # t8465로 선물 분봉 데이터 단일 조회
+    print(f"\n=== t8465 선물 1분봉 단일 조회 ({symbol}) ===")
+
+    test_date = "20260617"
+    req = {
+        "t8465InBlock": {
+            "shcode": symbol,
+            "ncnt": 1,  # 1분봉
+            "qrycnt": 500,
+            "nday": "",
+            "sdate": test_date,
+            "stime": "",
+            "edate": test_date,
+            "etime": "",
+            "cts_date": "",
+            "cts_time": "",
+            "comp_yn": "N"
         }
-        response = await api.request('t2111', inputs)
-        if not response:
-            print(f'요청 실패: {api.last_message}')
-        else:
-            print(f"t2111 응답: {response}")
-            body = getattr(response, "body", None) or {}
-            print(f"t2111 body: {body}")
-    except Exception as e:
-        print(f"t2111 실패: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    # t8465로 선물 분봉 데이터 조회
-    print(f"\n=== t8465 선물 분봉 데이터 조회 ({symbol}) ===")
-    test_date = "20260616"
-    try:
-        req = {
-            "t8465InBlock": {
-                "shcode": symbol,
-                "ncnt": 1,
-                "qrycnt": 1,
-                "nday": "",
-                "sdate": test_date,
-                "stime": "",
-                "edate": test_date,
-                "etime": "",
-                "cts_date": "",
-                "cts_time": "",
-                "comp_yn": "N"
-            }
-        }
-        res = await api.request("t8465", req)
-        print(f"t8465 응답: {res}")
-        body = getattr(res, "body", None) or {}
-        print(f"t8465 body: {body}")
-        items = body.get("t8465OutBlock1") or []
-        print(f"t8465 items: {items}")
-        if items:
-            print(f"✅ t8465 성공: {len(items)} 건 수신")
-            print(f"첫 번째 바: {items[0]}")
-        else:
-            print(f"❌ t8465 실패: 데이터 없음")
-    except Exception as e:
-        print(f"❌ t8465 실패: {e}")
-        import traceback
-        traceback.print_exc()
+    }
+
+    res = await api.request("t8465", req)
+    body = res.body
+    rows = body.get("t8465OutBlock1", [])
+
+    print(f"수신 건수: {len(rows)}")
+
+    if rows:
+        print(f"첫 번째 바: {rows[0]}")
+        print(f"마지막 바: {rows[-1]}")
+    else:
+        print("데이터 없음")
 
 async def main():
     api = ebest.OpenApi()
