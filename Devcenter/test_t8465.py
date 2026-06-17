@@ -29,6 +29,26 @@ async def test_t8465(api):
         print(f"t9943 실패: {e}")
         return
     
+    # t2111로 현재 선물 시세 조회
+    print(f"\n=== t2111 현재 선물 시세 조회 ({symbol}) ===")
+    try:
+        inputs = {
+            't2111InBlock': {
+                'focode': symbol,  # 단축코드
+            },
+        }
+        response = await api.request('t2111', inputs)
+        if not response:
+            print(f'요청 실패: {api.last_message}')
+        else:
+            print(f"t2111 응답: {response}")
+            body = getattr(response, "body", None) or {}
+            print(f"t2111 body: {body}")
+    except Exception as e:
+        print(f"t2111 실패: {e}")
+        import traceback
+        traceback.print_exc()
+    
     # t8465로 선물 분봉 데이터 조회
     print(f"\n=== t8465 선물 분봉 데이터 조회 ({symbol}) ===")
     test_date = "20260616"
