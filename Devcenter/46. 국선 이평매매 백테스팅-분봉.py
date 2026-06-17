@@ -32,10 +32,20 @@ import pandas as pd
 '''
 
 async def sample(api):
-    shcode = '90199999' # 기본값, 연결선물지수
+    # t9943로 선물 심볼 조회 (실제 선물 코드)
+    print('선물 심볼 조회 중...')
+    res = await api.request("t9943", {"t9943InBlock": {"gubun": ""}})
+    body = getattr(res, "body", None) or {}
+    items = body.get("t9943OutBlock") or []
+    if items:
+        shcode = str(items[0].get("shcode") or "").strip()
+        print(f'선물 심볼: {shcode}')
+    else:
+        print('선물 심볼 조회 실패')
+        return
 
     # 30분봉 데이터를 불러올 수 있을때 까지 불러온다
-    print(f'코스피200 연결선물 30분봉 데이터를 불러올 수 있을때 까지 불러옵니다...')
+    print(f'코스피200 선물 30분봉 데이터를 불러올 수 있을때 까지 불러옵니다...')
     df = await GetFutureMinuteChartData(api, shcode, 30, 10000)
 
     length = len(df)
@@ -166,9 +176,9 @@ async def GetFutureMinuteChartData(api, code, ncnt, count):
         req_fram_count += 1
         print (f'[{code}] 차트요청중...{req_fram_count}')
         req_count = min(500, count - received_count)
-        # [요청] t8415 : 선물/옵션챠트(N분)
+        # [요청] t8465 : 선물/옵션챠트(N분)
         request = {
-            "t8415InBlock": {
+            "t8465InBlock": {
                 "shcode": code, # 종목코드
                 "ncnt": ncnt, # N분
                 "qrycnt": req_count, # 요청건수
@@ -182,20 +192,21 @@ async def GetFutureMinuteChartData(api, code, ncnt, count):
                 "comp_yn": "N",
             },
         }
-        response = await api.request("t8415", request, tr_cont = tr_cont, tr_cont_key = tr_cont_key)
+        response = await api.request("t8465", request, tr_cont = tr_cont, tr_cont_key = tr_cont_key)
         if not response:
             print(f'요청실패: {api.last_message}')
             break
         
-        data = response.body.get('t8415OutBlock1', None)
+        data = response.body.get('t8465OutBlock1', None)
         if data is None: break
         
         all_data = data + all_data
         received_count = len(all_data)
         if received_count >= count:
             break
-        cts_date = response.body['t8415OutBlock']['cts_date']
-        cts_time = response.body['t8415OutBlock']['cts_time']
+        cts_date = response.body['t8465OutBlock']['cts_date']
+        cts_time = response.body['t8465OutBlock']['cts_time']
+        print(f'cts_date: {cts_date}, cts_time: {cts_time}')
         tr_cont = response.tr_cont
         tr_cont_key = response.tr_cont_key
         if tr_cont == 'N': break
