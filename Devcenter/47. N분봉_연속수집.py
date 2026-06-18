@@ -18,11 +18,11 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 
 [사용법]
 1. config.secrets.json에 eBest API 키(appkey, appsecretkey) 설정
-2. 스크립트 실행: python "47. 1분봉_연속수집.py"
+2. 스크립트 실행: python "47. N분봉_연속수집.py"
 3. 분 단위 입력 (예: 1=1분봉, 5=5분봉, 60=60분봉)
-4. 각 종목별로 수집할 건수 입력 (빈칸=스킵)
-   - KP 200 연결지수선물: 건수 입력
-   - KOSPI 지수: 건수 입력
+4. 각 종목별로 수집할 일수 입력 (빈칸=스킵)
+   - KP 200 연결지수선물: 일수 입력 (예: 10일)
+   - KOSPI 지수: 일수 입력 (예: 10일)
 5. 데이터 자동 필터링 및 CSV 저장
 
 [특징]
@@ -33,7 +33,7 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 - 불완전한 데이터 자동 제거
 - CSV 파일 저장:
   - KOSPI: kospi_YYYYMMDD_{ncnt}min.csv
-  - 선물: kp200_YYYYMMDD_{ncnt}min.csv
+  - 선물: futures_YYYYMMDD_{ncnt}min.csv
   - 저장 위치: Devcenter/data/
 
 [참고]
@@ -41,7 +41,27 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
   매 요청의 최과거 타임스탬프를 찍어 실제 보관 깊이를 눈으로 확인한다.
 - 분봉이 얕게 나오면(연결지수 한계) → 월물별로 받아 직접 롤오버 결합이 정공법.
 - 1분봉 기준: KOSPI 약 381건/일, 선물 약 411건/일
+- 일수 입력 시 자동으로 요청 건수 계산 (일수 × 하루 봉 개수)
 '''
+
+
+def calculate_daily_bars(ncnt, is_futures=True):
+    '''
+    분 단위에 따른 하루 봉 개수 계산
+    ncnt: 분 단위 (1, 5, 60 등)
+    is_futures: 선물(True) 또는 지수(False)
+    return: 하루 봉 개수
+    '''
+    # 장 운영 시간 (분 단위)
+    # 선물: 09:00 ~ 15:15 = 6시간 15분 = 375분 (장중) + 시간외 포함하여 411분
+    # 지수: 09:00 ~ 15:30 = 6시간 30분 = 390분 (장중) + 시간외 포함하여 381분
+    if is_futures:
+        total_minutes = 411  # 선물 전체 운영 시간 (분)
+    else:
+        total_minutes = 381  # 지수 전체 운영 시간 (분)
+
+    # 분 단위로 나누어 계산 (정수로 반올림)
+    return max(1, round(total_minutes / ncnt))
 
 
 async def GetFutureMinuteChartData(api, code, count, ncnt=1):
@@ -226,8 +246,8 @@ async def sample(api):
 
     # 선물 → KOSPI 순으로 수집
     targets = [
-        {'code': '90199999', 'name': 'KP 200 연결지수선물', 'prefix': 'kp200_', 'func': GetFutureMinuteChartData},
-        {'code': '001', 'name': 'KOSPI 지수', 'prefix': 'kospi_', 'func': GetIndexMinuteChartData},
+        {'code': '90199999', 'name': 'KP 200 연결지수선물', 'prefix': 'futures_', 'func': GetFutureMinuteChartData, 'is_futures': True},
+        {'code': '001', 'name': 'KOSPI 지수', 'prefix': 'kospi_', 'func': GetIndexMinuteChartData, 'is_futures': False},
     ]
 
     for target in targets:
@@ -235,19 +255,25 @@ async def sample(api):
         name = target['name']
         file_prefix = target['prefix']
         func = target['func']
+        is_futures = target['is_futures']
 
         print(f'\n{"="*60}')
         print(f'{name} {ncnt}분봉 데이터 수집 시작 ({shcode})')
         print(f'{"="*60}')
 
-        count_str = await ainput(f'{name} 조회할 {ncnt}분봉 건수(ex 5000, 빈칸=스킵): ')
-        if len(count_str) == 0:
+        days_str = await ainput(f'{name} 수집할 일수(ex 10, 빈칸=스킵): ')
+        if len(days_str) == 0:
             print('스킵\n')
             continue
-        if not count_str.isdigit():
+        if not days_str.isdigit():
             print('잘못된 입력, 스킵\n')
             continue
-        count = int(count_str) or 5000
+        days = int(days_str) or 10
+
+        # 하루 봉 개수 계산
+        daily_bars = calculate_daily_bars(ncnt, is_futures)
+        count = days * daily_bars
+        print(f'하루 봉 개수: {daily_bars}건, 요청 건수: {count}건')
 
         df = await func(api, shcode, count, ncnt=ncnt)
         if df.empty:
@@ -305,6 +331,10 @@ async def sample(api):
 
         for date in complete_dates:
             df_date = df_filtered[df_filtered['date'] == date].copy()
+            # timestamp 컬럼 추가 (날짜 + 시분, 초 제거)
+            df_date['timestamp'] = df_date['date'] + ' ' + df_date['time'].str[:-2]
+            # 컬럼 순서: timestamp, open, high, low, close, volume (date, time 제거)
+            df_date = df_date[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
             filename = output_dir / f'{file_prefix}{date}_{ncnt}min.csv'
             df_date.to_csv(filename, index=False, encoding='utf-8-sig')
             print(f'{filename}: {len(df_date)}건 저장')
