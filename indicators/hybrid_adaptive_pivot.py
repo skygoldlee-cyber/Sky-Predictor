@@ -77,9 +77,9 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULT_WARMUP_BARS = 20
-DEFAULT_CONFIRMATION_BARS = 1
-DEFAULT_MIN_BAR_GAP = 3
-DEFAULT_CANCEL_RATIO = 0.3
+DEFAULT_CONFIRMATION_BARS = 0  # 즉시 확정으로 변경
+DEFAULT_MIN_BAR_GAP = 1  # 최소 봉 간격 감소
+DEFAULT_CANCEL_RATIO = 0.1  # 취소 비율 감소 (더 민감하게)
 MULTIPLIER_CLIP_MIN_FACTOR = 0.5
 MULTIPLIER_CLIP_MAX_FACTOR = 2.0
 
@@ -156,8 +156,8 @@ class HybridAdaptivePivotConfig:
     multiplier_max:       float = 2.0
     er_period:           int   = 10
     confirmation_bars:   int   = DEFAULT_CONFIRMATION_BARS
-    min_wave_pct:        float = 0.15
-    min_wave_atr_ratio:  float = 0.5
+    min_wave_pct:        float = 0.05  # 최소 파동 퍼센트 감소
+    min_wave_atr_ratio:  float = 0.2  # ATR 비율 감소
     max_pivots:          int   = 30
     session_multiplier_table: List[Tuple[str, str, float]] = field(
         default_factory=list
@@ -938,10 +938,10 @@ class HybridAdaptivePivot:
         """
         cfg = self.config
 
-        # 최소 봉 간격: 직전 확정 피봇으로부터 최소 3봉 이상
+        # 최소 봉 간격: 직전 확정 피봇으로부터 최소 1봉 이상
         if self._last_confirmed_bar >= 0:
             gap = candidate_idx - self._last_confirmed_bar
-            if gap < 3:
+            if gap < 1:
                 return False
 
         # 반전 기준점: direction=1이면 low, direction=-1이면 high
