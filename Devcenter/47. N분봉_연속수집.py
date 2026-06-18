@@ -5,6 +5,8 @@ from pathlib import Path
 from common import *
 
 import pandas as pd
+import duckdb
+import pyarrow
 
 # config.secrets.json에서 읽어오기
 secrets_path = Path(__file__).parent.parent / 'config.secrets.json'
@@ -19,11 +21,12 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 [사용법]
 1. config.secrets.json에 eBest API 키(appkey, appsecretkey) 설정
 2. 스크립트 실행: python "47. N분봉_연속수집.py"
-3. 분 단위 입력 (예: 1=1분봉, 5=5분봉, 60=60분봉)
-4. 각 종목별로 수집할 일수 입력 (빈칸=스킵)
+3. 저장 형식 선택 (1=CSV, 2=Parquet+DuckDB)
+4. 분 단위 입력 (예: 1=1분봉, 5=5분봉, 60=60분봉)
+5. 각 종목별로 수집할 일수 입력 (빈칸=스킵)
    - KP 200 연결지수선물: 일수 입력 (예: 10일)
    - KOSPI 지수: 일수 입력 (예: 10일)
-5. 데이터 자동 필터링 및 CSV 저장
+6. 데이터 자동 필터링 및 저장
 
 [특징]
 - 선물(KP 200 연결지수선물 90199999): t8465 사용 (구 t8415 폐지)
@@ -31,10 +34,12 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 - 연속조회로 과거 데이터 최대한 수집
 - 일자별 데이터 건수 자동 판별(최빈값 기준)
 - 불완전한 데이터 자동 제거
-- CSV 파일 저장:
-  - KOSPI: kospi_YYYYMMDD_{ncnt}min.csv
-  - 선물: futures_YYYYMMDD_{ncnt}min.csv
-  - 저장 위치: Devcenter/data/
+- 저장 형식:
+  - CSV: 개별 파일 저장 (Devcenter/data/)
+  - Parquet+DuckDB: 압축 저장 + DuckDB 테이블 (Devcenter/data/duckdb/)
+- 파일명:
+  - KOSPI: kospi_YYYYMMDD_{ncnt}min.{csv|parquet}
+  - 선물: futures_YYYYMMDD_{ncnt}min.{csv|parquet}
 
 [참고]
 - 연결지수가 "분봉을 얼마나 깊게 보관하는지"는 서버 정책상 불확실하므로,
@@ -42,6 +47,7 @@ appsecretkey = secrets.get('ebest', {}).get('appsecretkey', '')
 - 분봉이 얕게 나오면(연결지수 한계) → 월물별로 받아 직접 롤오버 결합이 정공법.
 - 1분봉 기준: KOSPI 약 381건/일, 선물 약 411건/일
 - 일수 입력 시 자동으로 요청 건수 계산 (일수 × 하루 봉 개수)
+- Parquet+DuckDB 선택 시 필요 패키지: pip install duckdb pyarrow
 '''
 
 
@@ -237,6 +243,15 @@ async def GetIndexMinuteChartData(api, code, count, ncnt=1):
 
 
 async def sample(api):
+    # 저장 형식 선택
+    format_str = await ainput('저장 형식 (1=CSV, 2=Parquet+DuckDB, 빈칸=종료): ')
+    if len(format_str) == 0:
+        return
+    if format_str not in ['1', '2']:
+        print('잘못된 입력')
+        return
+    use_duckdb = format_str == '2'
+
     ncnt_str = await ainput('분 단위 (예: 1=1분봉, 5=5분봉, 60=60분봉, 빈칸=종료): ')
     if len(ncnt_str) == 0:
         return
@@ -324,22 +339,67 @@ async def sample(api):
             df_filtered = df.copy()
             complete_dates = []
 
-        # 날짜별로 OHLCV 형태의 CSV로 저장
-        print('\n=== CSV 저장 ===')
+        # 날짜별로 OHLCV 형태로 저장
+        print('\n=== 데이터 저장 ===')
         output_dir = Path(__file__).parent / 'data'
         output_dir.mkdir(exist_ok=True)
 
-        for date in complete_dates:
-            df_date = df_filtered[df_filtered['date'] == date].copy()
-            # timestamp 컬럼 추가 (날짜 + 시분, 초 제거)
-            df_date['timestamp'] = df_date['date'] + ' ' + df_date['time'].str[:-2]
-            # 컬럼 순서: timestamp, open, high, low, close, volume (date, time 제거)
-            df_date = df_date[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
-            filename = output_dir / f'{file_prefix}{date}_{ncnt}min.csv'
-            df_date.to_csv(filename, index=False, encoding='utf-8-sig')
-            print(f'{filename}: {len(df_date)}건 저장')
+        if use_duckdb:
+            # Parquet + DuckDB 저장
+            duckdb_dir = output_dir / 'duckdb'
+            duckdb_dir.mkdir(exist_ok=True)
+            db_path = duckdb_dir / 'market_data.duckdb'
 
-        print(f'\n총 {len(complete_dates)}개 파일 저장 완료')
+            # 테이블명 생성 (예: futures_1min, kospi_5min)
+            table_name = f'{file_prefix.rstrip("_")}_{ncnt}min'
+
+            # DuckDB 연결
+            con = duckdb.connect(str(db_path))
+
+            for date in complete_dates:
+                df_date = df_filtered[df_filtered['date'] == date].copy()
+                # timestamp 컬럼 추가 (날짜 + 시분, 초 제거)
+                df_date['timestamp'] = df_date['date'] + ' ' + df_date['time'].str[:-2]
+                # 컬럼 순서: timestamp, open, high, low, close, volume (date, time 제거)
+                df_date = df_date[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+
+                # Parquet 파일 저장
+                parquet_path = duckdb_dir / f'{file_prefix}{date}_{ncnt}min.parquet'
+                df_date.to_parquet(parquet_path, index=False)
+
+                # DuckDB 테이블에 삽입
+                con.execute(f'''
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        timestamp VARCHAR,
+                        open DOUBLE,
+                        high DOUBLE,
+                        low DOUBLE,
+                        close DOUBLE,
+                        volume DOUBLE
+                    )
+                ''')
+                con.execute(f'''
+                    INSERT INTO {table_name}
+                    SELECT * FROM read_parquet('{parquet_path}')
+                ''')
+
+                print(f'{parquet_path}: {len(df_date)}건 저장 (DuckDB 테이블: {table_name})')
+
+            con.close()
+            print(f'\n총 {len(complete_dates)}개 파일 저장 완료 (DuckDB: {db_path})')
+        else:
+            # CSV 저장
+            for date in complete_dates:
+                df_date = df_filtered[df_filtered['date'] == date].copy()
+                # timestamp 컬럼 추가 (날짜 + 시분, 초 제거)
+                df_date['timestamp'] = df_date['date'] + ' ' + df_date['time'].str[:-2]
+                # 컬럼 순서: timestamp, open, high, low, close, volume (date, time 제거)
+                df_date = df_date[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+                filename = output_dir / f'{file_prefix}{date}_{ncnt}min.csv'
+                df_date.to_csv(filename, index=False, encoding='utf-8-sig')
+                print(f'{filename}: {len(df_date)}건 저장')
+
+            print(f'\n총 {len(complete_dates)}개 파일 저장 완료')
         print('')
 
 
