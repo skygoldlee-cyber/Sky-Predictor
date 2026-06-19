@@ -20,6 +20,7 @@
 - `test_pivot_v2_5min.py` - 피봇 5분봉 테스트
 - `pivot_backtest.log` - 피봇 백테스트 로그
 - `PIVOT_OPTUNA_REVIEW.md` - 피봇 최적화 리뷰 문서
+- `49. 피봇탐색_성능검증.py` - 피봇 탐색 성능 검증
 
 ### 레질 감지 전략 테스트
 
