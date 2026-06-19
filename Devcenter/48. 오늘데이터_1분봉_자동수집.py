@@ -48,6 +48,70 @@ def calculate_daily_bars(ncnt, is_futures=True):
     return max(1, round(total_minutes / ncnt))
 
 
+def validate_data_quality(df: pd.DataFrame) -> list:
+    '''
+    데이터 품질 확인
+    
+    Args:
+        df: 수집된 데이터프레임
+    
+    Returns:
+        list: 품질 이슈 목록 (이슈 없으면 빈 리스트)
+    '''
+    issues = []
+    
+    # 1. 필수 컬럼 확인
+    required_columns = ['date', 'time', 'open', 'high', 'low', 'close', 'volume']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        issues.append(f'필수 컬럼 누락: {missing_columns}')
+    
+    # 2. 결측치 확인
+    null_counts = df.isnull().sum()
+    if null_counts.sum() > 0:
+        null_info = ', '.join([f'{col}: {count}' for col, count in null_counts.items() if count > 0])
+        issues.append(f'결측치 발견: {null_info}')
+    
+    # 3. 이상치 확인 (가격이 0 또는 음수)
+    price_columns = ['open', 'high', 'low', 'close']
+    for col in price_columns:
+        if col in df.columns:
+            if (df[col] <= 0).any():
+                issues.append(f'{col} 컬럼에 0 또는 음수 존재')
+    
+    # 4. OHLC 논리 확인 (High >= Low)
+    if 'high' in df.columns and 'low' in df.columns:
+        if (df['high'] < df['low']).any():
+            issues.append('High < Low인 데이터 존재')
+    
+    # 5. 거래량 이상치 확인 (음수)
+    if 'volume' in df.columns:
+        if (df['volume'] < 0).any():
+            issues.append('Volume 컬럼에 음수 존재')
+    
+    # 6. 중복 데이터 확인
+    duplicates = df.duplicated().sum()
+    if duplicates > 0:
+        issues.append(f'중복 데이터 {duplicates}건 존재')
+    
+    # 7. 시간 순서 확인
+    if 'date' in df.columns and 'time' in df.columns:
+        # 날짜+시간으로 정렬
+        df_sorted = df.sort_values(['date', 'time'])
+        if not df_sorted.equals(df):
+            issues.append('데이터 시간 순서가 올바르지 않음')
+    
+    # 8. 일자별 데이터 건수 편차 확인
+    if 'date' in df.columns:
+        daily_counts = df.groupby('date').size()
+        if len(daily_counts) > 1:
+            count_std = daily_counts.std()
+            if count_std > 10:  # 표준편차가 10 이상이면 편차 큼
+                issues.append(f'일자별 데이터 건수 편차 큼 (표준편차: {count_std:.1f})')
+    
+    return issues
+
+
 async def GetFutureMinuteChartData(api, code, count, ncnt=1):
     '''
     선물 분봉 데이터 연속조회.
@@ -274,6 +338,16 @@ async def sample(api):
             date = row['date']
             count = row['count']
             print(f'{date}: {count}건')
+        
+        # 데이터 품질 확인
+        print('\n=== 데이터 품질 확인 ===')
+        quality_issues = validate_data_quality(df)
+        if quality_issues:
+            print(f'⚠️  데이터 품질 이슈 발견:')
+            for issue in quality_issues:
+                print(f'  - {issue}')
+        else:
+            print('✓ 데이터 품질 정상')
 
         # 가장 많이 나오는 건수를 기준으로 완전한 데이터 판단
         if not daily_counts.empty:
