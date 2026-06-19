@@ -1,0 +1,20 @@
+async def sample(api):
+    inputs = {
+        't8418InBlock': {
+            'shcode': '', # 단축코드
+            'ncnt': 0, # 단위(n분)
+            'qrycnt': 0, # 요청건수(최대-압축:2000비압축:500)
+            'nday': '', # 조회영업일수(0:미사용1>=사용)
+            'sdate': '', # 시작일자
+            'stime': '', # 시작시간(현재미사용)
+            'edate': '', # 종료일자
+            'etime': '', # 종료시간(현재미사용)
+            'cts_date': '', # 연속일자
+            'cts_time': '', # 연속시간
+            'comp_yn': '', # 압축여부(Y:압축N:비압축)
+        },
+    }
+    response = await api.request('t8418', inputs)
+    if not response: return print(f'요청 실패: {api.last_message}')
+    
+    print(response)
