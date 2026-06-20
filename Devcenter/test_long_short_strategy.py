@@ -187,5 +187,72 @@ def compare_strategies():
     print("=" * 80)
 
 
+def test_adx_thresholds():
+    """ADX 임계값 조정 테스트"""
+    config = load_config()
+    
+    # 테스트할 ADX 임계값
+    adx_thresholds = [15.0, 20.0, 25.0, 30.0, 35.0]
+    
+    print("\n" + "=" * 80)
+    print("ADX 임계값 조정 테스트 (롱-숏 전략)")
+    print("=" * 80)
+    
+    results = []
+    for adx_threshold in adx_thresholds:
+        print(f"\n[ADX 임계값: {adx_threshold}]")
+        
+        # 설정 업데이트
+        config['parameters']['adx_threshold'] = adx_threshold
+        
+        # 백테스트
+        result, signal = backtest_long_short(config, allow_short=True)
+        
+        # 신호 분석
+        long_count = (signal == 1).sum()
+        flat_count = (signal == 0).sum()
+        short_count = (signal == -1).sum()
+        
+        print(f"거래수: {result.n_trades}")
+        print(f"승률: {result.win_rate:.2f}%")
+        print(f"총 손익 (원): {result.total_pnl_krw:,.0f}")
+        print(f"Sharpe (일): {result.sharpe_daily:.3f}")
+        print(f"Max Drawdown (원): {result.max_drawdown_krw:,.0f}")
+        print(f"신호: 롱={long_count}, 플랫={flat_count}, 숏={short_count}")
+        
+        results.append({
+            'adx_threshold': adx_threshold,
+            'n_trades': result.n_trades,
+            'win_rate': result.win_rate,
+            'total_pnl_krw': result.total_pnl_krw,
+            'sharpe_daily': result.sharpe_daily,
+            'max_drawdown_krw': result.max_drawdown_krw,
+            'long_count': long_count,
+            'flat_count': flat_count,
+            'short_count': short_count
+        })
+    
+    # 결과 비교
+    print("\n" + "=" * 80)
+    print("ADX 임계값 비교")
+    print("=" * 80)
+    print(f"{'ADX':<10}{'거래수':>10}{'승률(%)':>10}{'손익(원)':>15}{'Sharpe':>10}{'MaxDD(원)':>15}{'롱':>8}{'플랫':>8}{'숏':>8}")
+    print("-" * 80)
+    for r in results:
+        print(f"{r['adx_threshold']:<10.1f}{r['n_trades']:>10}{r['win_rate']:>10.2f}{r['total_pnl_krw']:>15,.0f}{r['sharpe_daily']:>10.3f}{r['max_drawdown_krw']:>15,.0f}{r['long_count']:>8}{r['flat_count']:>8}{r['short_count']:>8}")
+    print("=" * 80)
+    
+    # 최적 ADX 임계값 찾기
+    best_sharpe = max(results, key=lambda x: x['sharpe_daily'])
+    best_pnl = max(results, key=lambda x: x['total_pnl_krw'])
+    
+    print("\n최적 ADX 임계값")
+    print("-" * 80)
+    print(f"Sharpe 기준: ADX {best_sharpe['adx_threshold']} (Sharpe: {best_sharpe['sharpe_daily']:.3f})")
+    print(f"손익 기준: ADX {best_pnl['adx_threshold']} (손익: {best_pnl['total_pnl_krw']:,.0f} 원)")
+    print("=" * 80)
+
+
 if __name__ == '__main__':
-    compare_strategies()
+    # ADX 임계값 조정 테스트
+    test_adx_thresholds()
