@@ -1,0 +1,55 @@
+{
+  "adaptive_indicator": {
+    "supertrend": {
+      "multiplier_min": 1.5,
+      "multiplier_max": 4.0,
+      "atr_min_period": 7,
+      "atr_max_period": 21,
+      "er_period": 10,
+      "adx_period": 14,
+      "use_bb_correction": true,
+      "bb_period": 20,
+      "bb_std": 2.0,
+      "smooth_period": 3
+    },
+    "zigzag": {
+      "atr_multiplier": 1.5,
+      "atr_period": 14,
+      "er_period": 10,
+      "atr_multiplier_min": 1.0,
+      "atr_multiplier_max": 4.0,
+      "pivot_threshold_min_pct": 0.3,
+      "pivot_threshold_max_pct": 3.0,
+      "major_swing_ratio": 2.0,
+      "confirmation_bars": 2,
+      "max_swings": 20,
+      "freeze_on_confirm": true,
+      "min_wave_bars": 1,
+      "min_wave_pct": 0.4,
+      "cluster_tolerance_pct": 0.3,
+      "structure_lookback_swings": 30,
+      "structure_points": 4
+    },
+    "supertrend_pivot_filter": false,
+    "warmup_bars": 15
+  },
+  "prediction": {
+    "multiscale_5m": false,
+    "multiscale_enabled": false,
+    "multiscale_time_scales": [
+      1
+    ],
+    "llm_min_interval_sec": 30.0,
+    "tick_size": 0.05,
+    "feedback_threshold_ticks": 10,
+    "feedback_skip_hold_ticks": 2,
+    "feedback_weight_high": 1.0,
+    "feedback_weight_mid": 0.5,
+    "feedback_weight_low": 0.25,
+    "feedback_use_price_snapshot": true,
+    "feedback_snapshot_tolerance_sec": 30.0,
+    "feedback_snapshot_required": false,
+    "fc0_stale_threshold_sec": 10.0,
+    "fc0_stale_cooldown_sec": 60.0
+  }
+}

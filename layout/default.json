@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "tab_order": [
+    "📈 차트",
+    "📋 거래 로그",
+    "📊 분석 대시보드",
+    "💾 백업"
+  ],
+  "visible_tabs": [],
+  "tab_width": 967,
+  "tab_height": 400
+}

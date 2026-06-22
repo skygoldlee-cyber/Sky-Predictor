@@ -1,0 +1,43 @@
+{
+  "best_params": {
+    "base_pct": 1.3393696459910125,
+    "base_multiplier": 6.6093145457759395,
+    "atr_weight": 0.5726411101753216,
+    "confirmation_bars": 1,
+    "min_wave_pct": 0.06749091607264504,
+    "min_pivot_interval_bars": 5,
+    "st_distance_threshold": 0.014693406391509829,
+    "adx_hold_threshold": 13.756862328243788
+  },
+  "best_value": 2.4466013491423753,
+  "best_metric": "sharpe",
+  "best_total_trades": 345,
+  "constraint_satisfied": true,
+  "n_trials": 300,
+  "trial_states": {
+    "COMPLETE": 103,
+    "PRUNED": 197
+  },
+  "param_importances": {
+    "base_pct": 0.40151394176145855,
+    "min_wave_pct": 0.12832275637602908,
+    "base_multiplier": 0.12255221279516051,
+    "confirmation_bars": 0.11639487167976828,
+    "min_pivot_interval_bars": 0.06667983333652257,
+    "atr_weight": 0.06285199460202398,
+    "st_distance_threshold": 0.05524051372223266,
+    "adx_hold_threshold": 0.046443875726804425
+  },
+  "param_importance_error": null,
+  "backtest_cfg": {
+    "multiplier": 250000,
+    "commission_pct_per_side": 3e-05,
+    "slippage_ticks_per_side": 1.0,
+    "tick_size": 0.05,
+    "entry_on": "next_open",
+    "annualization": 252.0,
+    "intraday_only": true,
+    "session_boundary_hour": 8,
+    "direction_mode": "both"
+  }
+}

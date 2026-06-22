@@ -1,0 +1,39 @@
+{
+  "strategy": {
+    "name": "long_or_flat",
+    "description": "롱-또는-플랫 당일매매 전략"
+  },
+  "parameters": {
+    "ma_short": 20,
+    "ma_long": 60,
+    "adx_threshold": 25.0,
+    "allow_short": false
+  },
+  "data": {
+    "db_path": "c:/Project/SkyPredictor/Devcenter/data/duckdb/market_data.duckdb",
+    "table_name": "futures_1min",
+    "session_start": "08:45",
+    "session_end": "15:45",
+    "warmup_days": 60
+  },
+  "backtest": {
+    "multiplier": 250000,
+    "commission_pct_per_side": 0.00015,
+    "slippage_ticks_per_side": 1,
+    "tick_size": 0.05,
+    "entry_on": "next",
+    "annualization": 252,
+    "intraday_only": true,
+    "session_boundary_hour": 8,
+    "direction_mode": "both"
+  },
+  "logging": {
+    "enabled": true,
+    "log_dir": "data/logs",
+    "log_file": "long_or_flat_signals.csv"
+  },
+  "optimization": {
+    "enabled": false,
+    "run_on_startup": false
+  }
+}

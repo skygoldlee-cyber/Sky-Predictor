@@ -1,0 +1,409 @@
+0^f82999f4-eb1a-4ead-a0b1-a4386e8721ab^업종
+1^88a7c0d3-fb4f-48ef-bc9b-4c47ac72a87b^[업종] 시세^/indtp/market-data^REST
+2^6elw1gsv-2ddm-27t2-an4o-6q1s5v18x78n^t1514^업종기간별추이^1
+2^xknl5740-7upu-zukv-7tpa-153466dx54r3^t8424^전체업종^1
+2^3185b57h-f067-16z1-h8wn-xj1vk0wk37mv^t1485^예상지수^1
+2^8ll424vf-400s-6yy2-kc17-rq0s3z16q53b^t1511^업종현재가^10
+2^37w081ao-is0d-7je3-mr3q-5a44p2fju20q^t1516^업종별종목시세^1
+1^5b483d74-407c-4760-8452-1b2b1dc1dcde^[업종] 차트^/indtp/chart^REST
+2^6qhdamz4-udfm-g5b6-4266-85vz64g6363o^t4203^업종차트(종합)^2
+2^87477b5n-06j7-j553-67gb-2u6ix76fy6fx^t8417^업종차트(틱/n틱)^1
+2^wv87v3rg-6ru5-4ibe-z53e-25h83b24pm5c^t8418^업종차트(N분)^1
+2^03vo4mle-l8q8-1r45-u224-5bo27y1c8t54^t8419^업종차트(일주월)^1
+1^3c2b0280-6663-41e2-8995-a179de99e074^[업종] 실시간 시세^/websocket/indtp^WEBSOCKET
+2^1x170656-5p22-8158-345p-gs541fx43mp7^BM_^업종별투자자별매매현황^-
+0^73142d9f-1983-48d2-8543-89b75535d34c^주식
+1^54a99b02-dbba-4057-8756-9ac759c9a2ed^[주식] 시세^/stock/market-data^REST
+2^8tb7j8m8-5vb7-jzit-2284-1uc2rte784zb^t1101^주식현재가호가조회^10
+2^wqs8bq62-huk0-wb6z-7x83-nt78d4ax2yb6^t1102^주식현재가(시세)조회^10
+2^6l88mjo3-5pm7-z7lv-43ki-2k7613215075^t1104^주식현재가시세메모^3
+2^c4w2ylo3-34d0-10an-p0ul-41nv25j20s16^t1105^주식피봇/디마크조회^3
+2^f005a3h7-7en1-61ng-2t1c-w78a2g4b8lv4^t1109^시간외체결량^1
+2^f1408ze5-83ug-s557-4mc1-x51w48aoxvd8^t1301^주식시간대별체결조회^2
+2^3q8d1b4f-g6sp-300n-112u-j754u42nk4et^t1302^주식분별주가조회^1
+2^a7632b74-reqv-gx7q-7ni1-k15qb421az48^t1305^기간별주가^1
+2^80fs5s20-0zdv-pwy6-fuvc-i145b873aw1a^t1308^주식시간대별체결조회챠트^1
+2^m5385w1v-6qqk-4mp7-v4u2-47574734x8g2^t1310^주식당일전일분틱조회^2
+2^7gc27jom-y6q6-fc24-q83c-l5t8ssxgwz13^t1404^관리/불성실/투자유의조회^1
+2^rg2c22ji-2735-wfp8-4f47-x3a1j8f46865^t1405^투자경고/매매정지/정리매매조회^1
+2^zl807q83-e7b5-jb4p-5z4s-31b6148yiy6b^t1410^초저유동성조회^1
+2^ifbnu5gu-g826-qa0s-tyl8-68854p8y34wb^t1422^상/하한^2
+2^fxs7d671-z0s4-l4v3-1b8j-x416l2wc7t85^t1427^상/하한가직전^2
+2^nfyy0860-1bwb-27mx-ta01-12qr0510egi7^t1442^신고/신저가^2
+2^12qs34im-4k4k-vg4k-66rb-y402u56md2gn^t1449^가격대별매매비중조회^1
+2^a5xvfu75-46rq-lw81-ue10-i56j6kx71app^t1471^시간대별호가잔량추이^1
+2^7p78ad4g-h43g-w6i5-7hqs-koz18k11856i^t1475^체결강도추이^1
+2^eoh24044-jl6s-v36m-6157-0x6d81okpr3x^t1486^시간별예상체결가^2
+2^lg5trge2-s26u-d351-14hx-31r0kl7885k3^t1488^예상체결가등락율상위조회^2
+2^0xh85bca-blus-l8gm-685p-2tjnzb2k34pp^t8407^API용주식멀티현재가조회^5
+2^3691b2fa-67dc-49a5-aaaf-40aaf52c7bfb^t8450^(통합)주식현재가호가조회2 API용^10
+2^1455a055-68ad-4830-88d2-98e8b15ed8f2^t8454^(통합)주식시간대별체결2 API용^1
+2^u4hepin5-rfe4-3g3p-8yn3-7xko30x5hm5z^t9945^주식마스터조회API용^2
+1^3dbce945-a73c-475c-9758-88d9922ab94e^[주식] 거래원^/stock/exchange^REST
+2^0h1qnvbc-le70-sy1t-a2u2-i1ds41pc6513^t1752^종목별상위회원사^1
+2^6i73o0c1-d85n-paj0-875d-5px3v3f1c7wv^t1764^회원사리스트^1
+2^8a4e5o7y-37o3-t184-02h8-05s48p2r614g^t1771^종목별회원사추이^1
+1^580d2770-a7a9-49e3-9ec1-49ed8bc734a2^[주식] 투자정보^/stock/investinfo^REST
+2^4wofedx3-t8yv-8yip-i8po-770w008210h6^t3102^뉴스본문^1
+2^8jt64n5i-p4ck-5768-12w6-7quuf15q2801^t3202^종목별증시일정^1
+2^4b615q00-nr1w-oj4j-8g10-cw063fdp5283^t3320^FNG_요약^1
+2^6030hk77-0862-5b44-45s3-2j3sr5715ns6^t3341^재무순위종합^1
+2^lfv4i84n-4n25-u4vx-xe0p-vj2u3r7364wn^t3401^투자의견^1
+2^pe6gx3rs-5144-tg00-2b3s-3v272316hhkp^t3518^해외실시간지수^1
+2^o4c55f7y-tcl2-ngb3-a28z-66yo0ma54566^t3521^해외지수조회(API용)^1
+2^jw117idr-dn8c-32kb-ky6v-5737x50ew113^t8428^증시주변자금추이^1
+1^6b554636-7b2a-4e1a-a615-54b0c131a558^[주식] 프로그램^/stock/program^REST
+2^3ygy7ilr-awrs-60o1-ky68-b23c257m2f08^t1631^프로그램매매종합조회^1
+2^a7x1ukns-mj2r-60wf-f571-663sz8840o25^t1632^시간대별프로그램매매추이^1
+2^58rziya5-xeqc-f11t-xdko-0066j341d5vy^t1633^기간별프로그램매매추이^1
+2^1t64260r-34ng-uo4g-d543-bp56f50vm8r5^t1636^종목별프로그램매매동향^1
+2^3h7g88h3-l5ch-vb14-1tph-4xxb1ivb3q5o^t1637^종목별프로그램매매추이^1
+2^u68b0uw6-38el-54l3-14i5-7yzx507g2h54^t1640^프로그램매매종합조회(미니)^1
+2^4811c8h5-c3yb-am53-h17k-6d507t3y4dqa^t1662^시간대별프로그램매매추이(차트)^1
+1^c148a42f-51a7-4446-b6df-10d6056dd75b^[주식] 투자자^/stock/investor^REST
+2^o63qme5o-p60j-8234-gan0-600418lqaj8w^t1601^투자자별종합^2
+2^ljzky5tm-285v-a0bq-76u6-5z0hxddzyo8w^t1602^시간대별투자자매매추이^1
+2^hvy8xw05-q34u-2a87-261p-52ecyc312osu^t1603^시간대별투자자매매추이상세^1
+2^18nb6771-n5aw-6178-f8l3-20kxa23m7mr5^t1615^투자자매매종합1^1
+2^2b03bzy8-k1vb-24m0-38v1-07io06pkwgtw^t1617^투자자매매종합2^1
+2^5wu60qa1-0cw6-u3m1-oae8-w5u7a1ghr407^t1621^업종별분별투자자매매동향(챠트용)^1
+2^65msfrhj-d38y-oq3x-f44i-h255slmrt617^t1664^투자자매매종합(챠트)^1
+1^90378c39-f93e-4f95-9670-f76e5c924cc6^[주식] 외인/기관^/stock/frgr-itt^REST
+2^fa4b5j38-1fr4-5dz7-lc88-58uts171x8zb^t1702^외인기관종목별동향^1
+2^0la12qs4-o5k4-y11t-o005-6ly5t3510n2p^t1716^외인기관종목별동향^1
+2^qy08l88k-gvdv-6bd3-3558-1k657uy121an^t1717^외인기관종목별동향^1
+1^3d58c125-8b45-46b4-baf2-6f98d0373131^[주식] ELW^/stock/elw^REST
+2^4002xq27-hu14-hb2p-mik8-7p6m713e6j4y^t1950^ELW현재가(시세)조회^10
+2^54gtzn1x-4760-ge6t-c82h-2o010o63p7kj^t1951^ELW시간대별체결조회^2
+2^45zh4j3a-6xaz-jl10-tpar-37n54151u5rc^t1954^ELW일별주가^1
+2^0uy226nw-4s85-5378-0606-d88g4jz3io01^t1956^ELW현재가(확정지급액)조회^10
+2^k30q78gy-3y83-8zv1-cgr3-85v1gu6of034^t1958^ELW종목비교^2
+2^iglt4y4j-l5f5-a7ep-65zg-36w6wn1qb470^t1959^LP대상종목정보조회^2
+2^6vwr173d-rx52-vqfk-2zvh-7v60h5b35ow4^t1960^ELW등락율상위^2
+2^33737g03-8jt8-07u8-h0j5-8m25f8ec6j5r^t1961^ELW거래량상위^2
+2^61n54k1n-7bsc-k663-w3tj-cv1a6511v76v^t1964^ELW전광판^2
+2^5n5yzbp1-2b3y-31o6-840i-w8bec210trg0^t1966^ELW거래대금상위^2
+2^2x8k4erz-ic50-gv1p-k7my-h7kvgsy6y341^t1969^ELW지표검색^2
+2^ke38z17v-mj40-5kvy-715g-168bgg3101nq^t1971^ELW현재가호가조회^10
+2^s4113r74-636i-ysy3-2hw1-152306dl55zy^t1972^ELW현재가(거래원)조회^2
+2^230ve3xt-zl3h-j81p-7zup-33niq5qpq7c3^t1973^ELW시간대별예상체결조회^2
+2^1t66384h-u63g-27d8-6n54-e03j6wb345qz^t1974^ELW기초자산동일종목^2
+2^da04335m-1313-3835-v123-6f2yy6x3v237^t1988^기초자산리스트조회^2
+2^iejgem64-k08j-e116-4a36-8doe43327514^t8431^ELW종목조회^2
+2^w52aou78-a16c-q710-4m44-1om00cd15a8i^t9905^기초자산리스트조회^2
+2^2vs687jh-w86c-06r5-l5b7-z43gr21u73o6^t9907^만기월조회^2
+2^e11t42bf-tog0-u5m4-4uuw-8en3ej31jzjl^t9942^ELW마스터조회API용^2
+1^30b6dfd6-b0bd-4e63-a510-7d5d94edc740^[주식] ETF^/stock/etf^REST
+2^h242r7il-d4l6-f5de-1xv2-5b40z1f71f5j^t1901^ETF현재가(시세)조회^1
+2^k724ii03-2p32-33z5-186l-a3eesiwvqjyp^t1902^ETF시간별추이^1
+2^5tnu74tn-3ep3-8m7s-553u-g777y6nyzut2^t1903^ETF일별추이^1
+2^t560kr3p-ks7k-5n67-z30d-mikn1ceb3epa^t1904^ETF구성종목조회^1
+2^f432s27u-5bdd-b6h7-y62f-nh7qwcli3xop^t1906^ETFLP호가^10
+1^8f027fa6-4177-43e3-9a7a-a76873efd47c^[주식] 섹터^/stock/sector^REST
+2^17rnwbj7-k537-ykve-4zt1-4704e5i40kd3^t1531^테마별종목^1
+2^27fprw8x-37eb-8w1a-m623-61581212l8od^t1532^종목별테마^1
+2^f2e16q68-dqb6-4g10-p60e-7424h1r2im2t^t1533^특이테마^1
+2^dtabrk1s-334b-4t28-1euv-c1ul4ri1zs7q^t1537^테마종목별시세조회^1
+2^u2ifz7w4-h8er-1rq6-z85i-3g0267007q2j^t8425^전체테마^1
+1^6b67369a-dc7a-4cc7-8c33-71bb6336b6bf^[주식] 종목검색^/stock/item-search^REST
+2^ut652167-711h-1fkz-s1a5-160212v457y1^t1809^신호조회^1
+2^dj332h7t-rup4-57tf-zv33-22g5r8f0tupi^t1825^종목Q클릭검색(씽큐스마트)^1
+2^572bidy2-5qh6-v450-3m30-8g5q7wie83c4^t1826^종목Q클릭검색리스트조회(씽큐스마트)^1
+2^aa66eb89-648c-4847-b92b-290c607828b0^t1852^파일저장종목 실시간검색^1
+2^1ca685b1-8537-425a-b509-e345735e8257^t1856^파일저장종목검색^1
+2^bae968ab-f7e1-4e05-b3d3-b2ba064cec1d^t1866^서버저장조건 리스트조회^1
+2^8b4b5576-ba52-4ec1-8ae7-b3ad6cf1a5b1^t1859^서버저장조건 조건검색^1
+2^b898b18c-327d-489a-9484-c64185b58629^t1860^서버저장조건 실시간검색^1
+1^d3d0ef41-6a0f-4bda-9e28-160071f66206^[주식] 상위종목^/stock/high-item^REST
+2^4p532f71-r7m0-4u0z-0ads-df62ir11o40m^t1441^등락율상위^1
+2^4x30u56m-rzo1-1ps5-x6c7-15e2864v36g7^t1444^시가총액상위^2
+2^y645oh51-0pi0-c88d-60za-vp2o5q8gc26v^t1452^거래량상위^2
+2^wre5muet-di4k-47r6-1ekq-8i7165312myp^t1463^거래대금상위^1
+2^cwd71sq0-238c-b2kb-8e65-577v6qahf50v^t1466^전일동시간대비거래급증^1
+2^2l47338m-58g1-ldp5-funr-448au4xfvvb0^t1481^시간외등락율상위^1
+2^o3w1066s-tp5i-2i58-652d-w1qvd0rm230w^t1482^시간외거래량상위^1
+2^6ub31yi5-3s33-5a4g-zlop-6i4a24au88ok^t1489^예상체결량상위조회^1
+2^24pk08ho-sb8g-p8q1-5z4t-i53nus86p16y^t1492^단일가예상등락율상위^1
+1^12320341-ad85-429a-90bd-5b3771c5e89f^[주식] 차트^/stock/chart^REST
+2^48flgily-6l6m-61un-0t51-0266li525pm0^t1665^기간별투자자매매추이(차트)^1
+2^8ncj7d41-48w8-fv13-cj5y-4z8d6m811rbr^t8410^API전용주식차트(일주월년)^1
+2^d572j5bw-aswb-mcjo-72x8-s726julol0y7^t8411^주식차트(틱/n틱)^1
+2^57t2im3o-021x-1331-dln1-k244483t2m66^t8412^주식차트(N분)^1
+2^91a1e804-ad13-4d71-b4a6-e723a76767ba^t8451^(통합)주식챠트(일주월년) API용^1
+2^6cc4c361-966c-41ec-b47b-db02023ef904^t8452^(통합)주식챠트(N분) API용^1
+2^70eede0c-82b7-49bd-8ab0-efba3a629d04^t8453^(통합)주식챠트(틱/N틱) API용^1
+1^316495d3-6109-45a6-baaf-9e8a0261f30a^[주식] 기타^/stock/etc^REST
+2^k7whln33-esmg-sk25-zwro-13j64ua02r70^CLNAQ00100^예탁담보융자가능종목현황조회^1
+2^1p7tu38d-jj3j-b2ic-s4sm-r3c08o27z7ij^t1403^신규상장종목조회^1
+2^42hzpy3a-453m-snq2-g1h6-s1f63k3o8x2x^t1411^증거금율별종목조회^1
+2^8028q33n-fb3f-67xl-v8a2-t511l27a1thb^t1638^종목별잔량/사전공시^1
+2^ikgery4i-1y82-832n-u473-cr0375r45zxe^t1921^신용거래동향^1
+2^2hi6684w-ktod-57pg-4vx6-61323xwh3za3^t1926^종목별신용정보^1
+2^d38cu2k1-44e2-06a5-0862-6fnkqb0x18dx^t1927^공매도일별추이^1
+2^qv468m0j-37o2-n3kt-80in-r756g1317d67^t1941^종목별대차거래일간추이^1
+2^ir3h1jd3-6q1q-lrz6-51wl-88u4t8748hre^t8430^주식종목조회^2
+2^10b608pg-043k-l8qc-587y-3hz6xy0c1b7r^t8436^주식종목조회 API용^2
+1^37d22d4d-83cd-40a4-a375-81b010a4a627^[주식] 계좌^/stock/accno^REST
+2^047x41xg-k554-3j5w-834d-1qml538oh06m^CDPCQ04700^계좌 거래내역^1
+2^ysl66481-wr5s-d884-8154-jj8s8tg876h1^CSPAQ00600^계좌별신용한도조회^1
+2^o3y3a5ti-2y2f-13g4-686g-8y08687kn3ea^CSPAQ12200^현물계좌예수금 주문가능금액 총평가 조회^1
+2^h6m7jb6n-0mzi-1l6m-fy5w-07wm257eekkw^CSPAQ12300^BEP단가조회^1
+2^42ut6k7z-036p-h5h7-828n-z00ubjy3eqk2^CSPAQ13700^현물계좌 주문체결내역 조회(API)^1
+2^7lr716yl-mg6i-8211-83o5-u0v38276y0d2^CSPAQ22200^현물계좌예수금 주문가능금액 총평가2^1
+2^q43zcs5n-yxo0-6kk4-rw4k-48xtm7ryp437^CSPBQ00200^현물계좌증거금률별주문가능수량조회^1
+2^5a76xq81-7zn7-dp0d-h317-231058j4nh5g^FOCCQ33600^주식계좌 기간별수익률 상세^1
+2^23vjoh0j-ip6m-4b5e-8y4p-u300x0s453ri^t0150^주식당일매매일지/수수료^2
+2^bnu7r8x4-3245-8ces-1nt5-85p4f70304ih^t0151^주식당일매매일지/수수료(전일)^2
+2^5rdgd534-2676-ibs7-513d-5pomn3hf1308^t0424^주식잔고2^2
+2^51rra84z-4ftz-w586-5872-6hr4u7qjx06s^t0425^주식체결/미체결^2
+1^d0e216e0-10d9-479f-8a4d-e175b8bae307^[주식] 주문^/stock/order^REST
+2^ie573q0i-t3sv-lflu-2h13-2u37435125zt^CSPAT00601^현물주문^10
+2^87dcqk1e-vbfr-7tlg-o8y2-ndm3v17606m8^CSPAT00701^현물정정주문^3
+2^b647ogpr-854a-b4yh-7d8r-h6ulmw165eh5^CSPAT00801^현물취소주문^3
+1^9a2800c3-9bf2-4d67-8d83-905074f06646^[주식] 실시간 시세^/websocket/stock^WEBSOCKET
+2^dqmwcg5m-7816-tc33-22w2-7d4a1wfh6o7u^B7_^ETF호가잔량^-
+2^j80g3150-f711-g08n-x547-6h5v1bmdda6l^DH1^KOSPI시간외단일가호가잔량^-
+2^4ar3rm7b-2a23-c135-ovao-pz22y85q5bsn^DHA^KOSDAQ시간외단일가호가잔량^-
+2^04vl4h6e-d818-60ub-1856-p6fi80z7l3d3^DK3^KOSDAQ시간외단일가체결^-
+2^z0i3q155-mtvw-2e6g-p4vs-2nk216v6bkw1^DS3^KOSPI시간외단일가체결^-
+2^dgb3zvti-2k01-jhfa-6c63-7pmb27qqtw67^DVI^시간외단일가VI발동해제^-
+2^1x6v03nd-8q12-500i-ip58-7x0272qv1wzm^H1_^KOSPI호가잔량^-
+2^07o1v6cy-d48b-7lx6-i637-5073kyi1r58h^H2_^KOSPI장전시간외호가잔량^-
+2^z25317m7-61g4-6k88-27p5-tab0k6146w1p^HA_^KOSDAQ호가잔량^-
+2^wle47rf0-oqr3-446b-7766-z2nd36054b6u^HB_^KOSDAQ장전시간외호가잔량^-
+2^kv031av8-4am0-f4sy-x32p-r842g57t7tkh^I5_^코스피ETF종목실시간NAV^-
+2^qr4qy180-148f-ty60-u84y-7c2qe3t54u52^IJ_^지수^-
+2^p01ytc30-0koz-d418-qhww-j6ytc16lv0zw^K1_^KOSPI거래원^-
+2^w384266h-m7ss-4vw2-g71j-a1h28rw228fr^K3_^KOSDAQ체결^-
+2^502bk5lr-b1y0-r666-eixz-vm82r7561db6^KH_^KOSDAQ프로그램매매종목별^-
+2^x47tsi3u-30i0-0q6e-856o-22c7iq5gp352^KM_^KOSDAQ프로그램매매전체집계^-
+2^z7kaf3y7-thby-37ko-515o-hcv01zmthfk6^KS_^KOSDAQ우선호가^-
+2^5t341rq3-755f-y536-p4l4-k44f5xm28l82^OK_^KOSDAQ거래원^-
+2^2680qf63-r24j-13wg-453w-77lirlgk1src^PH_^KOSPI프로그램매매종목별^-
+2^41mk23ng-rg52-5fm6-v3wr-f7c2qb5423nj^PM_^KOSPI프로그램매매전체집계^-
+2^12amehxz-3d0t-0zt5-4318-1xf6ho705gk6^S2_^KOSPI우선호가^-
+2^1v82075e-xo68-55y8-0if3-h7053s85441q^S3_^KOSPI체결^-
+2^j6eoqa2g-y0xy-2sub-lbw6-o2qh50567802^S4_^KOSPI기세^-
+2^40x00uzk-d077-jjz3-g3xz-n0t365rj71ks^SC0^주식주문접수^-
+2^f211yu82-clea-bh10-88f7-hbcf3munafti^SC1^주식주문체결^-
+2^03d1e7s2-5xoj-i4o8-jx71-y4wodzkijat6^SC2^주식주문정정^-
+2^1271t7l3-m48x-exbc-415w-j3zmt0ovt53z^SC3^주식주문취소^-
+2^3dkbr70m-w1iq-p46o-gw6a-r74y3u2zgwqa^SC4^주식주문거부^-
+2^w7s78u4q-68t4-p4n3-uw15-7648x1l777ov^SHC^상/하한가근접진입^-
+2^704k18b2-o7qv-aq0q-2316-q3noxfqa3j53^SHD^상/하한가근접이탈^-
+2^8k7ig4g4-06nc-1834-5fxt-2tl2hf5c71m3^SHI^상/하한가진입^-
+2^0s54ip50-226q-252z-e2in-3moti270h24t^SHO^상/하한가이탈^-
+2^86oo7q0s-td45-oxnn-y8x4-73z7f6g21g58^VI_^VI발동해제^-
+2^212vj75s-c7xe-4b16-jqgk-u6556883o8ev^YJ_^예상지수^-
+2^zs8g4tn3-14x0-403f-6cfh-1cg82a3r5720^YK3^KOSDAQ예상체결^-
+2^mbn0xzfu-d301-1d0v-6iyt-bfg20i54xiz4^YS3^KOSPI예상체결^-
+2^48i332t8-055l-82lb-61r4-0046kfbj7uci^ESN^뉴ELW투자지표민감도^-
+2^24t01tcg-c51z-5ce0-s83w-ap6e7c0k7kyd^h2_^ELW장전시간외호가잔량^-
+2^n020f232-tdr8-8gv1-mrqx-3nkmlgq6vh2v^h3_^ELW호가잔량^-
+2^1yd75440-004h-107x-5r4x-30pmkm6n7561^k1_^ELW거래원^-
+2^7855ng0e-2y50-k0ju-xzo7-e2w74qd82ar6^s2_^ELW우선호가^-
+2^5eu0xc20-110z-0e60-40dg-1upvfb55qea7^s3_^ELW체결^-
+2^5k2xpb0n-4h42-d5e3-88vu-tg6ljx817150^s4_^ELW기세^-
+2^z5yu11o3-7a13-gk04-s8o1-5ckci8o7534v^Ys3^ELW예상체결^-
+2^6109bede-ef88-45b2-bf8b-0e5a00ccfdf7^NS3^(NXT)체결^-
+2^cb01a6c6-242f-456d-a7fe-7a0dccad0ce8^NH1^(NXT)호가잔량^-
+2^a8eec35b-efee-4664-b976-8aed54072256^NS2^(NXT)우선호가^-
+2^e45ee2e7-33a3-4039-8fca-5e75deb39eaa^NYS^(NXT)예상체결^-
+2^62264908-64af-43f6-a8e3-dbdbd40f5205^NVI^(NXT)VI 발동 해제^-
+2^c01fb423-0e79-4786-a7f6-e661f92c9b73^NK1^(NXT)거래원^-
+2^0c3a6d32-f496-4c2a-89d9-6c004c6e84a1^NPH^(NXT)프로그램매매종목별^-
+2^eefddcc9-35a8-4b62-82dc-37fd1a390c40^NPM^(NXT)프로그램매매전체집계^-
+2^9399267d-089d-4e49-9553-a65bcdba8bb5^NBT^(NXT)시간대별투자자매매추이^-
+2^bd0bba34-6de0-4138-9c2c-8bd86164ea42^NBM^(NXT)업종별투자자별매매현황^-
+2^b26bf1b2-9662-469c-8b2c-a7241a3bf05c^US3^(통합)체결^-
+2^09f45862-49e8-4220-b2f8-09f7cfb72c99^UH1^(통합)호가잔량^-
+2^95a7966b-1d1d-4541-8adb-aec551f69215^US2^(통합)우선호가^-
+2^225bd3e0-fe5d-4d97-adff-55597404bf43^UYS^(통합)예상체결^-
+2^c7a396f9-772b-4def-8375-fa8b9a3669e8^UPH^(통합)프로그램매매종목별^-
+2^3d93aeaa-3da0-4c4e-9412-5b87e1d33189^UK1^(통합)거래원^-
+2^3b7cac40-3314-4707-92bc-864802a970e7^UBT^(통합)시간대별투자자매매추이^-
+2^f7c46d73-fdd5-4b41-b428-d28f8bcfbc79^UBM^(통합) 업종별투자자별매매현황^-
+2^13a78590-9b3f-42b2-9592-9c16c5c30dc5^UPM^(통합)프로그램매매전체집계^-
+2^006d0c8c-84a8-4466-b014-148c704d2f6e^UVI^(통합)VI발동해제^-
+2^90214c0f-6aee-4dba-bdeb-2caa8029ed7d^AFR^API사용자조건검색실시간^-
+0^2f1eea77-5606-4512-93c6-31b21d2ece90^선물/옵션
+1^9f467798-6ce6-4d31-ab93-5a0e2860f89f^[선물/옵션] 시세^/futureoption/market-data^REST
+2^60nl3560-26kl-g02t-64x7-o0oxo8n56qsa^t2111^선물/옵션현재가(시세)조회^10
+2^0uxzs86x-j211-5hxr-w6hh-7lm825q2yop2^t2112^선물/옵션현재가호가조회^10
+2^q87i3436-4x1f-88ye-2tmn-ofc4q8g05hyi^t2106^선물/옵션현재가시세메모^1
+2^0h4bf78p-c12y-er70-7803-np7zv72g46y8^t2212^선물옵션시간대별체결조회^2
+2^dv155010-6ty1-e41a-kc44-3q1673mk6rio^t2214^기간별주가^1
+2^p5t6y761-7k60-2048-b78v-2bn0yi77h1cc^t2210^선물옵션시간대별체결조회(단일출력용)^2
+2^3xmo08bs-sfdt-k352-0x43-b036340j4bsq^t2301^옵션전광판^2
+2^pb3zs2x7-3fhp-l536-7s1j-45875040k3wl^t2407^선물옵션호가잔량비율챠트^1
+2^uf51675k-7y66-yx3d-46g5-435gpbu6v251^t2424^미결제약정추이^1
+2^23202b3b-5a52-4248-8b0e-e97f19f76b33^t2522^주식선물기초자산조회^2
+2^5m2t006b-vf03-21pv-7uv7-ap62272s4j18^t8401^주식선물마스터조회(API용)^2
+2^0e0vx10t-n32x-pg0n-stc4-67ru3ub2t0ez^t8402^주식선물현재가조회(API용)^10
+2^iw5h2a35-715o-xbas-fx5c-877c1pisy51f^t8403^주식선물호가조회(API용)^10
+2^81pv6001-4g80-4527-j1v7-ghdhc46dg26t^t8404^주식선물시간대별체결조회(API용)^2
+2^312k6y3y-ctb7-55i6-kw20-u0uizx475k8e^t8405^주식선물기간별주가(API용)^1
+2^c6cg4b1z-72t4-m41r-qjnx-6jvze4yg5t3j^t8406^주식선물틱분별체결조회(API용)^1
+2^ge1gb75q-6551-8v58-yl2q-5e4252rl58m0^t8426^상품선물마스터조회(API용)^1
+2^7q05l438-4gr4-0yz0-3b4w-t875j5zq7sfh^t8427^과거데이터시간대별조회^1
+2^j2ji6uwp-lu1d-q124-e2f8-ji5720zm2i7d^t8467^지수선물마스터조회API용^2
+2^26m28b8c-3126-b4w0-14c6-ly7phzi1m601^t8433^지수옵션마스터조회API용^2
+2^j4881tsx-00k1-81sz-4143-ocat1lu6iq65^t8434^선물/옵션멀티현재가조회^3
+2^inrf05yt-g110-d15z-61e7-4560p1cc4853^t8435^파생종목마스터조회API용^2
+2^t56815xu-yx0h-n5m2-e355-oy4wcm05q8b6^t9943^지수선물마스터조회API용^2
+2^283404p0-sddl-35yd-7g03-mj0q266c7bfc^t9944^지수옵션마스터조회API용^2
+2^futroptn-0000-0000-0000-0000000t8455^t8455^KRX야간파생 마스터조회(API용)^2
+2^futroptn-0000-0000-0000-0000000t8456^t8456^KRX야간파생 시세조회(API용)^10
+2^futroptn-0000-0000-0000-0000000t8457^t8457^KRX야간파생 호가조회(API용)^10
+2^futroptn-0000-0000-0000-0000000t8458^t8458^KRX야간파생 시간대별체결(API용)^2
+2^futroptn-0000-0000-0000-0000000t8459^t8459^KRX야간파생 기간별주가(API용)^1
+2^futroptn-0000-0000-0000-0000000t8460^t8460^KRX야간파생 옵션 전광판^2
+1^47005ce6-8500-4a3d-ad6c-f96ec3251669^[선물/옵션] 투자자^/futureoption/investor^REST
+2^8fa18e6a-d6vg-76f4-zu1g-bgizg8o00vfu^t2541^상품선물투자자매매동향(실시간)^1
+2^ng2n026k-1521-364u-wfpv-3s61g3t232l7^t2545^상품선물투자자매매동향(챠트용)^1
+2^futroptn-0000-0000-0000-0000000t8462^t8462^KRX야간파생 투자자기간별(API용)^1
+2^futroptn-0000-0000-0000-0000000t8463^t8463^KRX야간파생 투자자시간대별(API용)^1
+1^a9b39b08-25c2-427d-848b-675c6228a92b^[선물/옵션] 차트^/futureoption/chart^REST
+2^v3tpt4yr-20bu-dnu2-1080-27u3gf713q1o^t2216^선물옵션틱분별체결조회차트^1
+2^78lgic88-s8zx-4y8b-05ib-y68rql0lxsbd^t8464^선물옵션차트(틱/n틱)^1
+2^6r6b18sc-cn36-y4vw-wil8-jra56onl6v4x^t8465^선물/옵션차트(N분)^1
+2^03577718-rp1f-nn3v-aomw-e78mu61q0u1k^t8466^선물/옵션차트(일주월)^1
+2^futroptn-0000-0000-0000-0000000t8461^t8461^KRX야간파생 틱분별조회(API용)^1
+1^09a668df-d7e8-4b5c-977f-91d1429b931a^[선물/옵션] 계좌^/futureoption/accno^REST
+2^216z4ie2-4275-4887-3740-6i2dr3a16626^CFOAQ00600^선물옵션 계좌 주문체결내역 조회^1
+2^be5bee77-5430-4c19-9c98-511d7d6c97d9^CFOAQ50600^선물옵션 계좌잔고 및 평가현황3^1
+2^w7b088r0-15f2-23nd-f64u-bspnv83368cp^CFOAQ10100^선물옵션 주문가능수량조회^1
+2^45806j0b-vj8a-qjg3-a4ah-b16866vp37oi^CFOBQ10500^선물옵션 계좌예탁금증거금조회^1
+2^3vs666s1-0dx2-8nqw-5mh5-6s7kt2j6434f^CFOEQ11100^선물옵션가정산예탁금상세^1
+2^n3os3024-dhxt-713c-6b08-zllxz1m110nh^CFOEQ82600^선물옵션 일별 계좌손익내역^1
+2^860prhn1-ts7u-i8bh-4nh8-4sin64ycp6of^CFOFQ02400^계좌 미결제 약정현황(평균가)^1
+2^z6a4ku4z-zn3q-221o-7yfl-g2u214z6o6o5^t0434^선물/옵션체결/미체결^2
+2^1o2u734w-63qm-f48n-6tw5-653q82mb77vq^t0441^선물/옵션잔고평가(이동평균)^2
+2^futroptn-0000-0000-0000-00CCENQ10100^CCENQ10100^KRX야간파생 주문가능수량 조회^1
+2^futroptn-0000-0000-0000-00CCENQ30100^CCENQ30100^KRX야간파생 주문/체결내역 조회^1
+2^futroptn-0000-0000-0000-00CCENQ90200^CCENQ90200^KRX야간파생 잔고조회^1
+2^2z3barom-1l84-37b4-2r5d-7b85q215652g^FOCCQ33700^선물옵션 기간별 계좌 수익률 현황^1
+1^b579d38a-3ce5-4b1b-b94e-b0c4bbbf1d27^[선물/옵션] 주문^/futureoption/order^REST
+2^1g6i3v5a-4n3u-63d1-07br-ykv647gu38uf^CFOAT00100^선물옵션 정상주문^10
+2^1t1252mz-mcn1-ou7y-3ie2-t56d48t3471a^CFOAT00200^선물옵션 정정주문^10
+2^7mqf3v58-aa34-23kx-r6ez-7z7rm2n5lt0s^CFOAT00300^선물옵션 취소주문^10
+2^zbae5oyj-in6m-r254-83z0-6rxw4d35b808^CFOBQ10800^선물옵션 옵션매도시 주문증거금조회(옵션매도시 1계약당 주문증거금)^1
+2^futroptn-0000-0000-0000-00CCENT00100^CCENT00100^KRX야간파생 위탁 신규 주문^5
+2^futroptn-0000-0000-0000-00CCENT00200^CCENT00200^KRX야간파생 위탁 정정 주문^5
+2^futroptn-0000-0000-0000-00CCENT00300^CCENT00300^KRX야간파생 위탁 취소 주문^5
+1^98373ce4-042a-4fc8-85ef-b9b8f64101ce^[선물/옵션] 기타^/futureoption/etc^REST
+2^p4n047y4-38z1-r18a-rchs-a380e285yuyz^MMDAQ91200^파생상품증거금율조회^1
+1^57936c91-b49d-4702-b7f6-3935c6859462^[선물/옵션] 실시간 시세^/websocket/futureoption^WEBSOCKET
+2^0irot5h7-6240-6s6d-0qk8-l8ui5vaai4v7^C01^선물주문체결^-
+2^p672pms7-z16q-rn77-2n5l-7gl60fwnivu8^CD0^상품선물실시간상하한가^-
+2^4ab0k2u7-kl78-y52c-e2m7-p13v5csnt014^FC9^KOSPI200선물체결^-
+2^abb3q1c7-45xx-61og-4oeg-e0nm84jf2v18^FD0^KOSPI200선물실시간상하한가^-
+2^2xv23r6o-4a8e-574s-rikj-x7iplgyoqclq^FH9^KOSPI200선물호가^-
+2^b7p5scxa-0c1s-7e6t-1f2u-1z7716r515kv^FX9^KOSPI200선물가격제한폭확대^-
+2^kryp706u-ok08-gbfb-crt6-68oq6ys46uwa^H01^선물주문정정취소^-
+2^8zcc1f1e-58k6-n20f-ypg1-h2rd6hd3v304^JC0^주식선물체결^-
+2^5b1l30l5-i71o-2s13-7s7d-tu4s72pa0nv8^JD0^주식선물실시간상하한가^-
+2^fwwkp60n-z431-7q2h-u847-lgx43tud56wo^JH0^주식선물호가^-
+2^lvlsq1pe-6g00-5sls-055a-wc8285u3pl2j^JX0^주식선물가격제한폭확대^-
+2^4410h36r-th14-osbq-2rey-vbrn7g71k457^O01^선물접수^-
+2^76072h62-h48f-flf6-38w2-lrvs7s1qj1q6^OC0^KOSPI200옵션체결^-
+2^yw60867c-45fb-w47r-2db4-2861e0vb5evx^OD0^KOSPI200옵션실시간상하한가^-
+2^8rj74yu0-gma6-l2b6-cuc3-5kvhhb0snm2c^OH0^KOSPI200옵션호가^-
+2^30d5gryt-et0l-76a7-tq46-w2ui7ed3t4k7^OMG^KOSPI200옵션민감도^-
+2^d267i487-yk5t-a84i-446t-538m5f65qtm5^OX0^KOSPI200옵션가격제한폭확대^-
+2^e2v4f5qi-3038-420r-5pkt-pa84oh287xni^YC3^상품선물예상체결^-
+2^3adzj1y0-b1y6-57d5-x5m8-fuq1pb2340pc^YF9^지수선물예상체결^-
+2^2o40382l-81tg-36i4-33m0-4yiujqcjy64q^YJC^주식선물예상체결^-
+2^8478652c-n55m-4n0r-54nx-005qzs00shaj^YOC^지수옵션예상체결^-
+2^futroptn-0000-0000-0000-000000000DC0^DC0^KRX야간파생 체결^-
+2^futroptn-0000-0000-0000-000000000O02^O02^KRX야간파생 선물접수^-
+2^futroptn-0000-0000-0000-000000000C02^C02^KRX야간파생 선물체결^-
+2^futroptn-0000-0000-0000-000000000DH0^DH0^KRX야간파생 호가^-
+2^futroptn-0000-0000-0000-000000000H02^H02^KRX야간파생 선물정정취소^-
+2^futroptn-0000-0000-0000-000000000DD0^DD0^KRX야간파생 실시간상하한가^-
+2^futroptn-0000-0000-0000-000000000DX0^DX0^KRX야간파생 가격제한폭확대^-
+2^futroptn-0000-0000-0000-000000000DYC^DYC^KRX야간파생 예상체결^-
+2^futroptn-0000-0000-0000-000000000DBM^DBM^KRX야간파생 투자자매매현황^-
+2^futroptn-0000-0000-0000-000000000DBT^DBT^KRX야간파생 투자자별현황^-
+0^c1ef0e8b-4666-4d8c-a77f-6ab488cfdb39^해외선물
+1^d61d4f85-9845-41ef-b915-4efa8fd0aad1^[해외선물] 시세^/overseas-futureoption/market-data^REST
+2^u038b63z-2354-03m4-w547-37um214aiznh^o3101^해외선물마스터조회^1
+2^r1ot4gi1-gt0u-bonc-ru51-e58gp6wner6d^o3104^해외선물 일별체결 조회^1
+2^xye10g8i-pr0n-51rh-2270-7hhkqe7p1681^o3105^해외선물 현재가(종목정보) 조회^2
+2^2uqu01k5-e0af-715e-d1i8-k4wax8btd22p^o3106^해외선물 현재가호가 조회^1
+2^62nwofv5-b6dd-ak84-y10q-swp5b88easv3^o3107^해외선물 관심종목 조회^1
+2^avf4s57l-c4ga-680i-0uq1-66g34d8udc5c^o3116^해외선물 시간대별(Tick)체결 조회^1
+2^64366nr4-665w-0822-7w6h-2u736o3v5a5e^o3121^해외선물옵션 마스터 조회^1
+2^mfc5j6ct-8je5-15b3-r6n2-l583i7srn7w1^o3123^해외선물옵션 차트 분봉 조회^1
+2^di2qj1s5-m1ii-28xh-46ej-e34ub4in2mr5^o3125^해외선물옵션 현재가(종목정보) 조회^2
+2^u180wo03-u534-h8hp-7np5-3eln5h11p26q^o3126^해외선물옵션 현재가호가 조회^2
+2^e55o820a-w6o3-7468-lrlp-6j8s506cc1vx^o3127^해외선물옵션 관심종목 조회^1
+2^6j4vn442-k022-0ik5-te3f-kkf84gfn08b6^o3128^해외선물옵션 차트 일주월 조회^1
+2^k4kemoq4-4w87-u42c-j7zm-oj5qq8d7027o^o3136^해외선물옵션 시간대별 Tick 체결 조회^1
+2^fxc2y145-87wa-wkw5-iv0d-d077c3ild148^o3137^해외선물옵션 차트 NTick 체결 조회^1
+1^44c1c082-c899-48fb-bc66-bb5be2f0ab4e^[해외선물] 계좌^/overseas-futureoption/accno^REST
+2^2184sm8u-peo0-563l-a8u5-ssa4gd17nmck^CIDBQ01400^해외선물 체결내역개별 조회(주문가능수량)^1
+2^2m4440q0-lhnl-18af-6j16-d74g51805b44^CIDBQ01500^해외선물 미결제잔고내역 조회^1
+2^manorzj6-c8c3-118m-14lq-7lmso11ectcv^CIDBQ01800^해외선물 주문내역 조회^1
+2^7rnqmh33-cgax-1752-csox-358u54s33spn^CIDBQ02400^해외선물 주문체결내역 상세 조회^1
+2^qn0dajb1-urxn-zioq-4r87-taw56cv8t5dk^CIDBQ03000^해외선물 예수금/잔고현황^1
+2^2118b70j-d5qq-jcp0-m46l-k6h1z3u1l723^CIDBQ05300^해외선물 예탁자산 조회^1
+2^i4da0t7s-ucj1-1b2m-xrcp-67ep37728aw4^CIDEQ00800^일자별 미결제 잔고내역^1
+1^b820f925-e189-4553-a7d1-8e5f2750fe08^[해외선물] 주문^/overseas-futureoption/order^REST
+2^ehb68dt2-ej40-fd48-2z0m-64zh0rf7x3is^CIDBT00100^해외선물 신규주문^5
+2^nug3s4y2-14b4-g17y-i8u2-c77186aj560m^CIDBT00900^해외선물 정정주문^5
+2^426ys31p-w0o6-k33i-p20y-12lk4m62203f^CIDBT01000^해외선물 취소주문^5
+1^906d2d0a-7a6d-4ecc-b574-ca2154a70bca^[해외선물] 차트^/overseas-futureoption/chart^REST
+2^6ds88k84-z7x1-5t7b-0aj8-13ormd5084iu^o3103^해외선물차트 분봉 조회^1
+2^b17bvjdk-i477-1b52-77s5-85j6f571mcsb^o3108^해외선물차트(일주월) 조회^1
+2^rz562l37-7le3-s1jh-h33h-16e07kvi1i86^o3117^해외선물 차트 NTick 체결 조회^1
+2^c1hb04fe-hq4i-030c-210r-0e8pr14z3x71^o3139^해외선물옵션차트용NTick(고정형)-API용^10
+1^3dc1c51b-5ff2-456d-ad2a-055e78ba2b03^[해외선물] 실시간 시세^/websocket/overseas-futureoption^WEBSOCKET
+2^f5608g2k-zr15-t2z5-5s8y-0ra57238k44v^OVC^해외선물 체결^-
+2^831vre4o-b816-n8l2-l76u-330du53w45mr^OVH^해외선물 호가^-
+2^j8348v6s-033d-idv8-k870-0vn5c021n08z^WOC^해외옵션 체결^-
+2^15t02g30-gq1z-6g5w-j0mq-y87jf3e71510^WOH^해외옵션 호가^-
+2^o5f0eane-37wy-jve6-t12s-sb6f200f5vh0^TC1^해외선물 주문접수^-
+2^35vp7151-20e2-oapm-7l7a-gr538k3s2ir3^TC2^해외선물 주문응답^-
+2^5227m3j1-3g6d-wym5-d2f1-77x746nyt16i^TC3^해외선물 주문체결^-
+0^cdb7e1bc-f7c5-425c-8248-aa83dbb6919f^해외주식
+1^45b5abe1-a6e1-4833-a9cb-7eb0c408dba3^[해외주식] 계좌^/overseas-stock/accno^REST
+2^b08d5789-9810-4293-8e9b-470d7ab4a2f7^COSAQ00102^해외주식 계좌주문체결내역조회 API^1
+2^7a8e64e0-f5bd-48ba-9bc0-9d497e727e62^COSAQ01400^예약주문 처리결과 조회^1
+2^986c2f3d-13be-4df6-8073-13aa369fa8d9^COSOQ00201^해외주식 종합잔고평가 API^1
+2^10cc2461-65bf-4d76-a995-e61123a83548^COSOQ02701^해외주식 예수금 조회 API^1
+1^06f2b1bc-7f44-4368-a564-207658af552d^[해외주식] 시세^/overseas-stock/market-data^REST
+2^2f51a79a-b7e6-4cff-b37f-093ccacd3883^g3101^해외주식 API 현재가 조회^10
+2^a59f2379-453a-4ff5-acdf-7827ed92d86a^g3102^해외주식 API 시간대별^10
+2^b0ea6740-a516-48ea-b6d7-34bf90c5fbfd^g3104^해외주식 API 종목정보 조회^10
+2^be3f0c98-af5f-47c1-a46e-1676e9393e3f^g3106^해외주식 API 현재가호가 조회^10
+2^92f483fa-eeb0-400f-9b52-464dec266a5d^g3190^해외주식 API 마스터 조회^10
+1^0c023f96-5137-48cf-8682-8dd30bbc81be^[해외주식] 실시간 시세^/websocket/overseas-stock^WEBSOCKET
+2^59db98ea-003b-4ab6-916d-28c5beaf0f1f^AS0^해외주식주문접수(미국)^-
+2^f0615daa-bed6-400e-8b49-c7f47b1b8e11^AS1^해외주식주문체결(미국)^-
+2^fc74af93-357f-47cb-b777-51bd5e8b29ec^AS2^해외주식주문정정(미국)^-
+2^c8e09554-b476-45a2-8373-c4a78d6d6456^AS3^해외주식주문취소(미국)^-
+2^ce9506b6-a9a1-4ac0-baf4-a6a85fe040cd^AS4^해외주식주문거부(미국)^-
+2^54afe570-1d0d-4e32-a946-544b6b5ceb5f^GSH^해외주식 호가^-
+2^fb82371e-2d73-4ec0-909e-e56772e24660^GSC^해외주식 체결^-
+1^6bafc43c-6080-4541-bfc2-c2608b269ca0^[해외주식] 주문^/overseas-stock/order^REST
+2^999fa928-d6e7-4676-a643-45a3f1fc138a^COSAT00301^미국시장주문 API^10
+2^3844dd76-0872-47b4-8f12-9f85b62d9f57^COSAT00311^미국시장정정주문 API^10
+2^6eff43f9-c527-4b97-b59b-70aa297f566f^COSMT00300^해외증권 매도상환주문(미국)^1
+2^a24192de-e2b0-472a-b30b-2508ff9d343b^COSAT00400^해외주식 예약주문 등록 및 취소^1
+1^4903400b-731d-42b0-98c7-6d50fc504894^[해외주식] 차트^/overseas-stock/chart^REST
+2^c38c061e-9d80-42d5-a4a9-b743dadfafd9^g3103^해외주식 API 일주월 조회^1
+2^4768094d-51b7-436d-a5b4-7ef2d44ef2a9^g3202^해외주식 API 차트NTICK 조회^1
+2^83a54ab5-2e16-4efb-916c-69850e9d1191^g3203^해외주식 API 차트NMIN 조회^1
+2^26ef752b-1c93-4922-b057-689af7e1ee5a^g3204^해외주식 API 차트일주월년별 조회^1
+0^6ad419a5-f0ce-47c2-a52a-91685fa86a31^기타
+1^3c452f0d-715e-43b5-a140-3e26f73dec76^[기타] 시간조회^/etc/time-search^REST
+2^d3yk1m28-slea-1sfn-0072-fjd1bu38p5h4^t0167^서버시간조회^10
+1^eddd61f7-d595-4370-b9c3-49c4c6178096^[기타] 실시간 시세^/websocket/etc^WEBSOCKET
+2^148z73fs-4n7x-0ot8-46t8-63jg7w181y21^JIF^장운영정보^-
+2^1861dwn3-xbb5-3f1c-m5p1-1jycodtw73e7^NWS^실시간뉴스제목패킷^-
+0^cd909627-82e5-40c9-b313-1a8fd2d7b119^실시간 시세 투자정보
+1^d67d0790-4b26-447b-82eb-e9642f66057c^[실시간 시세 투자정보] 투자정보^/websocket/investinfo^WEBSOCKET
+2^428y83h8-v5nr-1u57-z1o5-mea473p5265i^BMT^시간대별투자자매매추이^-
+2^2b0au583-15ar-bkry-wvly-3p35c0u603iz^CUR^현물정보USD실시간^-
+2^3c0k0445-07da-jtv7-5jfc-6668r26l4ohn^MK2^US지수^-

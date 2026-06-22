@@ -1,0 +1,10 @@
+async def sample(api):
+    request = {
+        "t8467InBlock": {
+            "gubun": "",
+        }
+    }
+    response = await api.request('t8467', request)
+    if not response: return print(f'요청실패: {api.last_message}')
+    
+    print_table(response.body['t8467OutBlock'])

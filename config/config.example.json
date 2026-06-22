@@ -1,0 +1,89 @@
+{
+  "ai_providers": {
+    "anthropic_key": "your_anthropic_api_key_here",
+    "openai_key": "your_openai_api_key_here",
+    "gemini_key": "your_gemini_api_key_here"
+  },
+  "ebest": {
+    "appkey": "your_ebest_appkey_here",
+    "appsecretkey": "your_ebest_appsecretkey_here"
+  },
+  "options_subscription": {
+    "itm": 6,
+    "otm_open_min": 0.3,
+    "max_otm_calls": 0,
+    "max_otm_puts": 0,
+    "wait_sec": 2,
+    "preopen_oh0_window": 10,
+    "oi_itm_count": 10,
+    "oi_otm_count": 10,
+    "oi_rebalance_interval_sec": 60.0
+  },
+  "option_minute_ohlcv": {
+    "enabled": false,
+    "atm_window": 2
+  },
+  "minute_lookback": {
+    "futures": 120,
+    "options": 120
+  },
+  "prediction": {
+    "minutes": 5,
+    "use_llm": true,
+    "heuristic_fallback": true,
+    "heuristic_flip_min_interval_sec": null,
+    "heuristic_flip_include_hold_transition": false,
+    "rule_based_weights": null,
+    "rule_based_mom_multiplier": 1.0,
+    "confidence_spread_max_for_high": 0.01,
+    "confidence_spread_max_for_medium": 0.02
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "your_telegram_bot_token_here",
+    "chat_id": "your_telegram_chat_id_here",
+    "option_flow_status_enabled": true,
+    "option_flow_status_cooldown_sec": 0.0,
+    "option_flow_status_intraday_only": false,
+    "option_flow_status_disable_after_close": true,
+    "option_flow_interp_sr_warn": 1.5,
+    "option_flow_interp_sr_hot": 2.0,
+    "option_flow_interp_pt_low": 0.008,
+    "option_flow_interp_pt_high": 0.03,
+    "option_flow_interp_pcr_v_low": 0.9,
+    "option_flow_interp_pcr_v_high": 1.1,
+    "option_flow_interp_pcr_oi_low": 0.95,
+    "option_flow_interp_pcr_oi_high": 1.05
+  },
+  "adaptive_indicator": {
+    "enabled": true,
+    "dual_mode": false,
+    "kospi_symbol": "KOSPI 지수",
+    "futures_symbol": "KP200 선물",
+    "warmup_bars": 15,
+    "min_swings_for_ready": 4,
+    "supertrend_pivot_filter": true,
+    "min_pivot_interval_minutes": 3,
+    "pivot_candidate_alert": {
+      "enabled": true,
+      "telegram_enabled": true,
+      "events": ["registered", "changed", "cancelled"],
+      "change_cooldown_sec": 60.0
+    },
+    "pivot_proximity_alert": {
+      "enabled": true,
+      "max_bars_diff": 1,
+      "telegram_enabled": true
+    },
+    "ranging_filter": {
+      "enabled": true,
+      "adx_min": 15.0,
+      "er_min": 0.15,
+      "use_zigzag_structure": true,
+      "whipsaw_min_bars": 2,
+      "use_adx_filter": true,
+      "use_er_filter": true,
+      "use_whipsaw_filter": true
+    }
+  }
+}
