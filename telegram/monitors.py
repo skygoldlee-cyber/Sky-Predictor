@@ -134,7 +134,7 @@ class MonitorsMixin:
           _prev_atm_call_price 를 사용하면 snapshot 재계산 없이 현재 ATM 콜가를 얻는다.
           없으면 _build_option_snapshot_safe(update_prev=False) fallback.
         """
-        from prediction.option_features import FuturesCallSimilarity
+        from prediction.features.similarity_features import FuturesCallSimilarity
 
         sim = FuturesCallSimilarity(window=self._divergence_window)
         logger.info("[TG][DIV] 이탈 모니터 루프 시작 (window=%d)", self._divergence_window)

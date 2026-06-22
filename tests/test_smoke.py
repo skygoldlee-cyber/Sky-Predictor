@@ -134,6 +134,11 @@ def test_full_project_smoke() -> None:
     only this file still validates the core project paths.
     """
 
+    import os
+    import sys
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "prediction"))
+
     from test_adaptive_indicator_smoke import (
         test_adaptive_indicator_disabled_path_no_import_errors,
         test_adaptive_indicator_manager_smoke,

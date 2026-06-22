@@ -38,7 +38,7 @@ def test_adaptive_indicator_manager_smoke() -> None:
 
 def test_adaptive_indicator_disabled_path_no_import_errors() -> None:
     # Basic import smoke: the package should be importable without side effects.
-    import adaptive_indicator  # noqa: F401
+    import indicators  # noqa: F401
 
 
 def test_adaptive_indicator_compute_from_df_matches_sequential_cross_features() -> None:
@@ -93,7 +93,7 @@ def test_adaptive_indicator_compute_from_df_matches_sequential_cross_features() 
 
 
 def test_adaptive_supertrend_direction_flip_smoke() -> None:
-    from kospi_indicators import AdaptiveSuperTrend, AdaptiveSuperTrendConfig
+    from indicators import AdaptiveSuperTrend, AdaptiveSuperTrendConfig
 
     st = AdaptiveSuperTrend(
         AdaptiveSuperTrendConfig(

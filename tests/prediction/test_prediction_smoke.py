@@ -103,7 +103,7 @@ def test_build_sequence_dim_smoke() -> None:
 
 
 def test_option_snapshot_smoke() -> None:
-    from prediction.option_features import build_option_snapshot
+    from prediction.features.option_features import build_option_snapshot
 
     calls = {
         "C1": {"strike": 400.0, "price": 1.0, "volume": 10, "open_interest": 100, "iv": 0.2},

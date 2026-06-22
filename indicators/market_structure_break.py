@@ -60,7 +60,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 try:
-    from .atr_adaptive_pivot import PivotPoint, PivotType
+    from .experimental.atr_adaptive_pivot import PivotPoint, PivotType
 except ImportError:
     from atr_adaptive_pivot import PivotPoint, PivotType  # type: ignore
 

@@ -127,7 +127,7 @@ class AmplitudeMixin:
                 put_dist_pt             : 현재가 → Put OI Peak 거리(pt).
                 _amplitude_source       : 진폭 데이터 소스 ("iv+session" | "session_only" | "none").
         """
-        from prediction.option_features import calc_expected_amplitude
+        from prediction.features.oi_features import calc_expected_amplitude
 
         _empty: Dict[str, Any] = {
             "expected_amplitude_pt":  0.0,
@@ -245,7 +245,7 @@ class AmplitudeMixin:
                         _calls = getattr(_tp, "call_options", {}) or {}
                         _puts  = getattr(_tp, "put_options",  {}) or {}
                         if _calls or _puts:
-                            from prediction.option_features import calc_iv_skew
+                            from prediction.features.option_features import calc_iv_skew
                             _skew = calc_iv_skew(_calls, _puts, float(current_price))
                             _iv = float(_skew.get("atm_call_iv") or _skew.get("atm_iv") or 0.0)
                             if _iv > 0.0:
