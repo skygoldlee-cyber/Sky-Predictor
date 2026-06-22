@@ -85,6 +85,17 @@ class BacktestConfig:
     # ── 방향성 모드 설정 ───────────────────────────────────────────────────
     direction_mode: str = "both"           # 'both'(롱+숏) | 'long_only'(롱만) | 'short_only'(숏만)
 
+    # ── 리스크 관리 설정 ───────────────────────────────────────────────────
+    stop_loss_pct: float = 0.0             # 진입가 대비 손절 % (0이면 미사용)
+    take_profit_pct: float = 0.0           # 진입가 대비 익절 % (0이면 미사용)
+    trailing_stop_pct: float = 0.0       # 고점/저점 대비 트레일링 스탑 % (0이면 미사용)
+    daily_loss_limit_krw: float = 0.0      # 일별 손실 한도 (원). 0이면 미사용
+    position_size_mode: str = "fixed"      # 'fixed' | 'atr'
+    atr_sizing_period: int = 14            # ATR 기반 사이징 기간
+    atr_sizing_target_pts: float = 0.0     # legacy: 목표 ATR(points). 0이면 미사용
+    atr_sizing_target_krw: float = 0.0     # 거래당 목표 위험금액 (원). 0이면 미사용
+    max_position_size_factor: float = 3.0  # 기본 승수 대비 최대 증감 비율
+
     def round_trip_cost_pts(self, entry_px: float, exit_px: float) -> float:
         """한 거래(진입+청산)의 총 비용을 '포인트' 단위로 환산."""
         comm = self.commission_pct_per_side * (entry_px + exit_px)
@@ -112,6 +123,7 @@ class BacktestResult:
     total_pnl_pts: float = 0.0
     total_pnl_krw: float = 0.0
     expectancy_pts: float = 0.0     # 거래당 평균 순손익(pt)
+    expectancy_krw: float = 0.0       # 거래당 평균 순손익(KRW)
     profit_factor: float = 0.0
     sharpe_daily: float = 0.0       # 일별 순손익 기준 연율화 Sharpe
     max_drawdown_krw: float = 0.0
@@ -481,6 +493,8 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
     idx = df.index
     has_open = "OPEN" in df.columns
     px_open = df["OPEN"].to_numpy() if has_open else df["CLOSE"].to_numpy()
+    px_high = df["HIGH"].to_numpy()
+    px_low = df["LOW"].to_numpy()
     px_close = df["CLOSE"].to_numpy()
     n = len(df)
 
@@ -493,6 +507,18 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
         day_last = (
             pd.Series(np.arange(n)).groupby(tday).transform("max").to_numpy()
         )
+    else:
+        tday = np.array([])
+
+    # ── 리스크 관리 사전 준비 ───────────────────────────────────────────────
+    use_sizing = cfg.position_size_mode == "atr" and cfg.atr_sizing_target_krw > 0
+    if use_sizing:
+        atr = _atr(df, cfg.atr_sizing_period).to_numpy()
+    else:
+        atr = np.array([])
+
+    daily_loss_used: Dict[int, float] = {}
+    has_loss_limit = cfg.daily_loss_limit_krw > 0
 
     # 각 피봇의 '진입 가능 위치'
     events: List[Tuple[int, int]] = []   # (entry_pos, direction)
@@ -520,6 +546,10 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
     rows = []
     for k in range(len(events)):
         e_pos, d = events[k]
+        e_day = int(tday[e_pos]) if intraday else idx[e_pos].date()
+        if has_loss_limit and daily_loss_used.get(e_day, 0.0) <= -cfg.daily_loss_limit_krw:
+            continue
+
         e_px = px_open[e_pos] if cfg.entry_on == "next_open" else px_close[e_pos]
         nxt = events[k + 1][0] if k + 1 < len(events) else None
 
@@ -547,16 +577,104 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
 
         if x_pos <= e_pos:
             continue
-        gross_pts = d * (x_px - e_px)
-        cost_pts = cfg.round_trip_cost_pts(e_px, x_px)
-        net_pts = gross_pts - cost_pts
+
+        # ── 포지션 사이징 (ATR 기반) ─────────────────────────────────────
+        sl_pct = cfg.stop_loss_pct
+        tp_pct = cfg.take_profit_pct
+        trail_pct = cfg.trailing_stop_pct
+        if d == 1:
+            sl_price = e_px * (1 - sl_pct) if sl_pct > 0 else 0.0
+            tp_price = e_px * (1 + tp_pct) if tp_pct > 0 else 0.0
+        else:
+            sl_price = e_px * (1 + sl_pct) if sl_pct > 0 else 0.0
+            tp_price = e_px * (1 - tp_pct) if tp_pct > 0 else 0.0
+
+        if use_sizing:
+            if sl_pct > 0:
+                risk_pts = abs(e_px - sl_price)
+            else:
+                risk_pts = float(atr[e_pos]) if len(atr) > e_pos else 0.0
+            risk_pts = max(risk_pts, 1e-9)
+            size_factor = cfg.atr_sizing_target_krw / (risk_pts * cfg.multiplier)
+            size_factor = max(1.0 / cfg.max_position_size_factor, min(size_factor, cfg.max_position_size_factor))
+        else:
+            size_factor = 1.0
+        effective_multiplier = cfg.multiplier * size_factor
+
+        # ── 인트라-트레이드 손절/익절/트레일링 스캔 ─────────────────────
+        exit_pos = x_pos
+        exit_px = x_px
+        exit_reason = reason
+        if sl_pct > 0 or tp_pct > 0 or trail_pct > 0:
+            if d == 1:
+                high_watermark = e_px
+                for i in range(e_pos + 1, x_pos + 1):
+                    if px_high[i] > high_watermark:
+                        high_watermark = px_high[i]
+                    eff_sl = sl_price
+                    if trail_pct > 0:
+                        trail = high_watermark * (1 - trail_pct)
+                        if eff_sl == 0.0:
+                            eff_sl = trail
+                        else:
+                            eff_sl = max(eff_sl, trail)
+                    if eff_sl > 0 and px_low[i] <= eff_sl:
+                        exit_pos = i
+                        exit_px = eff_sl
+                        exit_reason = (
+                            "stop"
+                            if (sl_pct > 0 and abs(eff_sl - sl_price) < 1e-9)
+                            else "trail"
+                        )
+                        break
+                    if tp_pct > 0 and px_high[i] >= tp_price:
+                        exit_pos = i
+                        exit_px = tp_price
+                        exit_reason = "tp"
+                        break
+            else:
+                low_watermark = e_px
+                for i in range(e_pos + 1, x_pos + 1):
+                    if px_low[i] < low_watermark:
+                        low_watermark = px_low[i]
+                    eff_sl = sl_price
+                    if trail_pct > 0:
+                        trail = low_watermark * (1 + trail_pct)
+                        if eff_sl == 0.0:
+                            eff_sl = trail
+                        else:
+                            eff_sl = min(eff_sl, trail)
+                    if eff_sl > 0 and px_high[i] >= eff_sl:
+                        exit_pos = i
+                        exit_px = eff_sl
+                        exit_reason = (
+                            "stop"
+                            if (sl_pct > 0 and abs(eff_sl - sl_price) < 1e-9)
+                            else "trail"
+                        )
+                        break
+                    if tp_pct > 0 and px_low[i] <= tp_price:
+                        exit_pos = i
+                        exit_px = tp_price
+                        exit_reason = "tp"
+                        break
+
+        gross_pts = d * (exit_px - e_px)
+        cost_pts = cfg.round_trip_cost_pts(e_px, exit_px)
+        net_krw = (gross_pts - cost_pts) * effective_multiplier
+        net_pts = net_krw / cfg.multiplier
+
         rows.append({
-            "entry_time": idx[e_pos], "exit_time": idx[x_pos],
-            "direction": d, "entry_px": e_px, "exit_px": x_px,
-            "exit_reason": reason,
-            "gross_pts": gross_pts, "cost_pts": cost_pts, "net_pts": net_pts,
-            "net_krw": net_pts * cfg.multiplier,
+            "entry_time": idx[e_pos], "exit_time": idx[exit_pos],
+            "direction": d, "entry_px": e_px, "exit_px": exit_px,
+            "exit_reason": exit_reason,
+            "gross_pts": gross_pts, "cost_pts": cost_pts,
+            "net_pts": net_pts, "net_krw": net_krw,
+            "size_factor": size_factor,
         })
+
+        if has_loss_limit:
+            daily_loss_used[e_day] = daily_loss_used.get(e_day, 0.0) + net_krw
 
     if not rows:
         return empty
@@ -567,9 +685,11 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
     losses = net[net < 0]
 
     total_pts = float(net.sum())
+    total_krw = float(tdf["net_krw"].sum())
     n_trades = int(len(tdf))
     win_rate = float((net > 0).mean() * 100)
     expectancy = float(net.mean())
+    expectancy_krw = float(tdf["net_krw"].mean())
     gross_win = float(wins.sum())
     gross_loss = float(-losses.sum())
     profit_factor = float(gross_win / gross_loss) if gross_loss > 0 else float("inf") if gross_win > 0 else 0.0
@@ -591,8 +711,9 @@ def backtest(df: pd.DataFrame, pivots: pd.DataFrame, cfg: BacktestConfig) -> Bac
         n_trades=n_trades,
         win_rate=win_rate,
         total_pnl_pts=total_pts,
-        total_pnl_krw=total_pts * cfg.multiplier,
+        total_pnl_krw=total_krw,
         expectancy_pts=expectancy,
+        expectancy_krw=expectancy_krw,
         profit_factor=profit_factor,
         sharpe_daily=sharpe,
         max_drawdown_krw=max_dd,
