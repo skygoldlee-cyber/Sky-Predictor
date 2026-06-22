@@ -6,18 +6,21 @@
 롱-또는-플랫(MA20/60+ADX)과 비교한다.
 """
 import sys
+import math
 from pathlib import Path
 from itertools import product
 from datetime import datetime
 
+# 프로젝트 루트 경로 추가 (indicators 모듈 import용)
+sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent))
 
 import pandas as pd
 import pivot_optuna_v2 as pv
 import regime_intraday_v2 as rg
 
-DB_PATH = "c:/Project/SkyPredictor/Devcenter/data/duckdb/market_data.duckdb"
-OUTPUT_LOG = Path(__file__).parent / "pivot_viability_analysis.log"
+DB_PATH = "c:/Project/SkyPredictor v1/Devcenter/duckdb/market_data.duckdb"
+OUTPUT_LOG = Path(__file__).parent / "pivot_viability_analysis_2019plus.log"
 
 # 동일 비용/승수 모델 (롱-또는-플랫 config 와 통일)
 BT = pv.BacktestConfig(
@@ -41,17 +44,32 @@ def log_and_print(msg: str, log_file):
     log_file.flush()
 
 
-def load_data():
-    df_1min = pv.load_data_by_date(
-        DB_PATH, "futures_1min", start="2025-06-24", end="2026-06-18"
-    )
-    df_1min = pv.filter_day_session(df_1min, start="08:45", end="15:45")
-    df_5min = df_1min.resample("5min").agg({
-        "OPEN": "first", "HIGH": "max", "LOW": "min",
-        "CLOSE": "last", "VOLUME": "sum",
-    }).dropna()
-    df_5min = pv.compute_indicators(df_5min)
-    return df_5min
+def load_data_by_year(year: int):
+    """특정 연도의 5분봉 데이터 로드"""
+    import duckdb
+    start_date = f"{year}-01-01 00:00:00"
+    end_date = f"{year}-12-31 23:59:59"
+    
+    con = duckdb.connect(DB_PATH, read_only=True)
+    df = con.execute(
+        f"SELECT * FROM futures_5min "
+        f"WHERE timestamp >= '{start_date}' "
+        f"AND timestamp <= '{end_date}' "
+        f"ORDER BY timestamp"
+    ).df()
+    con.close()
+    
+    # timestamp 컬럼 처리 (VARCHAR -> datetime)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df.set_index("timestamp")
+    df.columns = df.columns.str.upper()
+    
+    # 주간세션 필터
+    df = pv.filter_day_session(df, start="08:45", end="15:45")
+    
+    # 지표 계산
+    df = pv.compute_indicators(df)
+    return df
 
 
 def run_long_or_flat(df: pd.DataFrame):
@@ -74,19 +92,103 @@ def fmt_result(res: pv.BacktestResult, params: str = ""):
             f"MaxDD={res.max_drawdown_krw:>13,.0f}")
 
 
+def combine_results(results_list):
+    """여러 BacktestResult를 합산하여 하나의 결과로 반환"""
+    if not results_list:
+        return pv.BacktestResult()
+    
+    total_trades = sum(r.n_trades for r in results_list)
+    total_pnl_pts = sum(r.total_pnl_pts for r in results_list)
+    total_pnl_krw = sum(r.total_pnl_krw for r in results_list)
+    
+    if total_trades > 0:
+        win_rate = sum(r.win_rate * r.n_trades for r in results_list) / total_trades
+        expectancy_pts = total_pnl_pts / total_trades
+        expectancy_krw = total_pnl_krw / total_trades
+        
+        # Profit Factor 계산
+        gross_win = sum(r.trades[r.trades["net_pts"] > 0]["net_pts"].sum() if r.trades is not None else 0 for r in results_list)
+        gross_loss = sum(-r.trades[r.trades["net_pts"] < 0]["net_pts"].sum() if r.trades is not None else 0 for r in results_list)
+        profit_factor = float(gross_win / gross_loss) if gross_loss > 0 else float("inf") if gross_win > 0 else 0.0
+        
+        # 일별 PnL 합산 후 Sharpe 계산
+        all_daily = []
+        for r in results_list:
+            if r.trades is not None and len(r.trades) > 0:
+                r.trades["exit_date"] = pd.to_datetime(r.trades["exit_time"]).dt.date
+                daily = r.trades.groupby("exit_date")["net_krw"].sum()
+                all_daily.append(daily)
+        
+        if all_daily:
+            combined_daily = pd.concat(all_daily)
+            if len(combined_daily) >= 2 and combined_daily.std(ddof=1) > 0:
+                sharpe = float(combined_daily.mean() / combined_daily.std(ddof=1) * math.sqrt(BT.annualization))
+            else:
+                sharpe = 0.0
+        else:
+            sharpe = 0.0
+        
+        # Max Drawdown 계산
+        all_equity = []
+        for r in results_list:
+            if r.trades is not None and len(r.trades) > 0:
+                equity = r.trades["net_krw"].cumsum()
+                all_equity.append(equity)
+        
+        if all_equity:
+            combined_equity = pd.concat(all_equity)
+            running_max = combined_equity.cummax()
+            max_dd = float((combined_equity - running_max).min())
+        else:
+            max_dd = 0.0
+        
+        # 모든 거래 합치기
+        all_trades = pd.concat([r.trades for r in results_list if r.trades is not None], ignore_index=True)
+    else:
+        win_rate = 0.0
+        expectancy_pts = 0.0
+        expectancy_krw = 0.0
+        profit_factor = 0.0
+        sharpe = 0.0
+        max_dd = 0.0
+        all_trades = None
+    
+    return pv.BacktestResult(
+        n_trades=total_trades,
+        win_rate=win_rate,
+        total_pnl_pts=total_pnl_pts,
+        total_pnl_krw=total_pnl_krw,
+        expectancy_pts=expectancy_pts,
+        expectancy_krw=expectancy_krw,
+        profit_factor=profit_factor,
+        sharpe_daily=sharpe,
+        max_drawdown_krw=max_dd,
+        trades=all_trades,
+    )
+
+
 def main():
     with open(OUTPUT_LOG, "w", encoding="utf-8") as log:
         log_and_print("=" * 100, log)
-        log_and_print("피봇반전 vs 롱-또는-플랫 비교 분석", log)
+        log_and_print("피봇반전 vs 롱-또는-플랫 비교 분석 (연도별 분할 백테스트)", log)
         log_and_print("=" * 100, log)
 
-        df = load_data()
-        log_and_print(f"5분봉 데이터: {len(df)} 봉, {df.index[0]} ~ {df.index[-1]}", log)
-
-        # 1) 롱-또는-플랫 벤치마크
+        # 연도별로 백테스트 실행 (최근 2년: 2024-2025)
+        years = list(range(2024, 2026))
+        
+        # 1) 롱-또는-플랫 벤치마크 (연도별 실행 후 합산)
         log_and_print("\n[1] 롱-또는-플랫 벤치마크 (MA20/60 + ADX25, 숏 금지)", log)
-        lf_res = run_long_or_flat(df)
-        log_and_print(fmt_result(lf_res, "롱-또는-플랫"), log)
+        lf_results_by_year = []
+        for year in years:
+            log_and_print(f"  [{year}년 백테스트 중...]", log)
+            df_year = load_data_by_year(year)
+            if len(df_year) > 0:
+                res = run_long_or_flat(df_year)
+                lf_results_by_year.append(res)
+                log_and_print(f"    거래={res.n_trades}, PnL={res.total_pnl_krw:,.0f}", log)
+        
+        lf_res = combine_results(lf_results_by_year)
+        log_and_print(fmt_result(lf_res, "롱-또는-플랫 (전체 합산)"), log)
 
         # 2) 피봇반전 기본 파라미터
         log_and_print("\n[2] 피봇반전 기본 파라미터", log)
@@ -98,8 +200,17 @@ def main():
             st_distance_threshold=0.1, adx_hold_threshold=15.0
         )
         for mode in ("both", "long_only"):
-            res = run_pivot(df, pcfg_default, fcfg_default, mode)
-            log_and_print(fmt_result(res, f"기본 피봇 ({mode})"), log)
+            log_and_print(f"  기본 피봇 ({mode})", log)
+            pivot_results_by_year = []
+            for year in years:
+                log_and_print(f"    [{year}년 백테스트 중...]", log)
+                df_year = load_data_by_year(year)
+                if len(df_year) > 0:
+                    res = run_pivot(df_year, pcfg_default, fcfg_default, mode)
+                    pivot_results_by_year.append(res)
+                    log_and_print(f"      거래={res.n_trades}, PnL={res.total_pnl_krw:,.0f}", log)
+            res = combine_results(pivot_results_by_year)
+            log_and_print(fmt_result(res, f"기본 피봇 ({mode}) - 전체 합산"), log)
 
         # 3) 집중 그리드 탐색 (비교적 적은 조합)
         log_and_print("\n[3] 피봇 파라미터 집중 그리드 탐색", log)
@@ -134,16 +245,24 @@ def main():
             )
             for mode in direction_modes:
                 try:
-                    res = run_pivot(df, pcfg, fcfg, mode)
+                    log_and_print(f"  [{i}/{len(combos)}] {mode} {params}", log)
+                    pivot_results_by_year = []
+                    for year in years:
+                        df_year = load_data_by_year(year)
+                        if len(df_year) > 0:
+                            res = run_pivot(df_year, pcfg, fcfg, mode)
+                            pivot_results_by_year.append(res)
+                    combined_res = combine_results(pivot_results_by_year)
                     results.append({
                         "params": params,
                         "mode": mode,
-                        "sharpe": res.sharpe_daily,
-                        "pnl": res.total_pnl_krw,
-                        "maxdd": res.max_drawdown_krw,
-                        "trades": res.n_trades,
-                        "win_rate": res.win_rate,
+                        "sharpe": combined_res.sharpe_daily,
+                        "pnl": combined_res.total_pnl_krw,
+                        "maxdd": combined_res.max_drawdown_krw,
+                        "trades": combined_res.n_trades,
+                        "win_rate": combined_res.win_rate,
                     })
+                    log_and_print(f"    거래={combined_res.n_trades}, PnL={combined_res.total_pnl_krw:,.0f}, Sharpe={combined_res.sharpe_daily:.3f}", log)
                 except Exception as e:
                     log_and_print(f"  [{i}] {mode} 오류: {e}", log)
 
