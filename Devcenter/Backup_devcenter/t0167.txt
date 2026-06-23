@@ -1,0 +1,10 @@
+async def sample(api):
+    inputs = {
+        't0167InBlock': {
+            'id': '', # id
+        },
+    }
+    response = await api.request('t0167', inputs)
+    if not response: return print(f'요청 실패: {api.last_message}')
+    
+    print(response)
