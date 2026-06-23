@@ -3,7 +3,6 @@ import math
 
 def test_adaptive_indicator_manager_smoke() -> None:
     from indicators import AdaptiveIndicatorManager
-    from prediction.features import ADAPT_KEYS
 
     mgr = AdaptiveIndicatorManager()
 
@@ -20,16 +19,21 @@ def test_adaptive_indicator_manager_smoke() -> None:
     assert isinstance(out, dict)
     assert "transformer" in out
     assert "llm_context" in out
+    assert "is_ready" in out
 
     tf = out.get("transformer")
     assert isinstance(tf, dict)
 
-    # Must contain all ADAPT_KEYS and values must be finite floats.
-    for k in ADAPT_KEYS:
-        assert k in tf
-        v = tf.get(k)
-        assert isinstance(v, (int, float))
-        assert math.isfinite(float(v))
+    # AdaptiveIndicatorManager는 ast_*, azz_*, cross_* 피처만 생성합니다.
+    # aap_*, msb_*, kf_*, oi_*, ps_* 등은 pipeline의 다른 모듈에서 생성됩니다.
+    expected_keys = set(mgr.get_transformer_feature_names())
+    assert expected_keys, "AdaptiveIndicatorManager should produce non-empty transformer features"
+    assert set(tf.keys()) == expected_keys, (
+        f"transformer keys mismatch: got {sorted(tf.keys())}, expected {sorted(expected_keys)}"
+    )
+    for k, v in tf.items():
+        assert isinstance(v, (int, float)), f"{k} is not numeric: {v!r}"
+        assert math.isfinite(float(v)), f"{k} is not finite: {v!r}"
 
     llm_ctx = out.get("llm_context")
     assert isinstance(llm_ctx, str)
@@ -38,7 +42,7 @@ def test_adaptive_indicator_manager_smoke() -> None:
 
 def test_adaptive_indicator_disabled_path_no_import_errors() -> None:
     # Basic import smoke: the package should be importable without side effects.
-    import adaptive_indicator  # noqa: F401
+    import indicators  # noqa: F401
 
 
 def test_adaptive_indicator_compute_from_df_matches_sequential_cross_features() -> None:
@@ -93,7 +97,7 @@ def test_adaptive_indicator_compute_from_df_matches_sequential_cross_features() 
 
 
 def test_adaptive_supertrend_direction_flip_smoke() -> None:
-    from kospi_indicators import AdaptiveSuperTrend, AdaptiveSuperTrendConfig
+    from indicators import AdaptiveSuperTrend, AdaptiveSuperTrendConfig
 
     st = AdaptiveSuperTrend(
         AdaptiveSuperTrendConfig(

@@ -79,8 +79,9 @@ def run_long_or_flat(df: pd.DataFrame):
 
 
 def run_pivot(df: pd.DataFrame, pcfg: pv.HybridAdaptivePivotConfig,
-              fcfg: pv.FilterConfig, direction_mode: str = "both"):
-    bt = pv.BacktestConfig(**BT.__dict__)
+              fcfg: pv.FilterConfig, direction_mode: str = "both",
+              bt_cfg: pv.BacktestConfig = None):
+    bt = bt_cfg if bt_cfg is not None else pv.BacktestConfig(**BT.__dict__)
     bt.direction_mode = direction_mode
     pivots = pv.detect_pivots_daily(df, pcfg, fcfg, bt.session_boundary_hour)
     return pv.backtest(df, pivots, bt)

@@ -7,8 +7,6 @@
 
 ## 문서 목록
 
-- `main.md`
-  - CLI/GUI 엔트리포인트, 파이프라인 초기화
 - `config.md`
   - `config.json` 구조/로드/검증(AppConfig)
 - `ticks.md`
@@ -20,11 +18,35 @@
 - `adaptive_indicator.md`
   - Adaptive SuperTrend/ZigZag 통합 모듈(ADAPT 피처 + LLM 컨텍스트)
   - **SuperTrend 데이터 소스 전환 시 전체 재계산**: 데이터 소스(KOSPI ↔ KP200) 변경 시 SuperTrend 캐시와 상태를 초기화하여 전체 재계산 수행. `gui/engines/chart_engine.py`의 `compute()` 메서드에서 `force_recompute=True` 시 `_st_cache_sig`, `_st_cache_values`, `_st_cache_dirs`, `_st_fed_bars`를 초기화하고 `AdaptiveSuperTrend.reset()` 호출.
+  - **부록**: `adaptive_indicator_improvements.md`, `adaptive_indicator_parameters.md` 통합
 - `volume_imbalance.md`
   - FH0 오더북 기반 Volume Imbalance(OBI) 계산/버퍼링/사용처 정리
 - `telegram.md`
   - 텔레그램 알림/명령 수신(`telegram_notifier.py`), CLI/GUI 연동
   - v4 전용 프리미엄 블리드 독립 알림(BleedMonitor 스레드)
+  - **부록**: `runtime_telegram.md` 통합
+- `realtime_trading.md`
+  - 실시간 데이터 수집, 신호 생성, 자동 주문 연동
+  - **부록**: `main.md`, `Market_Open_Subscription_Flow.md`, `live_run_troubleshooting.md` 통합
+- `RECOMMENDED_STRATEGY.md`
+  - 최종 전략 가이드 및 피봇/롱-또는-플랫 분석 부록
+- `pivot_refactor_plan.md`
+  - 피봇 전략 파일 통합 완료 보고서
+
+### 통합/제거된 문서
+
+| 원본 문서 | 통합 대상 | 비고 |
+|-----------|-----------|------|
+| `adaptive_indicator_improvements.md` | `adaptive_indicator.md` 부록 A | ✅ 제거됨 |
+| `adaptive_indicator_parameters.md` | `adaptive_indicator.md` 부록 B | ✅ 제거됨 |
+| `runtime_telegram.md` | `telegram.md` 상세 명령/공통 규칙 | ✅ 제거됨 |
+| `main.md` | `realtime_trading.md` 부록 A | ✅ 제거됨 |
+| `Market_Open_Subscription_Flow.md` | `realtime_trading.md` 부록 B | ✅ 제거됨 |
+| `live_run_troubleshooting.md` | `realtime_trading.md` 부록 C | ✅ 제거됨 |
+| `LONG_OR_FLAT_IMPROVEMENTS.md` | `RECOMMENDED_STRATEGY.md` 부록 A | ✅ `archives/legacy/docs/`로 이동 |
+| `LONG_OR_FLAT_IMPROVEMENTS_BACKTEST.md` | `RECOMMENDED_STRATEGY.md` 부록 B | ✅ `archives/legacy/docs/`로 이동 |
+| `PIVOT_REVERSAL_VIABILITY.md` | `RECOMMENDED_STRATEGY.md` 부록 C | ✅ `archives/legacy/docs/`로 이동 |
+| `PIVOT_REVERSAL_VERIFICATION.md` | `RECOMMENDED_STRATEGY.md` 부록 D | ✅ `archives/legacy/docs/`로 이동 |
 
 ## 전체 흐름(요약)
 

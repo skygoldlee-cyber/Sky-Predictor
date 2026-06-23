@@ -248,17 +248,64 @@ class AdaptiveZigZagConfig:
     )  # 시간대별 퍼센트 배율 테이블
 
     def __post_init__(self) -> None:
-        try:
-            self.structure_lookback_swings = int(self.structure_lookback_swings)
-        except Exception:
-            self.structure_lookback_swings = 8
+        """파라미터 범위를 검증하고, 비정상값은 안전한 기본값으로 교체합니다."""
+        # 정수 기간 파라미터는 2 이상이어야 함
+        period_fields = (
+            "atr_period", "er_period", "max_swings", "structure_lookback_swings",
+            "structure_points", "pivot_collector_max_sequence", "decay_start_bars",
+            "major_wave_lookback",
+        )
+        for name in period_fields:
+            try:
+                val = int(getattr(self, name, 2))
+            except Exception:
+                val = 2
+            if val < 2:
+                _logger.warning("[AdaptiveZigZagConfig] %s=%s는 2 미만이어서 2로 교체합니다.", name, val)
+                setattr(self, name, 2)
+
+        # non-negative 정수 파라미터
+        nonneg_fields = ("confirmation_bars", "min_wave_bars", "max_wait_bars")
+        for name in nonneg_fields:
+            try:
+                val = int(getattr(self, name, 0))
+            except Exception:
+                val = 0
+            if val < 0:
+                _logger.warning("[AdaptiveZigZagConfig] %s=%s < 0 이므로 0으로 교체합니다.", name, val)
+                setattr(self, name, 0)
+
+        # min/max 관계 보장
+        if self.atr_multiplier_min > self.atr_multiplier_max:
+            _logger.warning(
+                "[AdaptiveZigZagConfig] atr_multiplier_min(%s) > atr_multiplier_max(%s) 이므로 swap 합니다.",
+                self.atr_multiplier_min, self.atr_multiplier_max,
+            )
+            self.atr_multiplier_min, self.atr_multiplier_max = self.atr_multiplier_max, self.atr_multiplier_min
+        if self.pivot_threshold_min_pct > self.pivot_threshold_max_pct:
+            _logger.warning(
+                "[AdaptiveZigZagConfig] pivot_threshold_min_pct(%s) > pivot_threshold_max_pct(%s) 이므로 swap 합니다.",
+                self.pivot_threshold_min_pct, self.pivot_threshold_max_pct,
+            )
+            self.pivot_threshold_min_pct, self.pivot_threshold_max_pct = self.pivot_threshold_max_pct, self.pivot_threshold_min_pct
+
+        # 양수값 보장
+        if self.atr_multiplier <= 0:
+            _logger.warning("[AdaptiveZigZagConfig] atr_multiplier=%s <= 0 이므로 1.5로 교체합니다.", self.atr_multiplier)
+            self.atr_multiplier = 1.5
+        if self.major_swing_ratio <= 0:
+            _logger.warning("[AdaptiveZigZagConfig] major_swing_ratio=%s <= 0 이므로 2.0으로 교체합니다.", self.major_swing_ratio)
+            self.major_swing_ratio = 2.0
+        if self.cluster_tolerance_pct <= 0:
+            _logger.warning("[AdaptiveZigZagConfig] cluster_tolerance_pct=%s <= 0 이므로 0.3으로 교체합니다.", self.cluster_tolerance_pct)
+            self.cluster_tolerance_pct = 0.3
+        if self.min_wave_pct < 0:
+            _logger.warning("[AdaptiveZigZagConfig] min_wave_pct=%s < 0 이므로 0으로 교체합니다.", self.min_wave_pct)
+            self.min_wave_pct = 0.0
+
+        # 구조 파라미터 범위 (기존 로직 유지)
         if int(self.structure_lookback_swings) < 4:
             self.structure_lookback_swings = 4
-
-        try:
-            self.structure_points = int(self.structure_points)
-        except Exception:
-            self.structure_points = 3
         if int(self.structure_points) < 2:
             self.structure_points = 2
 

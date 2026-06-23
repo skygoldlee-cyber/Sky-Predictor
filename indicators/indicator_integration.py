@@ -3,7 +3,7 @@
 AdaptiveSuperTrend + AdaptiveZigZag 통합 관리자.
 
 두 지표를 동시에 업데이트하고, Cross-feature 및 통합 LLM 컨텍스트를 생성합니다.
-Transformer 피처(22개+)와 SkyEbest 실시간 파이프라인 모두 이 클래스를 사용할 수 있습니다.
+Transformer 피처 40개(ast_9 + azz_27 + cross_4)와 SkyEbest 실시간 파이프라인 모두 이 클래스를 사용할 수 있습니다.
 """
 
 from __future__ import annotations
@@ -46,6 +46,8 @@ class IndicatorManagerConfig:
     pivot_candidate_alert_change_cooldown_sec: float = 60.0
     # ZigZag 최소 스윙 수 (is_ready 판단 기준)
     min_swings_for_ready: int = 4
+    # SuperTrend 방향을 ZigZag 후보 필터링에 사용할지 여부
+    supertrend_pivot_filter: bool = False
 
     def __post_init__(self) -> None:
         if self.supertrend is None:
@@ -80,9 +82,9 @@ class IndicatorManagerConfig:
 class AdaptiveIndicatorManager:
     """AdaptiveSuperTrend + AdaptiveZigZag 통합 관리자.
 
-    Transformer 피처 (약 26개):
+    Transformer 피처 (40개):
         ast_*  : AdaptiveSuperTrend 9개
-        azz_*  : AdaptiveZigZag 14개
+        azz_*  : AdaptiveZigZag 27개
         cross_*: 크로스 피처 4개 (이 클래스 전용)
 
     SkyEbest 실시간 파이프라인에서 사용 시:
@@ -503,14 +505,14 @@ class AdaptiveIndicatorManager:
         Returns
         -------
         {
-            "transformer"     : Dict[str, float],   # 26개 정규화 피처
+            "transformer"     : Dict[str, float],   # 40개 정규화 피처 (ast_9 + azz_27 + cross_4)
             "llm_context"     : str,                # 통합 자연어 컨텍스트
             "supertrend_state": SuperTrendState,
             "zigzag_state"    : ZigZagState,
             "kospi_zigzag_state": ZigZagState,     # dual_mode일 때 추가
             "futures_zigzag_state": ZigZagState,   # dual_mode일 때 추가
             "bar_count"       : int,
-            "is_ready"        : bool,
+            "is_ready"        : bool,               # 안정적 피처 생성 가능 여부 (min_bars + min_swings)
         }
 
         skip_zigzag : bool, default False
@@ -732,6 +734,8 @@ class AdaptiveIndicatorManager:
         ZigZag는 마지막(미완결) 봉의 OHLC를 update에 넣지 않는다. 피봇 확정이
         마지막 봉에 의해 흔들리지 않도록 하며, azz_*·cross_*의 마지막 행은
         직전 봉까지의 ZigZag 상태 + 해당 행 종가로 계산된다.
+
+        성능: pandas ``iterrows()`` 대신 ``itertuples()``를 사용하여 행을 순회합니다.
         """
         st_tmp = AdaptiveSuperTrend(self.config.supertrend)
         zz_tmp = AdaptiveZigZag(self.config.zigzag)

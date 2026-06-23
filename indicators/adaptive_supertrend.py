@@ -19,6 +19,14 @@ ATR 배수(multiplier)와 기간(period)을 시장 변동성/추세 강도에 �
 
 [FIX-4] _prev_adx 초기값 0.0 -> 25.0
     워밍업 중 fallback 경로와 초기값 통일.
+
+[INIT-POLICY] 초기 구간 NaN/상수 처리
+- `_calc_er`: 버퍼가 `er_period + 1` 미만이면 0.0 반환 (중립값)
+- `_calc_adx`: 종가가 2개 미만이면 25.0 반환 (보수적 중립값, `SuperTrendState.adx` 초기값과 통일)
+- `_calc_bb_width`: `bb_period` 이상 누적된 후에만 `use_bb_correction`이 활성화되며,
+  `np.std(ddof=1)`은 1개 샘플일 때 NaN이 될 수 있으나, `bb_period >= 2` 가정 하에 안전함.
+- `is_ready`는 `IndicatorManagerConfig`에서 설정한 `min_swings_for_ready`와 `warmup_bars`를 기준으로
+  피처 사용 시점을 제한합니다.
 """
 
 import logging
@@ -54,6 +62,55 @@ class AdaptiveSuperTrendConfig:
     adx_mult_norm_cap: float = 60.0
     bb_correction_floor: float = 0.7
     bb_correction_ref_pct: float = 0.05
+
+    def __post_init__(self) -> None:
+        """파라미터 범위를 검증하고, 비정상값은 안전한 기본값으로 교체합니다."""
+        # period 파라미터는 2 이상이어야 함
+        for name in ("atr_min_period", "atr_max_period", "er_period", "adx_period", "bb_period", "smooth_period"):
+            try:
+                val = int(getattr(self, name, 2))
+            except Exception:
+                val = 2
+            if val < 2:
+                _logger.warning("[AdaptiveSuperTrendConfig] %s=%s는 2 미만이어서 2로 교체합니다.", name, val)
+                setattr(self, name, 2)
+
+        # min/max 관계 보장
+        if self.atr_min_period > self.atr_max_period:
+            _logger.warning(
+                "[AdaptiveSuperTrendConfig] atr_min_period(%s) > atr_max_period(%s) 이므로 swap 합니다.",
+                self.atr_min_period, self.atr_max_period,
+            )
+            self.atr_min_period, self.atr_max_period = self.atr_max_period, self.atr_min_period
+        if self.multiplier_min > self.multiplier_max:
+            _logger.warning(
+                "[AdaptiveSuperTrendConfig] multiplier_min(%s) > multiplier_max(%s) 이므로 swap 합니다.",
+                self.multiplier_min, self.multiplier_max,
+            )
+            self.multiplier_min, self.multiplier_max = self.multiplier_max, self.multiplier_min
+
+        # 양수값 보장
+        if self.multiplier_min <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] multiplier_min=%s <= 0 이므로 1.5로 교체합니다.", self.multiplier_min)
+            self.multiplier_min = 1.5
+        if self.multiplier_max <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] multiplier_max=%s <= 0 이므로 4.0으로 교체합니다.", self.multiplier_max)
+            self.multiplier_max = 4.0
+        if self.bb_std <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] bb_std=%s <= 0 이므로 2.0으로 교체합니다.", self.bb_std)
+            self.bb_std = 2.0
+        if self.adx_norm_cap <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] adx_norm_cap=%s <= 0 이므로 100.0으로 교체합니다.", self.adx_norm_cap)
+            self.adx_norm_cap = 100.0
+        if self.adx_mult_norm_cap <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] adx_mult_norm_cap=%s <= 0 이므로 60.0으로 교체합니다.", self.adx_mult_norm_cap)
+            self.adx_mult_norm_cap = 60.0
+        if not (0.0 < self.bb_correction_floor <= 1.0):
+            _logger.warning("[AdaptiveSuperTrendConfig] bb_correction_floor=%s이 유효 범위(0,1]가 아니어서 0.7로 교체합니다.", self.bb_correction_floor)
+            self.bb_correction_floor = 0.7
+        if self.bb_correction_ref_pct <= 0:
+            _logger.warning("[AdaptiveSuperTrendConfig] bb_correction_ref_pct=%s <= 0 이므로 0.05로 교체합니다.", self.bb_correction_ref_pct)
+            self.bb_correction_ref_pct = 0.05
 
 
 @dataclass
