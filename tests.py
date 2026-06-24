@@ -2,6 +2,8 @@
 
 The project uses pytest-based tests under `tests/`.
 `python tests.py` or `main.py --test` (if wired) may call `run_all_tests()`.
+
+for test
 """
 
 from __future__ import annotations
