@@ -5329,7 +5329,155 @@ L2(0.03)            # 0.02→0.03 (L2 정규화 강화)
 - 샤프 비율: 1.4995
 - 수익률: 7.88%
 
-### 24.7 최종 결론
+### 24.7 실매매 절차 및 파라미터
+
+#### 24.7.1 모델 파라미터
+
+**Random Forest 보수적 파라미터:**
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(
+    n_estimators=20,           # 트리 개수
+    max_depth=3,               # 트리 최대 깊이
+    min_samples_split=30,      # 분할 최소 샘플 수
+    min_samples_leaf=15,       # 리프 최소 샘플 수
+    max_features='sqrt',       # 피처 수 제한
+    random_state=42,           # 랜덤 시드
+    n_jobs=-1,                # 병렬 처리
+    class_weight='balanced'    # 클래스 불균형 처리
+)
+```
+
+#### 24.7.2 피처 목록
+
+**기본 피처 (16개):**
+- entry_rsi: 진입 시점 RSI
+- entry_macd: 진입 시점 MACD
+- entry_macd_signal: 진입 시점 MACD Signal
+- entry_macd_hist: 진입 시점 MACD Histogram
+- entry_atr: 진입 시점 ATR
+- entry_supertrend: 진입 시점 SuperTrend
+- entry_supertrend_dir: 진입 시점 SuperTrend 방향
+- entry_ma20: 진입 시점 MA20
+- entry_ma60: 진입 시점 MA60
+- entry_bb_upper: 진입 시점 BB 상단
+- entry_bb_lower: 진입 시점 BB 하단
+- entry_bb_middle: 진입 시점 BB 중단
+- entry_hour: 진입 시간 (0-23)
+- entry_dayofweek: 진입 요일 (0-6)
+- entry_month: 진입 월 (1-12)
+- regime: 레짐 (0: NEUTRAL, 1: BULL)
+
+**파생 피처 (4개):**
+- rsi_ma_ratio: RSI / MA20
+- price_ma_ratio: 가격 / MA20
+- bb_position: (가격 - BB 하단) / (BB 상단 - BB 하단)
+- supertrend_alignment: (가격 > SuperTrend) & (SuperTrend 방향 == 1)
+
+#### 24.7.3 실매매 절차
+
+**1단계: 데이터 준비**
+```python
+import pandas as pd
+from pathlib import Path
+
+# 데이터 로드
+DATA_DIR = Path("Devcenter/ml/ml_data")
+df = pd.read_csv(DATA_DIR / "ml_dataset.csv")
+df['entry_time'] = pd.to_datetime(df['entry_time'])
+```
+
+**2단계: 피처 계산**
+```python
+# 파생 피처 계산
+df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+
+# 피처 목록
+feature_cols = [
+    'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
+    'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
+    'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
+    'entry_hour', 'entry_dayofweek', 'entry_month', 'regime',
+    'rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment'
+]
+```
+
+**3단계: 모델 학습**
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+# 학습 데이터 준비
+X = df[feature_cols].copy().fillna(0).astype(float)
+y = df['is_win'].copy()
+
+# 모델 학습
+model = RandomForestClassifier(
+    n_estimators=20,
+    max_depth=3,
+    min_samples_split=30,
+    min_samples_leaf=15,
+    max_features='sqrt',
+    random_state=42,
+    n_jobs=-1,
+    class_weight='balanced'
+)
+model.fit(X, y)
+```
+
+**4단계: 실시간 예측**
+```python
+# 진입 임계값 설정 (보수적: 0.6, 공격적: 0.5)
+entry_threshold = 0.6
+
+# 실시간 데이터로 피처 계산
+# (실시간 데이터 수집 및 피처 계산 로직 필요)
+
+# 예측
+predicted_prob = model.predict_proba(current_features)[0, 1]
+
+# 진입 결정
+if predicted_prob >= entry_threshold:
+    # 진입
+    execute_trade()
+```
+
+**5단계: 리스크 관리**
+```python
+# 포지션 사이즈 (보수적: 1계약, 공격적: 3계약)
+position_size = 1
+
+# 최대 손실 제한
+max_loss = 1000000  # 100만원
+
+# 연속 손실 제한
+max_consecutive_losses = 1
+```
+
+#### 24.7.4 실매매 추천 설정
+
+**보수적 접근 (추천):**
+- 진입 임계값: 0.6
+- 포지션 사이즈: 1계약
+- 최대 손실: 100만원
+- 연속 손실 제한: 1회
+- 예상 승률: 73.33%
+- 예상 샤프 비율: 3.2719
+- 예상 수익률: 1.52%
+
+**공격적 접근:**
+- 진입 임계값: 0.5
+- 포지션 사이즈: 3계약
+- 최대 손실: 300만원
+- 연속 손실 제한: 2회
+- 예상 승률: 54.47%
+- 예상 샤프 비율: 1.4995
+- 예상 수익률: 7.88%
+
+### 24.8 최종 결론
 
 Random Forest 보수적 파라미터 모델로 실매매 가능한 모델이 도출되었습니다. 승률과 샤프 비율이 우수하여 실매매에 적합합니다. 하지만 거래 빈도가 낮고 시장 영향력을 고려해야 합니다. 1계약 기준으로 시작하여 점진적으로 포지션을 늘리는 것을 추천합니다.
 
