@@ -210,8 +210,8 @@ def main():
     
     print(f"\n실매매 시뮬레이션 기간: {start_date} ~ {end_date}")
     
-    # 실매매 시뮬레이션
-    live_trading_result = simulate_live_trading(df, start_date, end_date, position_size=1)
+    # 실매매 시뮬레이션 (3계약 기준)
+    live_trading_result = simulate_live_trading(df, start_date, end_date, position_size=3)
     
     if 'error' in live_trading_result:
         print(f"\n실매매 시뮬레이션 오류: {live_trading_result['error']}")
