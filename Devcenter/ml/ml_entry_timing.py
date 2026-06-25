@@ -107,10 +107,10 @@ def train_random_forest_model(X: pd.DataFrame, y: pd.Series, timestamps: pd.Seri
     
     # Random Forest 모델 학습 (복잡도 감소 및 정규화 강화)
     model = RandomForestClassifier(
-        n_estimators=50,  # 복잡도 유지
-        max_depth=6,  # 복잡도 유지
-        min_samples_split=20,  # 유지
-        min_samples_leaf=10,  # 유지
+        n_estimators=30,  # 50→30 (트리 수 감소)
+        max_depth=4,  # 6→4 (깊이 감소)
+        min_samples_split=25,  # 20→25 (분할 최소 샘플 증가)
+        min_samples_leaf=12,  # 10→12 (리프 최소 샘플 증가)
         max_features='sqrt',  # 피처 수 제한
         random_state=42,
         n_jobs=-1,
@@ -217,17 +217,17 @@ def optimize_for_sharpe_ratio_entry(df: pd.DataFrame, model: RandomForestClassif
 
 
 def filter_by_time_and_month(df: pd.DataFrame) -> pd.DataFrame:
-    """시간대별 및 월별 필터링"""
+    """시간대별 및 월별 필터링 (완화: 시간대/월별 필터링 제거)"""
     df_filtered = df.copy()
     
-    # 시간대별 필터링 (9시, 10시, 11시 제외)
-    df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
+    # 시간대별 필터링 제거 (거래 수 확보를 위해)
+    # df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
     
-    # 월별 필터링 (3월, 5월, 6월 제외)
-    df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
-    df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
+    # 월별 필터링 제거 (거래 수 확보를 위해)
+    # df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
+    # df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
     
-    print(f"\n시간대별 및 월별 필터링 적용:")
+    print(f"\n시간대별 및 월별 필터링 완화 (제거):")
     print(f"  필터링 전: {len(df)}건")
     print(f"  필터링 후: {len(df_filtered)}건")
     print(f"  제외된 거래: {len(df) - len(df_filtered)}건")
@@ -236,7 +236,7 @@ def filter_by_time_and_month(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def optimize_entry_timing(df: pd.DataFrame, model: RandomForestClassifier, 
-                          X: pd.DataFrame, threshold: float = 0.7) -> pd.DataFrame:
+                          X: pd.DataFrame, threshold: float = 0.75) -> pd.DataFrame:
     """진입 타이밍 최적화"""
     # 승률 예측
     y_pred_proba = model.predict_proba(X)[:, 1]

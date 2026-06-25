@@ -100,17 +100,17 @@ def build_lstm_model(input_shape: int) -> Sequential:
     
     model = Sequential([
         LSTM(32, return_sequences=True, input_shape=input_shape,
-             kernel_regularizer=l2(0.02), recurrent_regularizer=l2(0.02)),
-        Dropout(0.5),
+             kernel_regularizer=l2(0.03), recurrent_regularizer=l2(0.03)),
+        Dropout(0.6),  # 0.5→0.6 (드롭아웃 증가)
         LSTM(16, return_sequences=False,
-             kernel_regularizer=l2(0.02), recurrent_regularizer=l2(0.02)),
-        Dropout(0.5),
-        Dense(8, activation='relu', kernel_regularizer=l2(0.02)),
+             kernel_regularizer=l2(0.03), recurrent_regularizer=l2(0.03)),
+        Dropout(0.6),  # 0.5→0.6 (드롭아웃 증가)
+        Dense(8, activation='relu', kernel_regularizer=l2(0.03)),
         Dense(1, activation='sigmoid')
     ])
     
     model.compile(
-        optimizer=Adam(learning_rate=0.0005),
+        optimizer=Adam(learning_rate=0.0003),  # 0.0005→0.0003 (학습률 감소)
         loss='binary_crossentropy',
         metrics=['accuracy']
     )
@@ -241,17 +241,17 @@ def optimize_for_sharpe_ratio_exit(df: pd.DataFrame, model: Sequential, X: np.nd
 
 
 def filter_by_time_and_month(df: pd.DataFrame) -> pd.DataFrame:
-    """시간대별 및 월별 필터링"""
+    """시간대별 및 월별 필터링 (완화: 시간대/월별 필터링 제거)"""
     df_filtered = df.copy()
     
-    # 시간대별 필터링 (9시, 10시, 11시 제외)
-    df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
+    # 시간대별 필터링 제거 (거래 수 확보를 위해)
+    # df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
     
-    # 월별 필터링 (3월, 5월, 6월 제외)
-    df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
-    df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
+    # 월별 필터링 제거 (거래 수 확보를 위해)
+    # df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
+    # df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
     
-    print(f"\n시간대별 및 월별 필터링 적용:")
+    print(f"\n시간대별 및 월별 필터링 완화 (제거):")
     print(f"  필터링 전: {len(df)}건")
     print(f"  필터링 후: {len(df_filtered)}건")
     print(f"  제외된 거래: {len(df) - len(df_filtered)}건")

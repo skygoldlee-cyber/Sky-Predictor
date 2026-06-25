@@ -99,8 +99,8 @@ def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
         random_state=42,
         use_label_encoder=False,
         eval_metric='logloss',
-        reg_alpha=0.1,
-        reg_lambda=1.0
+        reg_alpha=0.5,  # 0.1→0.5 (L1 정규화 강화)
+        reg_lambda=2.0  # 1.0→2.0 (L2 정규화 강화)
     )
     
     model.fit(X_train, y_train)
@@ -152,10 +152,10 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Di
     
     from sklearn.ensemble import RandomForestClassifier
     model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=8,
-        min_samples_split=15,
-        min_samples_leaf=8,
+        n_estimators=30,  # 100→30 (트리 수 감소)
+        max_depth=4,  # 8→4 (깊이 감소)
+        min_samples_split=25,  # 15→25 (분할 최소 샘플 증가)
+        min_samples_leaf=12,  # 8→12 (리프 최소 샘플 증가)
         max_features='sqrt',
         random_state=42,
         n_jobs=-1,
@@ -234,16 +234,16 @@ def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
     
     model = Sequential([
         LSTM(32, return_sequences=True, input_shape=(X_train_seq.shape[1], X_train_seq.shape[2]),
-             kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01)),
-        Dropout(0.3),
+             kernel_regularizer=l2(0.03), recurrent_regularizer=l2(0.03)),
+        Dropout(0.6),  # 0.3→0.6 (드롭아웃 증가)
         LSTM(16, return_sequences=False,
-             kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01)),
-        Dropout(0.3),
-        Dense(8, activation='relu', kernel_regularizer=l2(0.01)),
+             kernel_regularizer=l2(0.03), recurrent_regularizer=l2(0.03)),
+        Dropout(0.6),  # 0.3→0.6 (드롭아웃 증가)
+        Dense(8, activation='relu', kernel_regularizer=l2(0.03)),
         Dense(1, activation='sigmoid')
     ])
     
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=0.0003), loss='binary_crossentropy', metrics=['accuracy'])  # 0.001→0.0003
     
     model.fit(X_train_seq, y_train_seq, epochs=50, batch_size=32, verbose=0)
     

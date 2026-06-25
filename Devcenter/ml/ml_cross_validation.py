@@ -164,6 +164,105 @@ class CrossValidationEvaluator:
         return avg_results
 
 
+def optimize_n_splits(df: pd.DataFrame):
+    """Time Series Split n_splits 파라미터 최적화"""
+    print("=" * 80)
+    print("Time Series Split n_splits 파라미터 최적화")
+    print("=" * 80)
+    
+    evaluator = CrossValidationEvaluator()
+    
+    n_splits_options = [3, 4, 5]
+    results = {}
+    
+    for n_splits in n_splits_options:
+        print(f"\nn_splits={n_splits} 테스트:")
+        
+        # TimeSeriesSplit 파라미터 수정
+        cv = TimeSeriesSplit(n_splits=n_splits)
+        
+        # 피처 준비
+        feature_cols = [
+            'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
+            'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
+            'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
+            'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
+        ]
+        
+        X = df[feature_cols].fillna(0).values
+        y = df['is_win'].values
+        timestamps = pd.to_datetime(df['entry_time'])
+        
+        # 교차 검증 실행
+        fold_results = []
+        
+        for fold, (train_idx, test_idx) in enumerate(cv.split(X, timestamps)):
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+            
+            # XGBoost 모델 학습
+            import xgboost as xgb
+            from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+            
+            model = xgb.XGBClassifier(
+                n_estimators=50,
+                max_depth=4,
+                learning_rate=0.05,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                random_state=42,
+                use_label_encoder=False,
+                eval_metric='logloss',
+                reg_alpha=0.5,
+                reg_lambda=2.0
+            )
+            
+            model.fit(X_train, y_train)
+            
+            # 예측
+            y_pred = model.predict(X_test)
+            y_pred_proba = model.predict_proba(X_test)[:, 1]
+            
+            # 성과 평가
+            result = {
+                'fold': fold,
+                'accuracy': accuracy_score(y_test, y_pred),
+                'precision': precision_score(y_test, y_pred, zero_division=0),
+                'recall': recall_score(y_test, y_pred, zero_division=0),
+                'f1': f1_score(y_test, y_pred, zero_division=0),
+                'roc_auc': roc_auc_score(y_test, y_pred_proba) if len(y_test) > 1 else 0,
+                'train_size': len(X_train),
+                'test_size': len(X_test)
+            }
+            
+            fold_results.append(result)
+            print(f"  Fold {fold}: 정확도={result['accuracy']:.4f}, F1={result['f1']:.4f}")
+        
+        # 평균 성과 계산
+        avg_results = {
+            'accuracy': np.mean([r['accuracy'] for r in fold_results]),
+            'precision': np.mean([r['precision'] for r in fold_results]),
+            'recall': np.mean([r['recall'] for r in fold_results]),
+            'f1': np.mean([r['f1'] for r in fold_results]),
+            'roc_auc': np.mean([r['roc_auc'] for r in fold_results])
+        }
+        
+        results[n_splits] = {
+            'fold_results': fold_results,
+            'avg_results': avg_results
+        }
+        
+        print(f"  평균 정확도: {avg_results['accuracy']:.4f}")
+        print(f"  평균 F1 점수: {avg_results['f1']:.4f}")
+        print(f"  평균 ROC AUC: {avg_results['roc_auc']:.4f}")
+    
+    # 최적 n_splits 선택
+    best_n_splits = max(results, key=lambda x: results[x]['avg_results']['f1'])
+    print(f"\n최적 n_splits: {best_n_splits} (F1: {results[best_n_splits]['avg_results']['f1']:.4f})")
+    
+    return results, best_n_splits
+
+
 def compare_cv_methods(df: pd.DataFrame):
     """다양한 교차 검증 방법 비교"""
     print("=" * 80)
@@ -216,10 +315,16 @@ def main():
     print(f"\n데이터 로드 완료: {len(df)}건")
     print(f"기간: {df['entry_time'].min()} ~ {df['entry_time'].max()}")
     
+    # Time Series Split n_splits 파라미터 최적화
+    results, best_n_splits = optimize_n_splits(df)
+    
     # 교차 검증 방법 비교
-    results = compare_cv_methods(df)
+    cv_results = compare_cv_methods(df)
     
     print(f"\n교차 검증 방법 개선 완료")
+    print(f"최적 n_splits: {best_n_splits}")
+    
+    return results, best_n_splits, cv_results
 
 
 if __name__ == "__main__":
