@@ -75,8 +75,8 @@ def train_and_evaluate_models(train_data: pd.DataFrame, test_data: pd.DataFrame)
     return results
 
 
-def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
-    """XGBoost 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
+    """XGBoost 모델 학습 및 평가 (피처 선택 및 부트스트랩 옵션 추가)"""
     # 기본 피처
     base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
@@ -135,6 +135,14 @@ def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature
     X_test = test_data[feature_cols].copy().fillna(0).astype(float)
     y_test = test_data['is_win'].copy()
     
+    # 부트스트랩 샘플링 (데이터 증강)
+    if use_bootstrap and len(X_train) > 100:
+        from sklearn.utils import resample
+        X_train_boot, y_train_boot = resample(X_train, y_train, n_samples=len(X_train), random_state=42)
+        X_train = pd.concat([X_train, X_train_boot])
+        y_train = pd.concat([y_train, y_train_boot])
+        print(f"  부트스트랩 적용: {len(X_train)}샘플")
+    
     import xgboost as xgb
     model = xgb.XGBClassifier(
         n_estimators=100,
@@ -171,8 +179,8 @@ def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature
     return result
 
 
-def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
-    """Random Forest 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
+    """Random Forest 모델 학습 및 평가 (피처 선택 및 부트스트랩 옵션 추가)"""
     # 기본 피처
     base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
@@ -229,6 +237,14 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_f
     X_test = test_data[feature_cols].copy().fillna(0).astype(float)
     y_test = test_data['is_win'].copy()
     
+    # 부트스트랩 샘플링 (데이터 증강)
+    if use_bootstrap and len(X_train) > 100:
+        from sklearn.utils import resample
+        X_train_boot, y_train_boot = resample(X_train, y_train, n_samples=len(X_train), random_state=42)
+        X_train = pd.concat([X_train, X_train_boot])
+        y_train = pd.concat([y_train, y_train_boot])
+        print(f"  부트스트랩 적용: {len(X_train)}샘플")
+    
     from sklearn.ensemble import RandomForestClassifier
     model = RandomForestClassifier(
         n_estimators=30,  # 100→30 (트리 수 감소)
@@ -263,8 +279,8 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_f
     return result
 
 
-def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
-    """LSTM 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
+    """LSTM 모델 학습 및 평가 (피처 선택 및 부트스트랩 옵션 추가)"""
     # 기본 피처
     base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
@@ -320,6 +336,13 @@ def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_se
     # 시계열 데이터 준비
     train_data_sorted = train_data.sort_values('entry_time').reset_index(drop=True)
     test_data_sorted = test_data.sort_values('entry_time').reset_index(drop=True)
+    
+    # 부트스트랩 샘플링 (데이터 증강)
+    if use_bootstrap and len(train_data_sorted) > 100:
+        from sklearn.utils import resample
+        train_data_boot = resample(train_data_sorted, n_samples=len(train_data_sorted), random_state=42)
+        train_data_sorted = pd.concat([train_data_sorted, train_data_boot])
+        print(f"  부트스트랩 적용: {len(train_data_sorted)}샘플")
     
     X_train = train_data_sorted[feature_cols].values
     X_test = test_data_sorted[feature_cols].values
