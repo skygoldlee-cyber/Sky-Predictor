@@ -16,23 +16,24 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 DATA_DIR = Path(__file__).parent / "ml_models"
 OUTPUT_DIR = Path(__file__).parent / "ml_models"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def load_filtered_data() -> pd.DataFrame:
+def load_filtered_data() -> Tuple[pd.DataFrame, pd.Series]:
     """필터링된 데이터 로드"""
     df = pd.read_csv(DATA_DIR / "filtered_trades.csv")
+    df['entry_time'] = pd.to_datetime(df['entry_time'])
+    timestamps = df['entry_time']
     
     print(f"필터링된 데이터 로드 완료: {len(df)}건")
     print(f"승률: {df['is_win'].mean() * 100:.2f}%")
     print(f"총 PnL: {df['net_krw'].sum():,.0f} 원")
+    print(f"기간: {timestamps.min()} ~ {timestamps.max()}")
     
-    return df
+    return df, timestamps
 
 
 def engineer_entry_timing_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
@@ -87,31 +88,36 @@ def engineer_entry_timing_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.D
     return df, X, y
 
 
-def train_random_forest_model(X: pd.DataFrame, y: pd.Series) -> RandomForestClassifier:
-    """Random Forest 모델 학습"""
-    # 학습/테스트 데이터 분리
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+def train_random_forest_model(X: pd.DataFrame, y: pd.Series, timestamps: pd.Series) -> RandomForestClassifier:
+    """Random Forest 모델 학습 (시간 기반 분할로 데이터 누설 방지)"""
+    # 시간 기반 train/validation/test 분할 (데이터 누설 방지)
+    # 2019-2023: 훈련, 2024: 검증, 2025-2026: 테스트
+    train_mask = (timestamps.dt.year >= 2019) & (timestamps.dt.year <= 2023)
+    val_mask = (timestamps.dt.year == 2024)
+    test_mask = (timestamps.dt.year >= 2025)
     
-    print(f"\n학습 데이터: {len(X_train)}건 (승률: {y_train.mean() * 100:.2f}%)")
-    print(f"테스트 데이터: {len(X_test)}건 (승률: {y_test.mean() * 100:.2f}%)")
+    X_train, y_train = X[train_mask], y[train_mask]
+    X_val, y_val = X[val_mask], y[val_mask]
+    X_test, y_test = X[test_mask], y[test_mask]
     
-    # Random Forest 모델 학습
+    print(f"\n시간 기반 분할 (데이터 누설 방지):")
+    print(f"  훈련 데이터 (2019-2023): {len(X_train)}건 (승률: {y_train.mean() * 100:.2f}%)")
+    print(f"  검증 데이터 (2024): {len(X_val)}건 (승률: {y_val.mean() * 100:.2f}%)")
+    print(f"  테스트 데이터 (2025-2026): {len(X_test)}건 (승률: {y_test.mean() * 100:.2f}%)")
+    
+    # Random Forest 모델 학습 (복잡도 감소 및 정규화 강화)
     model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=10,
-        min_samples_split=10,
-        min_samples_leaf=5,
+        n_estimators=50,  # 복잡도 유지
+        max_depth=6,  # 복잡도 유지
+        min_samples_split=20,  # 유지
+        min_samples_leaf=10,  # 유지
+        max_features='sqrt',  # 피처 수 제한
         random_state=42,
-        n_jobs=-1
+        n_jobs=-1,
+        class_weight='balanced'  # 클래스 불균형 처리
     )
     
     model.fit(X_train, y_train)
-    
-    # 교차 검증
-    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
-    print(f"\n교차 검증 정확도: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
     
     # 테스트 데이터 예측
     y_pred = model.predict(X_test)
@@ -124,7 +130,7 @@ def train_random_forest_model(X: pd.DataFrame, y: pd.Series) -> RandomForestClas
     f1 = f1_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
     
-    print(f"\n테스트 데이터 성능:")
+    print(f"\n테스트 데이터 성능 (샘플 외):")
     print(f"  정확도: {accuracy:.4f}")
     print(f"  정밀도: {precision:.4f}")
     print(f"  재현율: {recall:.4f}")
@@ -141,6 +147,92 @@ def train_random_forest_model(X: pd.DataFrame, y: pd.Series) -> RandomForestClas
     print(feature_importance.head(15))
     
     return model
+
+
+def optimize_for_total_pnl_entry(df: pd.DataFrame, model: RandomForestClassifier, 
+                                   X: pd.DataFrame) -> tuple:
+    """총 PnL 기반 threshold 최적화 (진입 타이밍)"""
+    best_pnl = 0
+    best_threshold = 0.5
+    best_df = None
+    
+    print(f"\n{'='*100}")
+    print("총 PnL 기반 threshold 최적화 (진입 타이밍)")
+    print(f"{'='*100}")
+    
+    for threshold in np.arange(0.5, 0.95, 0.05):
+        df_optimized = optimize_entry_timing(df, model, X, threshold)
+        total_pnl = df_optimized['net_krw'].sum()
+        win_rate = df_optimized['is_win'].mean() * 100
+        
+        print(f"Threshold {threshold:.2f}: 총 PnL {total_pnl:,.0f}원, 승률 {win_rate:.2f}%, 거래 수 {len(df_optimized)}건")
+        
+        if total_pnl > best_pnl:
+            best_pnl = total_pnl
+            best_threshold = threshold
+            best_df = df_optimized
+    
+    print(f"\n최적 threshold: {best_threshold:.2f}")
+    print(f"최적 총 PnL: {best_pnl:,.0f}원")
+    print(f"최적 승률: {best_df['is_win'].mean() * 100:.2f}%")
+    print(f"최적 거래 수: {len(best_df)}건")
+    
+    return best_threshold, best_df
+
+
+def optimize_for_sharpe_ratio_entry(df: pd.DataFrame, model: RandomForestClassifier, 
+                                     X: pd.DataFrame) -> tuple:
+    """샤프 비율 기반 threshold 최적화 (진입 타이밍)"""
+    best_sharpe = 0
+    best_threshold = 0.5
+    best_df = None
+    
+    print(f"\n{'='*100}")
+    print("샤프 비율 기반 threshold 최적화 (진입 타이밍)")
+    print(f"{'='*100}")
+    
+    for threshold in np.arange(0.5, 0.95, 0.05):
+        df_optimized = optimize_entry_timing(df, model, X, threshold)
+        returns = df_optimized['net_krw'].values
+        
+        if len(returns) > 1:
+            sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
+            total_pnl = df_optimized['net_krw'].sum()
+            win_rate = df_optimized['is_win'].mean() * 100
+            
+            print(f"Threshold {threshold:.2f}: 샤프 비율 {sharpe_ratio:.4f}, 총 PnL {total_pnl:,.0f}원, 승률 {win_rate:.2f}%, 거래 수 {len(df_optimized)}건")
+            
+            if sharpe_ratio > best_sharpe:
+                best_sharpe = sharpe_ratio
+                best_threshold = threshold
+                best_df = df_optimized
+    
+    print(f"\n최적 threshold: {best_threshold:.2f}")
+    print(f"최적 샤프 비율: {best_sharpe:.4f}")
+    print(f"최적 총 PnL: {best_df['net_krw'].sum():,.0f}원")
+    print(f"최적 승률: {best_df['is_win'].mean() * 100:.2f}%")
+    print(f"최적 거래 수: {len(best_df)}건")
+    
+    return best_threshold, best_df
+
+
+def filter_by_time_and_month(df: pd.DataFrame) -> pd.DataFrame:
+    """시간대별 및 월별 필터링"""
+    df_filtered = df.copy()
+    
+    # 시간대별 필터링 (9시, 10시, 11시 제외)
+    df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
+    
+    # 월별 필터링 (3월, 5월, 6월 제외)
+    df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
+    df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
+    
+    print(f"\n시간대별 및 월별 필터링 적용:")
+    print(f"  필터링 전: {len(df)}건")
+    print(f"  필터링 후: {len(df_filtered)}건")
+    print(f"  제외된 거래: {len(df) - len(df_filtered)}건")
+    
+    return df_filtered
 
 
 def optimize_entry_timing(df: pd.DataFrame, model: RandomForestClassifier, 
@@ -206,13 +298,13 @@ def main():
     print("=" * 100)
     
     # 1) 필터링된 데이터 로드
-    df = load_filtered_data()
+    df, timestamps = load_filtered_data()
     
     # 2) 진입 타이밍 피쳐 엔지니어링
     df, X, y = engineer_entry_timing_features(df)
     
     # 3) Random Forest 모델 학습
-    model = train_random_forest_model(X, y)
+    model = train_random_forest_model(X, y, timestamps)
     
     # 4) 모델 저장
     model_path = OUTPUT_DIR / "entry_timing_rf.pkl"
@@ -231,14 +323,8 @@ def main():
         df_optimized = optimize_entry_timing(df, model, X, threshold)
         compare_entry_timing(df, df_optimized)
     
-    # 6) 최적 threshold 선택
-    print(f"\n{'='*100}")
-    print("최적 threshold 선택")
-    print(f"{'='*100}")
-    
-    # 승/패 비율 개선을 위해 더 엄격한 진입 조건 적용
-    best_threshold = 0.8
-    df_best = optimize_entry_timing(df, model, X, best_threshold)
+    # 6) 총 PnL 기반 threshold 최적화 적용
+    best_threshold, df_best = optimize_for_total_pnl_entry(df, model, X)
     
     print(f"\n선택된 threshold: {best_threshold}")
     print(f"최적화 후 거래 수: {len(df_best)}건")

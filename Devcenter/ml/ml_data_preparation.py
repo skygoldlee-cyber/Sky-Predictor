@@ -20,7 +20,7 @@ import pivot_optuna_v2 as pv
 import regime_intraday_v2 as rg
 import pivot_regime_optimizer as pro
 
-DB_PATH = "c:/Project/SkyPredictor v1/Devcenter/duckdb/market_data.duckdb"
+DB_PATH = "c:/Project/SkyPredictor/Devcenter/duckdb/market_data.duckdb"
 OUTPUT_DIR = Path(__file__).parent / "ml_data"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -197,7 +197,9 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df['SUPERTREND'] = st
     df['SUPERTREND_DIR'] = direction
     
-    # 이동평균선
+    # 이동평균선 (다양한 시간 윈도우)
+    df['MA5'] = df['CLOSE'].rolling(window=5).mean()
+    df['MA10'] = df['CLOSE'].rolling(window=10).mean()
     df['MA20'] = df['CLOSE'].rolling(window=20).mean()
     df['MA60'] = df['CLOSE'].rolling(window=60).mean()
     
@@ -238,7 +240,7 @@ def extract_ml_dataset(years: List[int]):
             # 연도 정보 추가
             res.trades['year'] = year
             
-            # 진입 시점의 기술적 지표 추가
+            # 진입 시점의 기술적 지표 추가 (다양한 시간 윈도우 및 변동성 적응형 피처)
             for idx, trade in res.trades.iterrows():
                 entry_time = trade['entry_time']
                 entry_data = df.loc[entry_time]
@@ -250,11 +252,17 @@ def extract_ml_dataset(years: List[int]):
                 res.trades.at[idx, 'entry_atr'] = entry_data['ATR']
                 res.trades.at[idx, 'entry_supertrend'] = entry_data['SUPERTREND']
                 res.trades.at[idx, 'entry_supertrend_dir'] = entry_data['SUPERTREND_DIR']
+                res.trades.at[idx, 'entry_ma5'] = entry_data['MA5']
+                res.trades.at[idx, 'entry_ma10'] = entry_data['MA10']
                 res.trades.at[idx, 'entry_ma20'] = entry_data['MA20']
                 res.trades.at[idx, 'entry_ma60'] = entry_data['MA60']
                 res.trades.at[idx, 'entry_bb_upper'] = entry_data['BB_UPPER']
                 res.trades.at[idx, 'entry_bb_lower'] = entry_data['BB_LOWER']
                 res.trades.at[idx, 'entry_bb_middle'] = entry_data['BB_MIDDLE']
+                
+                # 변동성 적응형 피처
+                res.trades.at[idx, 'entry_close'] = entry_data['CLOSE']
+                res.trades.at[idx, 'atr_normalized'] = entry_data['ATR'] / entry_data['CLOSE'] if entry_data['CLOSE'] > 0 else 0
             
             all_trades.append(res.trades)
             print(f"  거래 수: {len(res.trades)}")

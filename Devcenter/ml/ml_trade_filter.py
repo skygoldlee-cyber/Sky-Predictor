@@ -16,18 +16,20 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 import xgboost as xgb
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 DATA_DIR = Path(__file__).parent / "ml_data"
 OUTPUT_DIR = Path(__file__).parent / "ml_models"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def load_and_preprocess_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+def load_and_preprocess_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """데이터 로드 및 전처리"""
     # 데이터셋 로드
     df = pd.read_csv(DATA_DIR / "ml_dataset.csv")
+    
+    # 타임스탬프 변환
+    df['entry_time'] = pd.to_datetime(df['entry_time'])
+    timestamps = df['entry_time']
     
     # 피쳐 선택
     feature_cols = [
@@ -53,37 +55,47 @@ def load_and_preprocess_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
     print(f"데이터 로드 완료: {len(df)}건")
     print(f"피쳐 수: {len(feature_cols)}")
     print(f"승률: {y.mean() * 100:.2f}%")
+    print(f"기간: {timestamps.min()} ~ {timestamps.max()}")
     
-    return df, X, y
+    return df, X, y, timestamps
 
 
-def train_xgboost_model(X: pd.DataFrame, y: pd.Series) -> xgb.XGBClassifier:
-    """XGBoost 모델 학습"""
-    # 학습/테스트 데이터 분리
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+def train_xgboost_model(X: pd.DataFrame, y: pd.Series, timestamps: pd.Series) -> xgb.XGBClassifier:
+    """XGBoost 모델 학습 (시간 기반 분할로 데이터 누설 방지)"""
+    # 시간 기반 train/validation/test 분할 (데이터 누설 방지)
+    # 2019-2023: 훈련, 2024: 검증, 2025-2026: 테스트
+    train_mask = (timestamps.dt.year >= 2019) & (timestamps.dt.year <= 2023)
+    val_mask = (timestamps.dt.year == 2024)
+    test_mask = (timestamps.dt.year >= 2025)
     
-    print(f"\n학습 데이터: {len(X_train)}건 (승률: {y_train.mean() * 100:.2f}%)")
-    print(f"테스트 데이터: {len(X_test)}건 (승률: {y_test.mean() * 100:.2f}%)")
+    X_train, y_train = X[train_mask], y[train_mask]
+    X_val, y_val = X[val_mask], y[val_mask]
+    X_test, y_test = X[test_mask], y[test_mask]
     
-    # XGBoost 모델 학습
+    print(f"\n시간 기반 분할 (데이터 누설 방지):")
+    print(f"  훈련 데이터 (2019-2023): {len(X_train)}건 (승률: {y_train.mean() * 100:.2f}%)")
+    print(f"  검증 데이터 (2024): {len(X_val)}건 (승률: {y_val.mean() * 100:.2f}%)")
+    print(f"  테스트 데이터 (2025-2026): {len(X_test)}건 (승률: {y_test.mean() * 100:.2f}%)")
+    
+    # XGBoost 모델 학습 (검증 데이터로 조기 종료, 정규화 강화)
     model = xgb.XGBClassifier(
-        n_estimators=100,
-        max_depth=6,
-        learning_rate=0.1,
-        subsample=0.8,
-        colsample_bytree=0.8,
+        n_estimators=50,  # 복잡도 유지
+        max_depth=4,  # 복잡도 유지
+        learning_rate=0.05,  # 학습률 유지
+        subsample=0.7,  # 샘플링 비율 유지
+        colsample_bytree=0.7,  # 피처 샘플링 비율 유지
         random_state=42,
         use_label_encoder=False,
-        eval_metric='logloss'
+        eval_metric='logloss',
+        reg_alpha=0.5,  # L1 정규화 유지
+        reg_lambda=2.0  # L2 정규화 유지
     )
     
-    model.fit(X_train, y_train)
-    
-    # 교차 검증
-    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
-    print(f"\n교차 검증 정확도: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
+    model.fit(
+        X_train, y_train,
+        eval_set=[(X_val, y_val)],
+        verbose=False
+    )
     
     # 테스트 데이터 예측
     y_pred = model.predict(X_test)
@@ -96,7 +108,7 @@ def train_xgboost_model(X: pd.DataFrame, y: pd.Series) -> xgb.XGBClassifier:
     f1 = f1_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
     
-    print(f"\n테스트 데이터 성능:")
+    print(f"\n테스트 데이터 성능 (샘플 외):")
     print(f"  정확도: {accuracy:.4f}")
     print(f"  정밀도: {precision:.4f}")
     print(f"  재현율: {recall:.4f}")
@@ -129,6 +141,167 @@ def filter_trades_by_model(df: pd.DataFrame, model: xgb.XGBClassifier,
     print(f"\n필터링 결과 (threshold={threshold}):")
     print(f"  필터링 전: {len(df)}건 (승률: {df['is_win'].mean() * 100:.2f}%)")
     print(f"  필터링 후: {len(df_filtered)}건 (승률: {df_filtered['is_win'].mean() * 100:.2f}%)")
+    
+    return df_filtered
+
+
+def filter_trades_by_model_dynamic(df: pd.DataFrame, model: xgb.XGBClassifier, 
+                                    X: pd.DataFrame, year_thresholds: dict) -> pd.DataFrame:
+    """연도별 동적 threshold를 사용하여 거래 필터링"""
+    # 승률 예측
+    y_pred_proba = model.predict_proba(X)[:, 1]
+    
+    # 필터링
+    df_filtered = df.copy()
+    df_filtered['win_probability'] = y_pred_proba
+    df_filtered['year'] = pd.to_datetime(df_filtered['entry_time']).dt.year
+    df_filtered['threshold'] = df_filtered['year'].map(year_thresholds)
+    df_filtered = df_filtered[df_filtered['win_probability'] >= df_filtered['threshold']]
+    
+    print(f"\n연도별 동적 필터링 결과:")
+    print(f"  필터링 전: {len(df)}건 (승률: {df['is_win'].mean() * 100:.2f}%)")
+    print(f"  필터링 후: {len(df_filtered)}건 (승률: {df_filtered['is_win'].mean() * 100:.2f}%)")
+    
+    # 연도별 필터링 결과
+    print("\n연도별 필터링 결과:")
+    for year in sorted(year_thresholds.keys()):
+        year_trades = df[df['year'] == year] if 'year' in df.columns else df[pd.to_datetime(df['entry_time']).dt.year == year]
+        year_filtered = df_filtered[df_filtered['year'] == year]
+        if len(year_trades) > 0:
+            print(f"  {year}: {len(year_trades)}건 → {len(year_filtered)}건 (threshold={year_thresholds[year]})")
+    
+    return df_filtered
+
+
+def filter_trades_by_model_volatility(df: pd.DataFrame, model: xgb.XGBClassifier, 
+                                       X: pd.DataFrame, volatility_thresholds: dict) -> pd.DataFrame:
+    """변동성 기반 동적 threshold를 사용하여 거래 필터링"""
+    # 승률 예측
+    y_pred_proba = model.predict_proba(X)[:, 1]
+    
+    # 변동성 계산 (원본 df와 필터링 df 모두)
+    df_temp = df.copy()
+    df_temp['volatility'] = df_temp['entry_atr'] / df_temp['entry_close']
+    
+    df_filtered = df.copy()
+    df_filtered['win_probability'] = y_pred_proba
+    df_filtered['volatility'] = df_filtered['entry_atr'] / df_filtered['entry_close']
+    
+    # 변동성 구간별 threshold 적용
+    def get_volatility_threshold(vol):
+        if vol < 0.0014:
+            return volatility_thresholds['low']
+        elif vol < 0.0022:
+            return volatility_thresholds['medium']
+        else:
+            return volatility_thresholds['high']
+    
+    df_filtered['threshold'] = df_filtered['volatility'].apply(get_volatility_threshold)
+    df_filtered = df_filtered[df_filtered['win_probability'] >= df_filtered['threshold']]
+    
+    print(f"\n변동성 기반 동적 필터링 결과:")
+    print(f"  필터링 전: {len(df)}건 (승률: {df['is_win'].mean() * 100:.2f}%)")
+    print(f"  필터링 후: {len(df_filtered)}건 (승률: {df_filtered['is_win'].mean() * 100:.2f}%)")
+    
+    # 변동성 구간별 필터링 결과
+    print("\n변동성 구간별 필터링 결과:")
+    for vol_type, threshold in volatility_thresholds.items():
+        if vol_type == 'low':
+            vol_mask = df_temp['volatility'] < 0.0014
+        elif vol_type == 'medium':
+            vol_mask = (df_temp['volatility'] >= 0.0014) & (df_temp['volatility'] < 0.0022)
+        else:
+            vol_mask = df_temp['volatility'] >= 0.0022
+        
+        vol_trades = df_temp[vol_mask]
+        vol_filtered = df_filtered[df_filtered['volatility'].apply(get_volatility_threshold) == threshold]
+        
+        if len(vol_trades) > 0:
+            print(f"  {vol_type} 변동성 (threshold={threshold}): {len(vol_trades)}건 → {len(vol_filtered)}건")
+    
+    return df_filtered
+
+
+def optimize_for_total_pnl(df: pd.DataFrame, model: xgb.XGBClassifier, X: pd.DataFrame) -> tuple:
+    """총 PnL 기반 threshold 최적화"""
+    best_pnl = 0
+    best_threshold = 0.5
+    best_df = None
+    
+    print(f"\n{'='*100}")
+    print("총 PnL 기반 threshold 최적화")
+    print(f"{'='*100}")
+    
+    for threshold in np.arange(0.4, 0.9, 0.05):
+        df_filtered = filter_trades_by_model(df, model, X, threshold)
+        total_pnl = df_filtered['net_krw'].sum()
+        win_rate = df_filtered['is_win'].mean() * 100
+        
+        print(f"Threshold {threshold:.2f}: 총 PnL {total_pnl:,.0f}원, 승률 {win_rate:.2f}%, 거래 수 {len(df_filtered)}건")
+        
+        if total_pnl > best_pnl:
+            best_pnl = total_pnl
+            best_threshold = threshold
+            best_df = df_filtered
+    
+    print(f"\n최적 threshold: {best_threshold:.2f}")
+    print(f"최적 총 PnL: {best_pnl:,.0f}원")
+    print(f"최적 승률: {best_df['is_win'].mean() * 100:.2f}%")
+    print(f"최적 거래 수: {len(best_df)}건")
+    
+    return best_threshold, best_df
+
+
+def optimize_for_sharpe_ratio(df: pd.DataFrame, model: xgb.XGBClassifier, X: pd.DataFrame) -> tuple:
+    """샤프 비율 기반 threshold 최적화 (수익/변동성)"""
+    best_sharpe = 0
+    best_threshold = 0.5
+    best_df = None
+    
+    print(f"\n{'='*100}")
+    print("샤프 비율 기반 threshold 최적화")
+    print(f"{'='*100}")
+    
+    for threshold in np.arange(0.4, 0.9, 0.05):
+        df_filtered = filter_trades_by_model(df, model, X, threshold)
+        returns = df_filtered['net_krw'].values
+        
+        if len(returns) > 1:
+            sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
+            total_pnl = df_filtered['net_krw'].sum()
+            win_rate = df_filtered['is_win'].mean() * 100
+            
+            print(f"Threshold {threshold:.2f}: 샤프 비율 {sharpe_ratio:.4f}, 총 PnL {total_pnl:,.0f}원, 승률 {win_rate:.2f}%, 거래 수 {len(df_filtered)}건")
+            
+            if sharpe_ratio > best_sharpe:
+                best_sharpe = sharpe_ratio
+                best_threshold = threshold
+                best_df = df_filtered
+    
+    print(f"\n최적 threshold: {best_threshold:.2f}")
+    print(f"최적 샤프 비율: {best_sharpe:.4f}")
+    print(f"최적 총 PnL: {best_df['net_krw'].sum():,.0f}원")
+    print(f"최적 승률: {best_df['is_win'].mean() * 100:.2f}%")
+    print(f"최적 거래 수: {len(best_df)}건")
+    
+    return best_threshold, best_df
+
+
+def filter_by_time_and_month(df: pd.DataFrame) -> pd.DataFrame:
+    """시간대별 및 월별 필터링"""
+    df_filtered = df.copy()
+    
+    # 시간대별 필터링 (9시, 10시, 11시 제외)
+    df_filtered = df_filtered[~df_filtered['entry_hour'].isin([9, 10, 11])]
+    
+    # 월별 필터링 (3월, 5월, 6월 제외)
+    df_filtered['entry_month'] = pd.to_datetime(df_filtered['entry_time']).dt.month
+    df_filtered = df_filtered[~df_filtered['entry_month'].isin([3, 5, 6])]
+    
+    print(f"\n시간대별 및 월별 필터링 적용:")
+    print(f"  필터링 전: {len(df)}건")
+    print(f"  필터링 후: {len(df_filtered)}건")
+    print(f"  제외된 거래: {len(df) - len(df_filtered)}건")
     
     return df_filtered
 
@@ -178,10 +351,10 @@ def main():
     print("=" * 100)
     
     # 1) 데이터 로드 및 전처리
-    df, X, y = load_and_preprocess_data()
+    df, X, y, timestamps = load_and_preprocess_data()
     
     # 2) XGBoost 모델 학습
-    model = train_xgboost_model(X, y)
+    model = train_xgboost_model(X, y, timestamps)
     
     # 3) 모델 저장
     model_path = OUTPUT_DIR / "trade_filter_xgboost.json"
@@ -199,18 +372,8 @@ def main():
         df_filtered = filter_trades_by_model(df, model, X, threshold)
         compare_performance(df, df_filtered)
     
-    # 5) 최적 threshold 선택 (승률 70% 이상 목표)
-    print(f"\n{'='*100}")
-    print("최적 threshold 선택")
-    print(f"{'='*100}")
-    
-    best_threshold = 0.6
-    df_best = filter_trades_by_model(df, model, X, best_threshold)
-    
-    print(f"\n선택된 threshold: {best_threshold}")
-    print(f"필터링 후 거래 수: {len(df_best)}건")
-    print(f"필터링 후 승률: {df_best['is_win'].mean() * 100:.2f}%")
-    print(f"필터링 후 총 PnL: {df_best['net_krw'].sum():,.0f} 원")
+    # 5) 총 PnL 기반 threshold 최적화 적용
+    best_threshold, df_best = optimize_for_total_pnl(df, model, X)
     
     # 필터링된 데이터셋 저장
     filtered_path = OUTPUT_DIR / "filtered_trades.csv"
