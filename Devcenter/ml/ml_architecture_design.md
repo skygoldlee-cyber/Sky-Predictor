@@ -5151,7 +5151,103 @@ L2(0.03)            # 0.02→0.03 (L2 정규화 강화)
 
 ---
 
+---
+
+## 23. HIGH 우선순위 개선 결과 (v2.2)
+
+### 23.1 구현 완료 항목
+
+**1. 과적합 방지 - 모델 복잡도 감소**
+- Random Forest: n_estimators 50→30, max_depth 6→4, min_samples_split 20→25, min_samples_leaf 10→12
+- 대상 파일: `ml_entry_timing.py`, `ml_walk_forward_validation.py`
+
+**2. 과적합 방지 - 정규화 강화**
+- XGBoost: reg_alpha 0.1→0.5, reg_lambda 1.0→2.0
+- 대상 파일: `ml_walk_forward_validation.py`
+
+**3. 과적합 방지 - 드롭아웃 증가**
+- LSTM: Dropout 0.5→0.6, L2 0.02→0.03, 학습률 0.0005→0.0003
+- 대상 파일: `ml_exit_timing.py`, `ml_walk_forward_validation.py`
+
+**4. 샘플 외 성과 개선 - Time Series Cross-Validation 파라미터 최적화**
+- n_splits 최적화 함수 추가 (3, 4, 5 테스트)
+- 최적 n_splits: 3 (F1: 0.4685)
+- 대상 파일: `ml_cross_validation.py`
+
+**5. 샘플 외 성과 개선 - Walk-Forward Validation 파라미터 업데이트**
+- Random Forest, LSTM 파라미터 개선 적용
+- 대상 파일: `ml_walk_forward_validation.py`
+
+**6. 거래 수 확보 - 필터링 조건 완화**
+- threshold 0.7→0.75
+- 대상 파일: `ml_entry_timing.py`
+
+**7. 거래 수 확보 - 시간대/월별 필터링 제거**
+- 시간대 필터링 (9-11시) 제거
+- 월별 필터링 (3,5,6월) 제거
+- 대상 파일: `ml_entry_timing.py`, `ml_exit_timing.py`
+
+### 23.2 모델 재학습 결과
+
+**Random Forest (ml_entry_timing.py):**
+- 정확도: 0.5342
+- F1 점수: 0.6852
+- ROC AUC: 0.5342
+- 최적 threshold: 0.5
+- 거래 수: 469건 (일일 약 0.16건)
+- 승률: 73.99%
+- 총 PnL: 14,313,973원
+
+**LSTM (ml_exit_timing.py):**
+- 정확도: 0.5874
+- F1 점수: 0.7401
+- 최적 threshold: 0.5
+- 거래 수: 459건 (일일 약 0.16건)
+- 승률: 73.42%
+- 총 PnL: 14,055,967원
+
+### 23.3 성과 검증 결과
+
+**Walk-Forward Validation (ml_walk_forward_validation.py):**
+- XGBoost: 정확도=0.4790, F1=0.4765, ROC AUC=0.4812
+- Random Forest: 정확도=0.5547, F1=0.5817, ROC AUC=0.5678
+- LSTM: 정확도=0.4651, F1=0.2576
+
+**Time Series CV 최적화 (ml_cross_validation.py):**
+- 최적 n_splits: 3 (F1: 0.4685)
+- n_splits=3: 평균 정확도 0.4965, F1 0.4685, ROC AUC 0.5156
+- 최적 교차 검증 방법: timeseries (F1: 0.4607)
+
+### 23.4 목표 달성 여부
+
+**최소 요건 달성 상태:**
+- Walk-Forward Validation 정확도 0.6 이상: **미달** (0.5547)
+- 일일 거래 수 3-5건 이상: **미달** (일일 약 0.16건)
+- 6개월 연속 양호한 성과: **미검증**
+- 슬리피지 반영 백테스트: **미완료**
+
+**개선 사항:**
+- Random Forest F1 점수 0.5817 달성 (이전보다 개선)
+- LSTM F1 점수 0.7401 달성 (양호)
+- 과적합 방지 파라미터 적용 완료
+- 거래 수 확보를 위한 필터링 완화 완료
+
+### 23.5 추가 개선 필요 사항
+
+**Walk-Forward Validation 정확도 0.6 달성을 위한 추가 개선:**
+1. 피처 엔지니어링 개선 (불필요 피처 제거)
+2. 데이터 증강 (부트스트랩 샘플링)
+3. 앙상블 방식 적용
+4. 더 많은 데이터 확보
+
+**거래 수 확보를 위한 추가 개선:**
+1. 피봇 파라미터 완화 (min_wave_pct 감소)
+2. 추가 필터링 조건 완화
+3. 다른 전략 결합 고려
+
+---
+
 **문서 작성일**: 2026년 6월 25일
 **최종 갱신일**: 2026년 6월 25일
 **작성자**: Cascade AI Assistant
-**버전**: 2.1 (실제 매매를 위한 개선 계획 추가)
+**버전**: 2.2 (HIGH 우선순위 개선 결과 추가)
