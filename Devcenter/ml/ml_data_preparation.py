@@ -34,12 +34,12 @@ BT_HALF_KELLY_INTRADAY = pv.BacktestConfig(
     entry_on="next_open"
 )
 
-# 피봇 파라미터 (BULL 최적 파라미터)
+# 피봇 파라미터 (BULL 최적 파라미터 - 거래 수 확보를 위해 완화)
 PCFG_BULL = pv.HybridAdaptivePivotConfig(
-    base_pct=0.5,
-    base_multiplier=2.0,
-    atr_weight=0.3,
-    confirmation_bars=2
+    base_pct=0.3,  # 0.5→0.3 (거래 수 확보를 위해 완화)
+    base_multiplier=1.5,  # 2.0→1.5 (거래 수 확보를 위해 완화)
+    atr_weight=0.2,  # 0.3→0.2 (거래 수 확보를 위해 완화)
+    confirmation_bars=1  # 2→1 (거래 수 확보를 위해 완화)
 )
 
 # 필터링 파라미터 (BULL 최적 파라미터 - 거래 수 확보를 위해 완화)
