@@ -75,14 +75,60 @@ def train_and_evaluate_models(train_data: pd.DataFrame, test_data: pd.DataFrame)
     return results
 
 
-def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
-    """XGBoost 모델 학습 및 평가"""
-    feature_cols = [
+def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
+    """XGBoost 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+    # 기본 피처
+    base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
         'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
         'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
         'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
     ]
+    
+    # 추가 피처 계산
+    train_data = train_data.copy()
+    test_data = test_data.copy()
+    
+    for df in [train_data, test_data]:
+        df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+        df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+        df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+        df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택 (중요도 기반)
+    if use_feature_selection:
+        # 먼저 모든 피처로 학습하여 중요도 확인
+        X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+        y_train = train_data['is_win'].copy()
+        
+        import xgboost as xgb
+        temp_model = xgb.XGBClassifier(
+            n_estimators=50, max_depth=4, learning_rate=0.05,
+            subsample=0.7, colsample_bytree=0.7, random_state=42,
+            use_label_encoder=False, eval_metric='logloss',
+            reg_alpha=0.5, reg_lambda=2.0
+        )
+        temp_model.fit(X_train_all, y_train)
+        
+        # 피처 중요도 확인
+        feature_importance = pd.DataFrame({
+            'feature': all_feature_cols,
+            'importance': temp_model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        # 중요도 0.02 이상 피처만 선택
+        selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+        
+        if len(selected_features) < 5:  # 최소 5개 피처 보장
+            selected_features = feature_importance.head(5)['feature'].tolist()
+        
+        feature_cols = selected_features
+        print(f"  선택된 피처 ({len(feature_cols)}개): {feature_cols}")
+    else:
+        feature_cols = all_feature_cols
     
     X_train = train_data[feature_cols].copy().fillna(0).astype(float)
     y_train = train_data['is_win'].copy()
@@ -125,14 +171,14 @@ def train_xgboost(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
     return result
 
 
-def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
-    """Random Forest 모델 학습 및 평가"""
-    feature_cols = [
+def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
+    """Random Forest 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+    # 기본 피처
+    base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
         'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
         'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
-        'entry_hour', 'entry_dayofweek', 'entry_month', 'regime',
-        'rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment'
+        'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
     ]
     
     # 추가 피처 계산
@@ -144,6 +190,39 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Di
         df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
         df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
         df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택 (중요도 기반)
+    if use_feature_selection:
+        # 먼저 모든 피처로 학습하여 중요도 확인
+        X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+        y_train = train_data['is_win'].copy()
+        
+        from sklearn.ensemble import RandomForestClassifier
+        temp_model = RandomForestClassifier(
+            n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+            max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+        )
+        temp_model.fit(X_train_all, y_train)
+        
+        # 피처 중요도 확인
+        feature_importance = pd.DataFrame({
+            'feature': all_feature_cols,
+            'importance': temp_model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        # 중요도 0.02 이상 피처만 선택
+        selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+        
+        if len(selected_features) < 5:  # 최소 5개 피처 보장
+            selected_features = feature_importance.head(5)['feature'].tolist()
+        
+        feature_cols = selected_features
+        print(f"  선택된 피처 ({len(feature_cols)}개): {feature_cols}")
+    else:
+        feature_cols = all_feature_cols
     
     X_train = train_data[feature_cols].copy().fillna(0).astype(float)
     y_train = train_data['is_win'].copy()
@@ -184,14 +263,57 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Di
     return result
 
 
-def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
-    """LSTM 모델 학습 및 평가"""
-    feature_cols = [
+def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True) -> Dict:
+    """LSTM 모델 학습 및 평가 (피처 선택 옵션 추가)"""
+    # 기본 피처
+    base_feature_cols = [
         'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
         'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
         'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
         'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
     ]
+    
+    # 추가 피처 계산
+    train_data = train_data.copy()
+    test_data = test_data.copy()
+    
+    for df in [train_data, test_data]:
+        df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+        df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+        df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+        df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택 (중요도 기반 - Random Forest 기반)
+    if use_feature_selection:
+        from sklearn.ensemble import RandomForestClassifier
+        X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+        y_train = train_data['is_win'].copy()
+        
+        temp_model = RandomForestClassifier(
+            n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+            max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+        )
+        temp_model.fit(X_train_all, y_train)
+        
+        # 피처 중요도 확인
+        feature_importance = pd.DataFrame({
+            'feature': all_feature_cols,
+            'importance': temp_model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        # 중요도 0.02 이상 피처만 선택
+        selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+        
+        if len(selected_features) < 5:  # 최소 5개 피처 보장
+            selected_features = feature_importance.head(5)['feature'].tolist()
+        
+        feature_cols = selected_features
+        print(f"  선택된 피처 ({len(feature_cols)}개): {feature_cols}")
+    else:
+        feature_cols = all_feature_cols
     
     from sklearn.preprocessing import MinMaxScaler
     

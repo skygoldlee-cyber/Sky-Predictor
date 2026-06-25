@@ -42,13 +42,13 @@ PCFG_BULL = pv.HybridAdaptivePivotConfig(
     confirmation_bars=2
 )
 
-# 필터링 파라미터 (BULL 최적 파라미터)
+# 필터링 파라미터 (BULL 최적 파라미터 - 거래 수 확보를 위해 완화)
 FCFG_BULL = pv.FilterConfig(
     enabled=True,
-    min_wave_pct=0.3,  # BULL 최적 파라미터
-    min_pivot_interval_bars=10,  # BULL 최적 파라미터
-    st_distance_threshold=0.1,  # BULL 최적 파라미터
-    adx_hold_threshold=15.0  # BULL 최적 파라미터
+    min_wave_pct=0.15,  # 0.3→0.15 (거래 수 확보를 위해 완화)
+    min_pivot_interval_bars=5,  # 10→5 (거래 수 확보를 위해 완화)
+    st_distance_threshold=0.05,  # 0.1→0.05 (거래 수 확보를 위해 완화)
+    adx_hold_threshold=10.0  # 15.0→10.0 (거래 수 확보를 위해 완화)
 )
 
 
