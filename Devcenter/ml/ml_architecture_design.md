@@ -5477,6 +5477,29 @@ max_consecutive_losses = 1
 - 예상 샤프 비율: 1.4995
 - 예상 수익률: 7.88%
 
+#### 24.7.5 필수 파일 목록
+
+**데이터 파일:**
+- `Devcenter/ml/ml_data/ml_dataset.csv` - ML 데이터셋 (1,521건 거래)
+
+**모델 파일:**
+- `Devcenter/ml/ml_models/` - 학습된 모델 저장 경로
+- `rf_conservative.pkl` - Random Forest 보수적 파라미터 모델 (저장 필요)
+
+**코드 파일:**
+- `Devcenter/ml/ml_walk_forward_validation.py` - Walk-Forward Validation
+- `Devcenter/ml/ml_live_trading_simulation.py` - 실매매 시뮬레이션
+- `Devcenter/ml/ml_live_trading.py` - 실매매 실행 파일 (생성 필요)
+
+**문서 파일:**
+- `Devcenter/ml/ml_architecture_design.md` - ML 아키텍처 설계 문서
+
+**의존성:**
+- pandas
+- numpy
+- scikit-learn
+- joblib (모델 저장/로드)
+
 ### 24.8 최종 결론
 
 Random Forest 보수적 파라미터 모델로 실매매 가능한 모델이 도출되었습니다. 승률과 샤프 비율이 우수하여 실매매에 적합합니다. 하지만 거래 빈도가 낮고 시장 영향력을 고려해야 합니다. 1계약 기준으로 시작하여 점진적으로 포지션을 늘리는 것을 추천합니다.
@@ -5486,4 +5509,4 @@ Random Forest 보수적 파라미터 모델로 실매매 가능한 모델이 도
 **문서 작성일**: 2026년 6월 25일
 **최종 갱신일**: 2026년 6월 25일
 **작성자**: Cascade AI Assistant
-**버전**: 2.3 (실거래 가능한 모델 도출 결과 추가)
+**버전**: 2.5 (실매매 필수 파일 목록 추가)
