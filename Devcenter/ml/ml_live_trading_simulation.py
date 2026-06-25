@@ -28,7 +28,7 @@ def load_data() -> pd.DataFrame:
     return df
 
 
-def simulate_live_trading(df: pd.DataFrame, start_date: str, end_date: str, position_size: int = 1) -> Dict:
+def simulate_live_trading(df: pd.DataFrame, start_date: str, end_date: str, position_size: int = 1, entry_threshold: float = 0.6) -> Dict:
     """실매매 시뮬레이션"""
     from sklearn.ensemble import RandomForestClassifier
     import joblib
@@ -75,8 +75,8 @@ def simulate_live_trading(df: pd.DataFrame, start_date: str, end_date: str, posi
     df['predicted_prob'] = model.predict_proba(X)[:, 1]
     df['predicted_signal'] = (df['predicted_prob'] >= 0.5).astype(int)
     
-    # 진입 필터: 예측 확률 0.6 이상만 진입 (보수적)
-    df['entry_signal'] = (df['predicted_prob'] >= 0.6).astype(int)
+    # 진입 필터: 예측 확률 임계값 이상만 진입
+    df['entry_signal'] = (df['predicted_prob'] >= entry_threshold).astype(int)
     
     # 실매매 시뮬레이션
     trades = []
@@ -196,7 +196,7 @@ def analyze_live_trading_performance(result: Dict, period: str) -> Dict:
 def main():
     """메인 함수"""
     print("=" * 80)
-    print("실매매 수익성 테스트 (Random Forest 보수적 파라미터)")
+    print("거래 빈도와 수익성 관계 분석")
     print("=" * 80)
     
     # 데이터 로드
@@ -210,49 +210,63 @@ def main():
     
     print(f"\n실매매 시뮬레이션 기간: {start_date} ~ {end_date}")
     
-    # 실매매 시뮬레이션 (3계약 기준)
-    live_trading_result = simulate_live_trading(df, start_date, end_date, position_size=3)
+    # 다른 진입 임계값으로 시뮬레이션
+    thresholds = [0.6, 0.55, 0.5]
+    results = {}
     
-    if 'error' in live_trading_result:
-        print(f"\n실매매 시뮬레이션 오류: {live_trading_result['error']}")
-        return live_trading_result
+    for threshold in thresholds:
+        print(f"\n{'='*80}")
+        print(f"진입 임계값: {threshold}")
+        print(f"{'='*80}")
+        
+        # 실매매 시뮬레이션 (3계약 기준)
+        live_trading_result = simulate_live_trading(df, start_date, end_date, position_size=3, entry_threshold=threshold)
+        
+        if 'error' in live_trading_result:
+            print(f"\n실매매 시뮬레이션 오류: {live_trading_result['error']}")
+            results[threshold] = live_trading_result
+            continue
+        
+        # 성과 분석
+        performance = analyze_live_trading_performance(live_trading_result, f"{start_date} ~ {end_date}")
+        
+        print(f"\n실매매 성과:")
+        print(f"  초기 자본: {performance['initial_capital']:,.0f}원")
+        print(f"  최종 자본: {performance['final_capital']:,.0f}원")
+        print(f"  총 수익률: {performance['total_return']:.2f}%")
+        print(f"  총 거래 수: {performance['total_trades']}건")
+        print(f"  승리 거래: {live_trading_result['winning_trades']}건")
+        print(f"  패배 거래: {live_trading_result['losing_trades']}건")
+        print(f"  승률: {performance['win_rate']:.2f}%")
+        print(f"  총 PnL: {performance['total_pnl']:,.0f}원")
+        print(f"  평균 PnL: {performance['avg_pnl']:,.0f}원")
+        print(f"  최대 손실: {performance['max_drawdown']:,.0f}원")
+        print(f"  최대 이익: {performance['max_profit']:,.0f}원")
+        print(f"  샤프 비율: {performance['sharpe_ratio']:.4f}")
+        
+        results[threshold] = performance
     
-    # 성과 분석
-    performance = analyze_live_trading_performance(live_trading_result, f"{start_date} ~ {end_date}")
+    # 결과 비교
+    print(f"\n{'='*80}")
+    print("진입 임계값별 성과 비교")
+    print(f"{'='*80}")
     
-    print(f"\n실매매 성과:")
-    print(f"  초기 자본: {performance['initial_capital']:,.0f}원")
-    print(f"  최종 자본: {performance['final_capital']:,.0f}원")
-    print(f"  총 수익률: {performance['total_return']:.2f}%")
-    print(f"  총 거래 수: {performance['total_trades']}건")
-    print(f"  승리 거래: {live_trading_result['winning_trades']}건")
-    print(f"  패배 거래: {live_trading_result['losing_trades']}건")
-    print(f"  승률: {performance['win_rate']:.2f}%")
-    print(f"  총 PnL: {performance['total_pnl']:,.0f}원")
-    print(f"  평균 PnL: {performance['avg_pnl']:,.0f}원")
-    print(f"  최대 손실: {performance['max_drawdown']:,.0f}원")
-    print(f"  최대 이익: {performance['max_profit']:,.0f}원")
-    print(f"  샤프 비율: {performance['sharpe_ratio']:.4f}")
-    
-    print(f"\n월별 성과:")
-    for month, pnl in performance['monthly_performance']['pnl'].items():
-        win_rate = performance['monthly_performance']['is_win'][month] * 100
-        print(f"  {month}월: PnL {pnl:,.0f}원, 승률 {win_rate:.2f}%")
-    
-    # 성공 여부 판단
-    if performance['is_successful']:
-        print(f"\n실매매 성공: 승률 {performance['win_rate']:.2f}%, 총 수익률 {performance['total_return']:.2f}%, 샤프 비율 {performance['sharpe_ratio']:.4f}")
-    else:
-        print(f"\n실매매 실패: 승률 {performance['win_rate']:.2f}%, 총 수익률 {performance['total_return']:.2f}%, 샤프 비율 {performance['sharpe_ratio']:.4f}")
+    for threshold, perf in results.items():
+        if 'error' not in perf:
+            print(f"\n임계값 {threshold}:")
+            print(f"  총 거래 수: {perf['total_trades']}건")
+            print(f"  승률: {perf['win_rate']:.2f}%")
+            print(f"  총 수익률: {perf['total_return']:.2f}%")
+            print(f"  샤프 비율: {perf['sharpe_ratio']:.4f}")
     
     # 결과 저장
     import json
-    result_path = MODELS_DIR / "live_trading_simulation_result.json"
+    result_path = MODELS_DIR / "frequency_analysis_result.json"
     with open(result_path, 'w', encoding='utf-8') as f:
-        json.dump(performance, f, indent=2, ensure_ascii=False, default=str)
-    print(f"\n실매매 시뮬레이션 결과 저장: {result_path}")
+        json.dump(results, f, indent=2, ensure_ascii=False, default=str)
+    print(f"\n거래 빈도 분석 결과 저장: {result_path}")
     
-    return performance
+    return results
 
 
 if __name__ == "__main__":
