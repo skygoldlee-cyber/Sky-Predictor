@@ -252,10 +252,10 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_f
     
     from sklearn.ensemble import RandomForestClassifier
     model = RandomForestClassifier(
-        n_estimators=30,  # 100→30 (트리 수 감소)
-        max_depth=4,  # 8→4 (깊이 감소)
-        min_samples_split=25,  # 15→25 (분할 최소 샘플 증가)
-        min_samples_leaf=12,  # 8→12 (리프 최소 샘플 증가)
+        n_estimators=20,  # 30→20 (트리 수 추가 감소)
+        max_depth=3,  # 4→3 (깊이 추가 감소)
+        min_samples_split=30,  # 25→30 (분할 최소 샘플 추가 증가)
+        min_samples_leaf=15,  # 12→15 (리프 최소 샘플 추가 증가)
         max_features='sqrt',
         random_state=42,
         n_jobs=-1,
@@ -351,7 +351,7 @@ def train_ensemble(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
     import xgboost as xgb
     
     rf_model = RandomForestClassifier(
-        n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+        n_estimators=20, max_depth=3, min_samples_split=30, min_samples_leaf=15,
         max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
     )
     
