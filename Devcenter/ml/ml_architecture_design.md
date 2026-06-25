@@ -5489,7 +5489,7 @@ max_consecutive_losses = 1
 **코드 파일:**
 - `Devcenter/ml/ml_walk_forward_validation.py` - Walk-Forward Validation
 - `Devcenter/ml/ml_live_trading_simulation.py` - 실매매 시뮬레이션
-- `Devcenter/ml/ml_live_trading.py` - 실매매 실행 파일 (생성 필요)
+- `Devcenter/ml/ml_live_trading.py` - 실매매 실행 파일
 
 **문서 파일:**
 - `Devcenter/ml/ml_architecture_design.md` - ML 아키텍처 설계 문서
@@ -5509,4 +5509,4 @@ Random Forest 보수적 파라미터 모델로 실매매 가능한 모델이 도
 **문서 작성일**: 2026년 6월 25일
 **최종 갱신일**: 2026년 6월 25일
 **작성자**: Cascade AI Assistant
-**버전**: 2.5 (실매매 필수 파일 목록 추가)
+**버전**: 2.6 (실매매 실행 파일 구현 완료)
