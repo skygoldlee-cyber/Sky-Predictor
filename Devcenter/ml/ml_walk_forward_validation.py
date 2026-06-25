@@ -72,6 +72,11 @@ def train_and_evaluate_models(train_data: pd.DataFrame, test_data: pd.DataFrame)
     lstm_result = train_lstm(train_data, test_data)
     results['lstm'] = lstm_result
     
+    # 4. 앙상블 모델 (평균 투표)
+    print("[4/4] 앙상블 모델 (평균 투표)...")
+    ensemble_result = train_ensemble(train_data, test_data)
+    results['ensemble'] = ensemble_result
+    
     return results
 
 
@@ -279,6 +284,113 @@ def train_random_forest(train_data: pd.DataFrame, test_data: pd.DataFrame, use_f
     return result
 
 
+def train_ensemble(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
+    """앙상블 모델 (평균 투표) 학습 및 평가"""
+    # 기본 피처
+    base_feature_cols = [
+        'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
+        'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
+        'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
+        'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
+    ]
+    
+    # 추가 피처 계산
+    train_data = train_data.copy()
+    test_data = test_data.copy()
+    
+    for df in [train_data, test_data]:
+        df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+        df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+        df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+        df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택 (중요도 기반)
+    from sklearn.ensemble import RandomForestClassifier
+    X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+    y_train = train_data['is_win'].copy()
+    
+    temp_model = RandomForestClassifier(
+        n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+        max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+    )
+    temp_model.fit(X_train_all, y_train)
+    
+    # 피처 중요도 확인
+    feature_importance = pd.DataFrame({
+        'feature': all_feature_cols,
+        'importance': temp_model.feature_importances_
+    }).sort_values('importance', ascending=False)
+    
+    # 중요도 0.02 이상 피처만 선택
+    selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+    
+    if len(selected_features) < 5:
+        selected_features = feature_importance.head(5)['feature'].tolist()
+    
+    feature_cols = selected_features
+    print(f"  선택된 피처 ({len(feature_cols)}개): {feature_cols}")
+    
+    X_train = train_data[feature_cols].copy().fillna(0).astype(float)
+    y_train = train_data['is_win'].copy()
+    X_test = test_data[feature_cols].copy().fillna(0).astype(float)
+    y_test = test_data['is_win'].copy()
+    
+    # 부트스트랩 샘플링
+    if len(X_train) > 100:
+        from sklearn.utils import resample
+        X_train_boot, y_train_boot = resample(X_train, y_train, n_samples=len(X_train), random_state=42)
+        X_train = pd.concat([X_train, X_train_boot])
+        y_train = pd.concat([y_train, y_train_boot])
+        print(f"  부트스트랩 적용: {len(X_train)}샘플")
+    
+    # 세 모델 학습
+    from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+    import xgboost as xgb
+    
+    rf_model = RandomForestClassifier(
+        n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+        max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+    )
+    
+    xgb_model = xgb.XGBClassifier(
+        n_estimators=100, max_depth=6, learning_rate=0.1,
+        subsample=0.8, colsample_bytree=0.8, random_state=42,
+        use_label_encoder=False, eval_metric='logloss',
+        reg_alpha=0.5, reg_lambda=2.0
+    )
+    
+    # 앙상블 모델 (소프트 투표)
+    ensemble_model = VotingClassifier(
+        estimators=[('rf', rf_model), ('xgb', xgb_model)],
+        voting='soft',
+        n_jobs=-1
+    )
+    
+    ensemble_model.fit(X_train, y_train)
+    
+    # 예측
+    y_pred = ensemble_model.predict(X_test)
+    y_pred_proba = ensemble_model.predict_proba(X_test)[:, 1]
+    
+    # 성능 평가
+    result = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred, zero_division=0),
+        'recall': recall_score(y_test, y_pred, zero_division=0),
+        'f1': f1_score(y_test, y_pred, zero_division=0),
+        'roc_auc': roc_auc_score(y_test, y_pred_proba) if len(y_test) > 1 else 0
+    }
+    
+    print(f"  정확도: {result['accuracy']:.4f}")
+    print(f"  F1 점수: {result['f1']:.4f}")
+    print(f"  ROC AUC: {result['roc_auc']:.4f}")
+    
+    return result
+
+
 def train_lstm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
     """LSTM 모델 학습 및 평가 (피처 선택 및 부트스트랩 옵션 추가)"""
     # 기본 피처
@@ -445,9 +557,16 @@ def print_walk_forward_results(results: List[Dict]):
         'f1': np.mean([r['lstm']['f1'] for r in results])
     }
     
+    avg_ensemble = {
+        'accuracy': np.mean([r['ensemble']['accuracy'] for r in results]),
+        'f1': np.mean([r['ensemble']['f1'] for r in results]),
+        'roc_auc': np.mean([r['ensemble']['roc_auc'] for r in results])
+    }
+    
     print(f"XGBoost: 정확도={avg_xgb['accuracy']:.4f}, F1={avg_xgb['f1']:.4f}, ROC AUC={avg_xgb['roc_auc']:.4f}")
     print(f"Random Forest: 정확도={avg_rf['accuracy']:.4f}, F1={avg_rf['f1']:.4f}, ROC AUC={avg_rf['roc_auc']:.4f}")
     print(f"LSTM: 정확도={avg_lstm['accuracy']:.4f}, F1={avg_lstm['f1']:.4f}")
+    print(f"Ensemble: 정확도={avg_ensemble['accuracy']:.4f}, F1={avg_ensemble['f1']:.4f}, ROC AUC={avg_ensemble['roc_auc']:.4f}")
 
 
 def main():
