@@ -58,22 +58,27 @@ def train_and_evaluate_models(train_data: pd.DataFrame, test_data: pd.DataFrame)
     results = {}
     
     # 1. XGBoost 필터링 모델
-    print("\n[1/3] XGBoost 필터링 모델...")
+    print("\n[1/5] XGBoost 필터링 모델...")
     xgb_result = train_xgboost(train_data, test_data)
     results['xgboost'] = xgb_result
     
     # 2. Random Forest 진입 타이밍 모델
-    print("[2/3] Random Forest 진입 타이밍 모델...")
+    print("[2/5] Random Forest 진입 타이밍 모델...")
     rf_result = train_random_forest(train_data, test_data)
     results['random_forest'] = rf_result
     
-    # 3. LSTM 청산 타이밍 모델
-    print("[3/3] LSTM 청산 타이밍 모델...")
-    lstm_result = train_lstm(train_data, test_data)
-    results['lstm'] = lstm_result
+    # 3. LightGBM 모델
+    print("[3/5] LightGBM 모델...")
+    lgb_result = train_lightgbm(train_data, test_data)
+    results['lightgbm'] = lgb_result
     
-    # 4. 앙상블 모델 (평균 투표)
-    print("[4/4] 앙상블 모델 (평균 투표)...")
+    # 4. CatBoost 모델
+    print("[4/5] CatBoost 모덈...")
+    cat_result = train_catboost(train_data, test_data)
+    results['catboost'] = cat_result
+    
+    # 5. 앙상블 모델 (평균 투표)
+    print("[5/5] 앙상블 모델 (평균 투표)...")
     ensemble_result = train_ensemble(train_data, test_data)
     results['ensemble'] = ensemble_result
     
@@ -346,7 +351,7 @@ def train_ensemble(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
         y_train = pd.concat([y_train, y_train_boot])
         print(f"  부트스트랩 적용: {len(X_train)}샘플")
     
-    # 세 모델 학습
+    # 네 모델 학습
     from sklearn.ensemble import RandomForestClassifier, VotingClassifier
     import xgboost as xgb
     
@@ -362,9 +367,33 @@ def train_ensemble(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Dict:
         reg_alpha=0.5, reg_lambda=2.0
     )
     
+    # LightGBM 모델
+    try:
+        import lightgbm as lgb
+        lgb_model = lgb.LGBMClassifier(
+            n_estimators=50, max_depth=4, learning_rate=0.05,
+            subsample=0.7, colsample_bytree=0.7, random_state=42,
+            reg_alpha=0.5, reg_lambda=2.0, verbose=-1
+        )
+        estimators = [('rf', rf_model), ('xgb', xgb_model), ('lgb', lgb_model)]
+    except ImportError:
+        print("  LightGBM not installed, using 2-model ensemble")
+        estimators = [('rf', rf_model), ('xgb', xgb_model)]
+    
+    # CatBoost 모델
+    try:
+        import catboost as cb
+        cat_model = cb.CatBoostClassifier(
+            iterations=50, depth=4, learning_rate=0.05,
+            random_seed=42, l2_leaf_reg=2.0, verbose=False
+        )
+        estimators.append(('cat', cat_model))
+    except ImportError:
+        print("  CatBoost not installed, using available models")
+    
     # 앙상블 모델 (소프트 투표)
     ensemble_model = VotingClassifier(
-        estimators=[('rf', rf_model), ('xgb', xgb_model)],
+        estimators=estimators,
         voting='soft',
         n_jobs=-1
     )
@@ -533,7 +562,8 @@ def print_walk_forward_results(results: List[Dict]):
         print(f"\nFold {i+1} ({result['train_years'][0]}-{result['train_years'][-1]} → {result['test_year']}):")
         print(f"  XGBoost: 정확도={result['xgboost']['accuracy']:.4f}, F1={result['xgboost']['f1']:.4f}, ROC AUC={result['xgboost']['roc_auc']:.4f}")
         print(f"  Random Forest: 정확도={result['random_forest']['accuracy']:.4f}, F1={result['random_forest']['f1']:.4f}, ROC AUC={result['random_forest']['roc_auc']:.4f}")
-        print(f"  LSTM: 정확도={result['lstm']['accuracy']:.4f}, F1={result['lstm']['f1']:.4f}")
+        print(f"  LightGBM: 정확도={result['lightgbm']['accuracy']:.4f}, F1={result['lightgbm']['f1']:.4f}, ROC AUC={result['lightgbm']['roc_auc']:.4f}")
+        print(f"  CatBoost: 정확도={result['catboost']['accuracy']:.4f}, F1={result['catboost']['f1']:.4f}, ROC AUC={result['catboost']['roc_auc']:.4f}")
     
     # 평균 성과
     print(f"\n{'='*80}")
@@ -552,9 +582,16 @@ def print_walk_forward_results(results: List[Dict]):
         'roc_auc': np.mean([r['random_forest']['roc_auc'] for r in results])
     }
     
-    avg_lstm = {
-        'accuracy': np.mean([r['lstm']['accuracy'] for r in results]),
-        'f1': np.mean([r['lstm']['f1'] for r in results])
+    avg_lgb = {
+        'accuracy': np.mean([r['lightgbm']['accuracy'] for r in results]),
+        'f1': np.mean([r['lightgbm']['f1'] for r in results]),
+        'roc_auc': np.mean([r['lightgbm']['roc_auc'] for r in results])
+    }
+    
+    avg_cat = {
+        'accuracy': np.mean([r['catboost']['accuracy'] for r in results]),
+        'f1': np.mean([r['catboost']['f1'] for r in results]),
+        'roc_auc': np.mean([r['catboost']['roc_auc'] for r in results])
     }
     
     avg_ensemble = {
@@ -565,8 +602,206 @@ def print_walk_forward_results(results: List[Dict]):
     
     print(f"XGBoost: 정확도={avg_xgb['accuracy']:.4f}, F1={avg_xgb['f1']:.4f}, ROC AUC={avg_xgb['roc_auc']:.4f}")
     print(f"Random Forest: 정확도={avg_rf['accuracy']:.4f}, F1={avg_rf['f1']:.4f}, ROC AUC={avg_rf['roc_auc']:.4f}")
-    print(f"LSTM: 정확도={avg_lstm['accuracy']:.4f}, F1={avg_lstm['f1']:.4f}")
+    print(f"LightGBM: 정확도={avg_lgb['accuracy']:.4f}, F1={avg_lgb['f1']:.4f}, ROC AUC={avg_lgb['roc_auc']:.4f}")
+    print(f"CatBoost: 정확도={avg_cat['accuracy']:.4f}, F1={avg_cat['f1']:.4f}, ROC AUC={avg_cat['roc_auc']:.4f}")
     print(f"Ensemble: 정확도={avg_ensemble['accuracy']:.4f}, F1={avg_ensemble['f1']:.4f}, ROC AUC={avg_ensemble['roc_auc']:.4f}")
+
+
+def train_lightgbm(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
+    """LightGBM 모델 학습 및 평가"""
+    try:
+        import lightgbm as lgb
+    except ImportError:
+        print("  LightGBM not installed, skipping...")
+        return {'accuracy': 0, 'f1': 0, 'roc_auc': 0}
+    
+    # 기본 피처
+    base_feature_cols = [
+        'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
+        'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
+        'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
+        'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
+    ]
+    
+    # 추가 피처 계산
+    train_data = train_data.copy()
+    test_data = test_data.copy()
+    
+    for df in [train_data, test_data]:
+        df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+        df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+        df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+        df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택
+    if use_feature_selection:
+        from sklearn.ensemble import RandomForestClassifier
+        X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+        y_train = train_data['is_win'].copy()
+        
+        temp_model = RandomForestClassifier(
+            n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+            max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+        )
+        temp_model.fit(X_train_all, y_train)
+        
+        feature_importance = pd.DataFrame({
+            'feature': all_feature_cols,
+            'importance': temp_model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+        selected_features = selected_features[:min(len(selected_features), 18)]
+        if len(selected_features) < 5:
+            selected_features = feature_importance['feature'].head(5).tolist()
+    else:
+        selected_features = all_feature_cols
+    
+    # 부트스트랩 샘플링
+    if use_bootstrap:
+        train_data = train_data.sample(frac=1.0, replace=True, random_state=42)
+    
+    # 학습 데이터 준비
+    X_train = train_data[selected_features].copy().fillna(0).astype(float)
+    y_train = train_data['is_win'].copy()
+    X_test = test_data[selected_features].copy().fillna(0).astype(float)
+    y_test = test_data['is_win'].copy()
+    
+    # LightGBM 모델 학습
+    model = lgb.LGBMClassifier(
+        n_estimators=50,
+        max_depth=4,
+        learning_rate=0.05,
+        subsample=0.7,
+        colsample_bytree=0.7,
+        random_state=42,
+        reg_alpha=0.5,
+        reg_lambda=2.0,
+        verbose=-1
+    )
+    
+    model.fit(X_train, y_train)
+    
+    # 예측
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    
+    # 성능 평가
+    result = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred, zero_division=0),
+        'recall': recall_score(y_test, y_pred, zero_division=0),
+        'f1': f1_score(y_test, y_pred, zero_division=0),
+        'roc_auc': roc_auc_score(y_test, y_pred_proba) if len(y_test) > 1 else 0,
+        'selected_features': selected_features
+    }
+    
+    print(f"  선택된 피처 ({len(selected_features)}개): {selected_features}")
+    print(f"  정확도: {result['accuracy']:.4f}")
+    print(f"  F1 점수: {result['f1']:.4f}")
+    print(f"  ROC AUC: {result['roc_auc']:.4f}")
+    
+    return result
+
+
+def train_catboost(train_data: pd.DataFrame, test_data: pd.DataFrame, use_feature_selection: bool = True, use_bootstrap: bool = True) -> Dict:
+    """CatBoost 모델 학습 및 평가"""
+    try:
+        import catboost as cb
+    except ImportError:
+        print("  CatBoost not installed, skipping...")
+        return {'accuracy': 0, 'f1': 0, 'roc_auc': 0}
+    
+    # 기본 피처
+    base_feature_cols = [
+        'entry_rsi', 'entry_macd', 'entry_macd_signal', 'entry_macd_hist',
+        'entry_atr', 'entry_supertrend', 'entry_supertrend_dir',
+        'entry_ma20', 'entry_ma60', 'entry_bb_upper', 'entry_bb_lower', 'entry_bb_middle',
+        'entry_hour', 'entry_dayofweek', 'entry_month', 'regime'
+    ]
+    
+    # 추가 피처 계산
+    train_data = train_data.copy()
+    test_data = test_data.copy()
+    
+    for df in [train_data, test_data]:
+        df['rsi_ma_ratio'] = df['entry_rsi'] / df['entry_ma20']
+        df['price_ma_ratio'] = df['entry_close'] / df['entry_ma20']
+        df['bb_position'] = (df['entry_close'] - df['entry_bb_lower']) / (df['entry_bb_upper'] - df['entry_bb_lower'])
+        df['supertrend_alignment'] = ((df['entry_close'] > df['entry_supertrend']) & (df['entry_supertrend_dir'] == 1)).astype(int)
+    
+    # 모든 피처
+    all_feature_cols = base_feature_cols + ['rsi_ma_ratio', 'price_ma_ratio', 'bb_position', 'supertrend_alignment']
+    
+    # 피처 선택
+    if use_feature_selection:
+        from sklearn.ensemble import RandomForestClassifier
+        X_train_all = train_data[all_feature_cols].copy().fillna(0).astype(float)
+        y_train = train_data['is_win'].copy()
+        
+        temp_model = RandomForestClassifier(
+            n_estimators=30, max_depth=4, min_samples_split=25, min_samples_leaf=12,
+            max_features='sqrt', random_state=42, n_jobs=-1, class_weight='balanced'
+        )
+        temp_model.fit(X_train_all, y_train)
+        
+        feature_importance = pd.DataFrame({
+            'feature': all_feature_cols,
+            'importance': temp_model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        selected_features = feature_importance[feature_importance['importance'] >= 0.02]['feature'].tolist()
+        selected_features = selected_features[:min(len(selected_features), 18)]
+        if len(selected_features) < 5:
+            selected_features = feature_importance['feature'].head(5).tolist()
+    else:
+        selected_features = all_feature_cols
+    
+    # 부트스트랩 샘플링
+    if use_bootstrap:
+        train_data = train_data.sample(frac=1.0, replace=True, random_state=42)
+    
+    # 학습 데이터 준비
+    X_train = train_data[selected_features].copy().fillna(0).astype(float)
+    y_train = train_data['is_win'].copy()
+    X_test = test_data[selected_features].copy().fillna(0).astype(float)
+    y_test = test_data['is_win'].copy()
+    
+    # CatBoost 모델 학습
+    model = cb.CatBoostClassifier(
+        iterations=50,
+        depth=4,
+        learning_rate=0.05,
+        random_seed=42,
+        l2_leaf_reg=2.0,
+        verbose=False
+    )
+    
+    model.fit(X_train, y_train)
+    
+    # 예측
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    
+    # 성능 평가
+    result = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred, zero_division=0),
+        'recall': recall_score(y_test, y_pred, zero_division=0),
+        'f1': f1_score(y_test, y_pred, zero_division=0),
+        'roc_auc': roc_auc_score(y_test, y_pred_proba) if len(y_test) > 1 else 0,
+        'selected_features': selected_features
+    }
+    
+    print(f"  선택된 피처 ({len(selected_features)}개): {selected_features}")
+    print(f"  정확도: {result['accuracy']:.4f}")
+    print(f"  F1 점수: {result['f1']:.4f}")
+    print(f"  ROC AUC: {result['roc_auc']:.4f}")
+    
+    return result
 
 
 def main():
