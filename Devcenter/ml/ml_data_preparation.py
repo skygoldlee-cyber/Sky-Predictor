@@ -20,7 +20,7 @@ import pivot_optuna_v2 as pv
 import regime_intraday_v2 as rg
 import pivot_regime_optimizer as pro
 
-DB_PATH = "c:/Project/SkyPredictor/Devcenter/duckdb/market_data.duckdb"
+DB_PATH = "Devcenter/data/duckdb/market_data.duckdb"
 OUTPUT_DIR = Path(__file__).parent / "ml_data"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -51,53 +51,131 @@ FCFG_BULL = pv.FilterConfig(
     adx_hold_threshold=10.0  # 15.0→10.0 (거래 수 확보를 위해 완화)
 )
 
+# Short 전용 피봇 파라미터 (더 보수적 - 양질 Short 피봇만 선택)
+PCFG_SHORT = pv.HybridAdaptivePivotConfig(
+    base_pct=0.4,  # 0.3→0.4 (더 보수적)
+    base_multiplier=2.0,  # 1.5→2.0 (더 보수적)
+    atr_weight=0.3,  # 0.2→0.3 (더 보수적)
+    confirmation_bars=2  # 1→2 (더 보수적)
+)
+
+# Short 전용 필터링 파라미터 (더 보수적)
+FCFG_SHORT = pv.FilterConfig(
+    enabled=True,
+    min_wave_pct=0.25,  # 0.15→0.25 (더 보수적)
+    min_pivot_interval_bars=10,  # 5→10 (더 보수적)
+    st_distance_threshold=0.1,  # 0.05→0.1 (더 보수적)
+    adx_hold_threshold=15.0  # 10.0→15.0 (더 보수적)
+)
+
 
 def load_data_by_year(year: int):
-    """특정 연도의 5분봉 데이터 로드"""
+    """특정 연도의 1분봉 데이터 로드 후 5분봉으로 집계"""
     import duckdb
-    start_date = f"{year}-01-01 00:00:00"
-    end_date = f"{year}-12-31 23:59:59"
+    start_date = f"{year}0101"
+    end_date = f"{year}1231"
     
     con = duckdb.connect(DB_PATH, read_only=True)
     df = con.execute(
-        f"SELECT * FROM futures_5min "
+        f"SELECT * FROM futures_1min "
         f"WHERE timestamp >= '{start_date}' "
         f"AND timestamp <= '{end_date}' "
         f"ORDER BY timestamp"
     ).df()
     con.close()
     
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    if len(df) == 0:
+        return df
+    
+    df["timestamp"] = pd.to_datetime(df["timestamp"], format='%Y%m%d %H%M')
     df = df.set_index("timestamp")
     df.columns = df.columns.str.upper()
     
-    df = pv.filter_day_session(df, start="08:45", end="15:45")
-    df = pv.compute_indicators(df)
+    # 5분봉으로 집계
+    df_5min = df.resample('5min').agg({
+        'OPEN': 'first',
+        'HIGH': 'max',
+        'LOW': 'min',
+        'CLOSE': 'last',
+        'VOLUME': 'sum'
+    }).dropna()
     
-    return df
+    df_5min = pv.filter_day_session(df_5min, start="08:45", end="15:45")
+    df_5min = pv.compute_indicators(df_5min)
+    
+    return df_5min
+
+
+def load_data_from_txt(txt_path: str):
+    """since2019_future_data.txt 파일에서 데이터 로드 후 5분봉으로 집계"""
+    # 공백으로 구분된 데이터 읽기 (헤더 없음)
+    df = pd.read_csv(txt_path, sep='\s+', header=None, 
+                     names=['index', 'datetime', 'open', 'high', 'low', 'close'])
+    
+    # 날짜/시간 파싱 (형식: 2019/06/03_0900)
+    df['datetime'] = pd.to_datetime(df['datetime'], format='%Y/%m/%d_%H%M')
+    df = df.set_index('datetime')
+    df = df.drop('index', axis=1)
+    
+    # 컬럼명 대문자로 변환
+    df.columns = ['OPEN', 'HIGH', 'LOW', 'CLOSE']
+    # VOLUME 컬럼 추가 (데이터가 없으므로 0으로 설정)
+    df['VOLUME'] = 0
+    
+    # 5분봉으로 집계
+    df_5min = df.resample('5min').agg({
+        'OPEN': 'first',
+        'HIGH': 'max',
+        'LOW': 'min',
+        'CLOSE': 'last',
+        'VOLUME': 'sum'
+    }).dropna()
+    
+    df_5min = pv.filter_day_session(df_5min, start="08:45", end="15:45")
+    df_5min = pv.compute_indicators(df_5min)
+    
+    return df_5min
 
 
 def run_pivot_bull_neutral_with_details(df: pd.DataFrame, pcfg: pv.HybridAdaptivePivotConfig, 
                                        fcfg: pv.FilterConfig, direction_mode: str = "long_only",
                                        bt_cfg: pv.BacktestConfig = None):
-    """BULL + NEUTRAL 레짐 완화 피봇 전략 실행 (상세 거래 데이터 포함)"""
+    """피봇 전략 실행 (상세 거래 데이터 포함, 방향별 파라미터 적용)"""
     bt = bt_cfg if bt_cfg is not None else BT_HALF_KELLY_INTRADAY
     bt.direction_mode = direction_mode
     
-    # 레짐 신호 계산
-    regime_signal = rg.daily_regime_signal(df, ma_short=20, ma_long=60)
-    regime_per_bar = regime_signal.reindex(df.index, method='ffill')
-    
-    # BULL(1)과 NEUTRAL(0) 레짐만 필터링
-    df_filtered = df[regime_per_bar.isin([0, 1])].copy()
-    print(f"  레짐 필터링 전: {len(df)} 봉, 필터링 후: {len(df_filtered)} 봉")
+    df_filtered = df.copy()
+    print(f"  사용 데이터: {len(df_filtered)} 봉")
     
     if len(df_filtered) == 0:
         return pv.BacktestResult()
     
-    # 피봇 검출 및 백테스트 (일별 리셋)
-    pivots = pv.detect_pivots_daily(df_filtered, pcfg, fcfg, bt.session_boundary_hour)
-    print(f"  검출된 피봇 수: {len(pivots)}")
+    # 방향별 파라미터 적용
+    if direction_mode == "both":
+        # Long 피봇 검출 (BULL 파라미터)
+        long_pivots = pv.detect_pivots_daily(df_filtered, PCFG_BULL, FCFG_BULL, bt.session_boundary_hour)
+        print(f"  Long 피봇 수: {len(long_pivots)}")
+        
+        # Short 피봇 검출 (SHORT 파라미터)
+        short_pivots = pv.detect_pivots_daily(df_filtered, PCFG_SHORT, FCFG_SHORT, bt.session_boundary_hour)
+        print(f"  Short 피봇 수: {len(short_pivots)}")
+        
+        # 피봇 합치기 (DataFrame으로 유지)
+        if isinstance(long_pivots, pd.DataFrame) and isinstance(short_pivots, pd.DataFrame):
+            pivots = pd.concat([long_pivots, short_pivots], ignore_index=True)
+        elif isinstance(long_pivots, list) and isinstance(short_pivots, list):
+            pivots = long_pivots + short_pivots
+        else:
+            # 둘 중 하나가 DataFrame이면 다른 것도 DataFrame으로 변환
+            if isinstance(long_pivots, pd.DataFrame):
+                pivots = pd.concat([long_pivots, pd.DataFrame(short_pivots)], ignore_index=True)
+            else:
+                pivots = pd.concat([pd.DataFrame(long_pivots), short_pivots], ignore_index=True)
+        print(f"  전체 피봇 수: {len(pivots)}")
+    else:
+        # 단일 방향 (기존 로직)
+        pivots = pv.detect_pivots_daily(df_filtered, pcfg, fcfg, bt.session_boundary_hour)
+        print(f"  검출된 피봇 수: {len(pivots)}")
     
     if len(pivots) == 0:
         return pv.BacktestResult()
@@ -125,9 +203,6 @@ def run_pivot_bull_neutral_with_details(df: pd.DataFrame, pcfg: pv.HybridAdaptiv
             res.trades.at[idx, 'exit_high'] = exit_data['HIGH']
             res.trades.at[idx, 'exit_low'] = exit_data['LOW']
             res.trades.at[idx, 'exit_volume'] = exit_data['VOLUME']
-            
-            # 레짐 정보
-            res.trades.at[idx, 'regime'] = regime_per_bar.loc[entry_time]
     
     return res
 
@@ -212,83 +287,141 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def extract_ml_dataset(years: List[int]):
-    """머신러닝 데이터셋 추출"""
-    all_trades = []
+def calculate_regime_features(df: pd.DataFrame, window: int = 20) -> pd.DataFrame:
+    """레짐 감지를 위한 피처 계산"""
+    df = df.copy()
     
-    for year in years:
-        print(f"[{year}년 데이터 추출 중...]")
+    # pv.compute_indicators 컬럼 이름 사용 (ATR_14, EMA_20 등)
+    atr_col = 'ATR_14' if 'ATR_14' in df.columns else 'ATR'
+    
+    # MA20 컬럼 찾기 (여러 가능한 이름)
+    ma20_col = None
+    for col in ['EMA_20', 'MA20', 'MA_20', 'SMA_20']:
+        if col in df.columns:
+            ma20_col = col
+            break
+    
+    # MA20가 없으면 직접 계산
+    if ma20_col is None:
+        df['MA20'] = df['CLOSE'].rolling(window=20).mean()
+        ma20_col = 'MA20'
+    
+    # 변동성 기반 레짐
+    df['volatility'] = df[atr_col] / df['CLOSE'] * 100
+    df['volatility_ma'] = df['volatility'].rolling(window=window, min_periods=1).mean()
+    df['volatility_regime'] = np.where(df['volatility'] > df['volatility_ma'] * 1.5, 2, 
+                                       np.where(df['volatility'] < df['volatility_ma'] * 0.5, 0, 1))
+    # 0: low, 1: normal, 2: high
+    
+    # 추세 기반 레짐
+    df['trend_strength'] = (df['CLOSE'] - df[ma20_col]) / df['CLOSE'] * 100
+    df['trend_regime'] = np.where(df['trend_strength'] > 1.0, 2,
+                                  np.where(df['trend_strength'] < -1.0, 0, 1))
+    # 0: downtrend, 1: sideways, 2: uptrend
+    
+    # 모멘텀 기반 레짐
+    df['momentum'] = df['CLOSE'] / df['CLOSE'].shift(window) - 1
+    df['momentum_regime'] = np.where(df['momentum'] > 0.01, 2,
+                                     np.where(df['momentum'] < -0.01, 0, 1))
+    # 0: negative, 1: neutral, 2: positive
+    
+    return df
+
+
+def extract_ml_dataset(years: List[int], use_txt: bool = False, txt_path: str = None):
+    """머신러닝 데이터셋 추출 (전체 기간 한 번에 처리)"""
+    print("전체 기간 데이터 로드 중...")
+    
+    if use_txt and txt_path:
+        # txt 파일 사용
+        print(f"TXT 파일 사용: {txt_path}")
+        df = load_data_from_txt(txt_path)
+        if len(df) > 0:
+            all_dfs = [df]
+        else:
+            print("TXT 파일 데이터 없음")
+            return None
+    else:
+        # DuckDB 사용
+        # 전체 기간 데이터 로드
+        all_dfs = []
+        for year in years:
+            df = load_data_by_year(year)
+            if len(df) > 0:
+                all_dfs.append(df)
+    
+    if not all_dfs:
+        print("데이터 없음")
+        return None
+    
+    df = pd.concat(all_dfs)
+    print(f"로드된 데이터: {len(df)} 봉")
+    print(f"기간: {df.index.min()} ~ {df.index.max()}")
+    
+    # 기술적 지표 계산 (pv.compute_indicators 사용)
+    df = pv.compute_indicators(df)
+    
+    # 레짐 피처 계산
+    df = calculate_regime_features(df)
+    
+    # 백테스트 실행 (long+short 모두 포함)
+    res = run_pivot_bull_neutral_with_details(
+        df, PCFG_BULL, FCFG_BULL, "both", BT_HALF_KELLY_INTRADAY
+    )
+    
+    print(f"백테스트 결과: 거래={res.n_trades}, PnL={res.total_pnl_krw:,.0f}")
+    
+    if res.trades is not None and len(res.trades) > 0:
+        # 연도 정보 추가
+        res.trades['year'] = pd.to_datetime(res.trades['entry_time']).dt.year
         
-        # 데이터 로드
-        df = load_data_by_year(year)
-        if len(df) == 0:
-            continue
-        
-        print(f"  로드된 데이터: {len(df)} 봉")
-        
-        # 기술적 지표 계산
-        df = calculate_technical_indicators(df)
-        
-        # 백테스트 실행
-        res = run_pivot_bull_neutral_with_details(
-            df, PCFG_BULL, FCFG_BULL, "long_only", BT_HALF_KELLY_INTRADAY
-        )
-        
-        print(f"  백테스트 결과: 거래={res.n_trades}, PnL={res.total_pnl_krw:,.0f}")
-        
-        if res.trades is not None and len(res.trades) > 0:
-            # 연도 정보 추가
-            res.trades['year'] = year
-            
-            # 진입 시점의 기술적 지표 추가 (다양한 시간 윈도우 및 변동성 적응형 피처)
-            for idx, trade in res.trades.iterrows():
-                entry_time = trade['entry_time']
+        # 진입 시점의 기술적 지표 추가
+        for idx, trade in res.trades.iterrows():
+            entry_time = trade['entry_time']
+            if entry_time in df.index:
                 entry_data = df.loc[entry_time]
                 
-                res.trades.at[idx, 'entry_rsi'] = entry_data['RSI']
-                res.trades.at[idx, 'entry_macd'] = entry_data['MACD']
-                res.trades.at[idx, 'entry_macd_signal'] = entry_data['MACD_SIGNAL']
-                res.trades.at[idx, 'entry_macd_hist'] = entry_data['MACD_HIST']
-                res.trades.at[idx, 'entry_atr'] = entry_data['ATR']
-                res.trades.at[idx, 'entry_supertrend'] = entry_data['SUPERTREND']
-                res.trades.at[idx, 'entry_supertrend_dir'] = entry_data['SUPERTREND_DIR']
-                res.trades.at[idx, 'entry_ma5'] = entry_data['MA5']
-                res.trades.at[idx, 'entry_ma10'] = entry_data['MA10']
-                res.trades.at[idx, 'entry_ma20'] = entry_data['MA20']
-                res.trades.at[idx, 'entry_ma60'] = entry_data['MA60']
-                res.trades.at[idx, 'entry_bb_upper'] = entry_data['BB_UPPER']
-                res.trades.at[idx, 'entry_bb_lower'] = entry_data['BB_LOWER']
-                res.trades.at[idx, 'entry_bb_middle'] = entry_data['BB_MIDDLE']
+                # pv.compute_indicators 컬럼 이름 사용
+                res.trades.at[idx, 'entry_rsi'] = entry_data.get('RSI_14', 0)
+                res.trades.at[idx, 'entry_macd'] = entry_data.get('MACD', 0)
+                res.trades.at[idx, 'entry_macd_signal'] = entry_data.get('MACD_Signal', 0)
+                res.trades.at[idx, 'entry_macd_hist'] = entry_data.get('MACD_Hist', 0)
+                res.trades.at[idx, 'entry_atr'] = entry_data.get('ATR_14', 0)
+                res.trades.at[idx, 'entry_supertrend'] = entry_data.get('Supertrend', 0)
+                res.trades.at[idx, 'entry_supertrend_dir'] = entry_data.get('Supertrend_Dir', 0)
+                res.trades.at[idx, 'entry_ma5'] = entry_data.get('EMA_5', 0)
+                res.trades.at[idx, 'entry_ma10'] = entry_data.get('EMA_10', 0)
+                res.trades.at[idx, 'entry_ma20'] = entry_data.get('EMA_20', 0)
+                res.trades.at[idx, 'entry_ma60'] = entry_data.get('EMA_60', 0)
+                res.trades.at[idx, 'entry_bb_upper'] = entry_data.get('BB_Upper', 0)
+                res.trades.at[idx, 'entry_bb_lower'] = entry_data.get('BB_Lower', 0)
+                res.trades.at[idx, 'entry_bb_middle'] = entry_data.get('BB_Middle', 0)
                 
                 # 변동성 적응형 피처
                 res.trades.at[idx, 'entry_close'] = entry_data['CLOSE']
-                res.trades.at[idx, 'atr_normalized'] = entry_data['ATR'] / entry_data['CLOSE'] if entry_data['CLOSE'] > 0 else 0
-            
-            all_trades.append(res.trades)
-            print(f"  거래 수: {len(res.trades)}")
-        else:
-            print(f"  거래 없음")
-    
-    # 모든 거래 데이터 합치기
-    if all_trades:
-        ml_dataset = pd.concat(all_trades, ignore_index=True)
+                res.trades.at[idx, 'atr_normalized'] = entry_data.get('ATR_14', 0) / entry_data['CLOSE'] if entry_data['CLOSE'] > 0 else 0
+                
+                # 레짐 피처
+                res.trades.at[idx, 'volatility_regime'] = entry_data.get('volatility_regime', 1)
+                res.trades.at[idx, 'trend_regime'] = entry_data.get('trend_regime', 1)
+                res.trades.at[idx, 'momentum_regime'] = entry_data.get('momentum_regime', 1)
         
         # 레이블링
-        ml_dataset['is_win'] = (ml_dataset['net_pts'] > 0).astype(int)
+        res.trades['is_win'] = (res.trades['net_pts'] > 0).astype(int)
         
         # 시간 피쳐 추가
-        ml_dataset['entry_hour'] = pd.to_datetime(ml_dataset['entry_time']).dt.hour
-        ml_dataset['entry_dayofweek'] = pd.to_datetime(ml_dataset['entry_time']).dt.dayofweek
-        ml_dataset['entry_month'] = pd.to_datetime(ml_dataset['entry_time']).dt.month
+        res.trades['entry_hour'] = pd.to_datetime(res.trades['entry_time']).dt.hour
+        res.trades['entry_dayofweek'] = pd.to_datetime(res.trades['entry_time']).dt.dayofweek
+        res.trades['entry_month'] = pd.to_datetime(res.trades['entry_time']).dt.month
         
         # 저장
         output_path = OUTPUT_DIR / "ml_dataset.csv"
-        ml_dataset.to_csv(output_path, index=False)
+        res.trades.to_csv(output_path, index=False)
         print(f"\n데이터셋 저장 완료: {output_path}")
-        print(f"총 거래 수: {len(ml_dataset)}")
-        print(f"승률: {ml_dataset['is_win'].mean() * 100:.2f}%")
+        print(f"총 거래 수: {len(res.trades)}")
+        print(f"승률: {res.trades['is_win'].mean() * 100:.2f}%")
         
-        return ml_dataset
+        return res.trades
     else:
         print("거래 데이터가 없습니다.")
         return None
@@ -296,13 +429,16 @@ def extract_ml_dataset(years: List[int]):
 
 def main():
     """메인 함수"""
-    years = list(range(2019, 2027))  # 2019-2026
+    # since2019_future_data.txt 사용 (2019-2026 전체 기간)
+    txt_path = "Devcenter/data/since2019_future_data.txt"
+    use_txt = True
+    years = []  # txt 파일 사용 시 years는 비워둠
     
     print("=" * 100)
     print("머신러닝 데이터 준비 시작")
     print("=" * 100)
     
-    ml_dataset = extract_ml_dataset(years)
+    ml_dataset = extract_ml_dataset(years, use_txt=use_txt, txt_path=txt_path)
     
     if ml_dataset is not None:
         print("\n" + "=" * 100)
@@ -318,6 +454,13 @@ def main():
         for year in sorted(ml_dataset['year'].unique()):
             year_data = ml_dataset[ml_dataset['year'] == year]
             print(f"  {year}년: 거래={len(year_data)}, 승률={year_data['is_win'].mean()*100:.2f}%, PnL={year_data['net_krw'].sum():,.0f}")
+        
+        # 방향별 통계
+        print("\n방향별 통계:")
+        for direction in sorted(ml_dataset['direction'].unique()):
+            dir_data = ml_dataset[ml_dataset['direction'] == direction]
+            dir_name = "Long" if direction == 1 else "Short"
+            print(f"  {dir_name}: 거래={len(dir_data)}, 승률={dir_data['is_win'].mean()*100:.2f}%, PnL={dir_data['net_krw'].sum():,.0f}")
 
 
 if __name__ == "__main__":

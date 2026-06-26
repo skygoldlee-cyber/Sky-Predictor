@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "n_estimators": 136,
+    "max_depth": 8,
+    "min_samples_split": 18,
+    "min_samples_leaf": 26,
+    "max_features": "sqrt"
+  },
+  "best_value": 0.6394557823129252,
+  "test_accuracy": 0.5168067226890757,
+  "test_f1": 0.4978165938864629,
+  "test_roc_auc": 0.5360005674966304
+}

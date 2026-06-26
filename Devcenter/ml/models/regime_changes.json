@@ -1,0 +1,4181 @@
+[
+  {
+    "time": "2019-06-11 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12994172310599914,
+    "trend_strength": 1.176038221242207
+  },
+  {
+    "time": "2019-06-13 15:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.16592920353982332,
+    "trend_strength": 0.7067354965584914
+  },
+  {
+    "time": "2019-06-14 09:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.23497109063548038,
+    "trend_strength": 0.40129894131003097
+  },
+  {
+    "time": "2019-06-17 10:50:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.11977151280633895,
+    "trend_strength": 0.6080707573245012
+  },
+  {
+    "time": "2019-06-19 14:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.0688186563481973,
+    "trend_strength": 1.714233775677161
+  },
+  {
+    "time": "2019-07-10 09:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1741195092995668,
+    "trend_strength": -0.2242448225827637
+  },
+  {
+    "time": "2019-07-16 12:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.08193736343772402,
+    "trend_strength": 1.0581047179736218
+  },
+  {
+    "time": "2019-07-19 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.14769311201149965,
+    "trend_strength": 0.5393171859199637
+  },
+  {
+    "time": "2019-07-22 11:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.10769430387959086,
+    "trend_strength": 1.1989100817438734
+  },
+  {
+    "time": "2019-07-30 12:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.06610084344675936,
+    "trend_strength": -0.9078289838978506
+  },
+  {
+    "time": "2019-08-01 12:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13247337151420743,
+    "trend_strength": -2.089733982765097
+  },
+  {
+    "time": "2019-08-06 14:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2079761670554511,
+    "trend_strength": -6.917174896714544
+  },
+  {
+    "time": "2019-08-08 13:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1645754796601577,
+    "trend_strength": -6.332217408428521
+  },
+  {
+    "time": "2019-08-09 09:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.25200201601612576,
+    "trend_strength": -5.2087416699333575
+  },
+  {
+    "time": "2019-08-12 12:20:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.0851337017808283,
+    "trend_strength": -4.5906604142242955
+  },
+  {
+    "time": "2019-08-28 14:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_downtrend_normal",
+    "volatility": 0.0629758172861605,
+    "trend_strength": -3.322884012539192
+  },
+  {
+    "time": "2019-08-29 14:30:00",
+    "old_regime": "low_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14560116480931895,
+    "trend_strength": -3.0566444531556196
+  },
+  {
+    "time": "2019-08-30 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.21745754730047906,
+    "trend_strength": -1.712235796005415
+  },
+  {
+    "time": "2019-09-03 11:15:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1312771190890734,
+    "trend_strength": -1.1965563938866433
+  },
+  {
+    "time": "2019-09-04 15:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12301131704116619,
+    "trend_strength": 0.14064293915040446
+  },
+  {
+    "time": "2019-09-05 12:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.10084982788295888,
+    "trend_strength": 1.9267695783132768
+  },
+  {
+    "time": "2019-09-17 12:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.0590752750282308,
+    "trend_strength": 4.237272560191153
+  },
+  {
+    "time": "2019-09-19 10:10:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.16963638247176924,
+    "trend_strength": 5.150471356055127
+  },
+  {
+    "time": "2019-10-07 14:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.07313051802999827,
+    "trend_strength": 0.8451228592702836
+  },
+  {
+    "time": "2019-10-10 09:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.23862551702195206,
+    "trend_strength": 0.9075723830734732
+  },
+  {
+    "time": "2019-10-11 09:15:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.20092979276653136,
+    "trend_strength": 1.502114359257209
+  },
+  {
+    "time": "2019-10-14 12:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.0737978715140207,
+    "trend_strength": 2.52039151712889
+  },
+  {
+    "time": "2019-12-05 09:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.15494267121165164,
+    "trend_strength": -1.370209689081693
+  },
+  {
+    "time": "2019-12-12 09:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.21312550443905917,
+    "trend_strength": 0.7847810734463365
+  },
+  {
+    "time": "2019-12-18 10:50:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1334084010574741,
+    "trend_strength": 3.4518505825908123
+  },
+  {
+    "time": "2020-01-09 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.1996639801310029,
+    "trend_strength": 2.645304244077038
+  },
+  {
+    "time": "2020-01-10 12:25:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11596723925491488,
+    "trend_strength": 3.2428547268729844
+  },
+  {
+    "time": "2020-01-31 11:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.18365586096388342,
+    "trend_strength": -0.6238136324417617
+  },
+  {
+    "time": "2020-02-03 13:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1729323308270671,
+    "trend_strength": -2.3017543859649328
+  },
+  {
+    "time": "2020-02-04 10:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.278486026190065,
+    "trend_strength": -1.4217639923756786
+  },
+  {
+    "time": "2020-02-04 12:45:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.14143053915781326,
+    "trend_strength": -0.9986225895316923
+  },
+  {
+    "time": "2020-02-05 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.2542331646555091,
+    "trend_strength": -0.07493188010898176
+  },
+  {
+    "time": "2020-02-06 14:00:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12148931608661391,
+    "trend_strength": 1.7883941970985529
+  },
+  {
+    "time": "2020-02-10 14:40:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13013302486986783,
+    "trend_strength": 0.5786099865046958
+  },
+  {
+    "time": "2020-02-11 10:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15496852946786055,
+    "trend_strength": 1.4961615487316475
+  },
+  {
+    "time": "2020-02-19 09:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.21753681392235663,
+    "trend_strength": 0.8023761713520681
+  },
+  {
+    "time": "2020-02-20 09:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.20272673384706738,
+    "trend_strength": 1.7676348547717804
+  },
+  {
+    "time": "2020-02-20 15:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1526405615249598,
+    "trend_strength": 0.37691401648997064
+  },
+  {
+    "time": "2020-02-25 13:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13963669300055095,
+    "trend_strength": -4.0709756956674905
+  },
+  {
+    "time": "2020-03-05 09:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2726184106601425,
+    "trend_strength": -3.4028892455858615
+  },
+  {
+    "time": "2020-03-05 11:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1905614528712094,
+    "trend_strength": -3.441360787824535
+  },
+  {
+    "time": "2020-03-13 14:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 1.1300772120817677,
+    "trend_strength": -16.15966038517291
+  },
+  {
+    "time": "2020-03-16 11:15:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.41286462228870546,
+    "trend_strength": -13.425130890052358
+  },
+  {
+    "time": "2020-03-20 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 1.1013527870245756,
+    "trend_strength": -28.267228557263284
+  },
+  {
+    "time": "2020-03-20 12:15:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.6063545961678389,
+    "trend_strength": -21.843317972350228
+  },
+  {
+    "time": "2020-03-24 10:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.9151838873201106,
+    "trend_strength": -13.38532984043821
+  },
+  {
+    "time": "2020-03-24 13:35:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.5008710801393714,
+    "trend_strength": -10.13250469043153
+  },
+  {
+    "time": "2020-03-25 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 1.0356585194863144,
+    "trend_strength": -2.196074057550766
+  },
+  {
+    "time": "2020-03-25 10:20:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.7423401840877573,
+    "trend_strength": 0.0706090026478361
+  },
+  {
+    "time": "2020-03-25 12:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.471491228070174,
+    "trend_strength": 1.4649122807017558
+  },
+  {
+    "time": "2020-03-25 13:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.2876634808853121,
+    "trend_strength": 1.9498239436619749
+  },
+  {
+    "time": "2020-03-25 13:55:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.510540701875648,
+    "trend_strength": 2.786452606113912
+  },
+  {
+    "time": "2020-04-02 13:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.4181413850346082,
+    "trend_strength": -1.255207191405386
+  },
+  {
+    "time": "2020-04-03 09:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.4375693331689877,
+    "trend_strength": 0.1779551337359891
+  },
+  {
+    "time": "2020-04-06 09:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.39211530309453035,
+    "trend_strength": 1.6543026706231347
+  },
+  {
+    "time": "2020-04-06 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.1869778943876462,
+    "trend_strength": 1.7247202871015326
+  },
+  {
+    "time": "2020-04-07 10:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.5963369963369953,
+    "trend_strength": 4.102564102564102
+  },
+  {
+    "time": "2020-04-14 13:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.12955605458628267,
+    "trend_strength": 2.89701733172108
+  },
+  {
+    "time": "2020-04-16 13:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15404737683476272,
+    "trend_strength": 1.6164801627670384
+  },
+  {
+    "time": "2020-04-22 13:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.18564176939811475,
+    "trend_strength": 0.46802030456852933
+  },
+  {
+    "time": "2020-04-22 14:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24033647105948347,
+    "trend_strength": 1.567194071700378
+  },
+  {
+    "time": "2020-05-06 10:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.22117620370895352,
+    "trend_strength": 0.4872965462485194
+  },
+  {
+    "time": "2020-05-07 10:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.20251455573369065,
+    "trend_strength": 1.072061429415249
+  },
+  {
+    "time": "2020-05-07 15:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1573564122738008,
+    "trend_strength": 0.7700629425649136
+  },
+  {
+    "time": "2020-05-19 13:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.10482180293501107,
+    "trend_strength": 3.2656756241662097
+  },
+  {
+    "time": "2020-06-01 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.29062855029194956,
+    "trend_strength": 3.254115036064366
+  },
+  {
+    "time": "2020-06-01 14:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1100715465052251,
+    "trend_strength": 3.7882957255549394
+  },
+  {
+    "time": "2020-06-03 10:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.27718550106610124,
+    "trend_strength": 7.039508340649678
+  },
+  {
+    "time": "2020-06-03 12:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1365196262618669,
+    "trend_strength": 6.622830089426615
+  },
+  {
+    "time": "2020-06-04 09:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5149673977474827,
+    "trend_strength": 6.7937413554633395
+  },
+  {
+    "time": "2020-06-05 11:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.22073412698412642,
+    "trend_strength": 5.796006944444443
+  },
+  {
+    "time": "2020-06-08 10:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4459691252144066,
+    "trend_strength": 6.308747855917662
+  },
+  {
+    "time": "2020-06-09 09:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2717258858507615,
+    "trend_strength": 6.295632889798698
+  },
+  {
+    "time": "2020-06-12 15:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1539792827874042,
+    "trend_strength": 0.8328879387136923
+  },
+  {
+    "time": "2020-06-17 09:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.46578287352203473,
+    "trend_strength": -0.53296309566462
+  },
+  {
+    "time": "2020-06-17 11:00:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.3493926919754042,
+    "trend_strength": -0.05869797225185471
+  },
+  {
+    "time": "2020-06-22 09:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3254264866651415,
+    "trend_strength": -1.1799252536038434
+  },
+  {
+    "time": "2020-06-22 13:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.10751600091072375,
+    "trend_strength": -0.6357357889144534
+  },
+  {
+    "time": "2020-06-23 09:45:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.3280460521354375,
+    "trend_strength": 0.019355973957399252
+  },
+  {
+    "time": "2020-06-30 13:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.0935028177200472,
+    "trend_strength": 0.09640898637890662
+  },
+  {
+    "time": "2020-07-01 10:45:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1743084501705171,
+    "trend_strength": 0.26967285587974843
+  },
+  {
+    "time": "2020-07-02 12:10:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.09734513274336484,
+    "trend_strength": 0.3433628318583966
+  },
+  {
+    "time": "2020-07-02 15:20:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.137289971534374,
+    "trend_strength": 0.6612590372068419
+  },
+  {
+    "time": "2020-07-09 09:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19923769923770088,
+    "trend_strength": 2.117983367983372
+  },
+  {
+    "time": "2020-07-17 12:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08080709143444999,
+    "trend_strength": 2.4537195749057346
+  },
+  {
+    "time": "2020-07-21 09:15:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17996984289119206,
+    "trend_strength": 2.889853592100787
+  },
+  {
+    "time": "2020-08-21 11:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.22636640863242063,
+    "trend_strength": -2.155993431855481
+  },
+  {
+    "time": "2020-08-24 11:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.24491116194173015,
+    "trend_strength": -0.7528707747048499
+  },
+  {
+    "time": "2020-09-01 12:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16595215046328154,
+    "trend_strength": -1.6690868021942609
+  },
+  {
+    "time": "2020-09-03 11:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2184979952245822,
+    "trend_strength": 0.6015452538631432
+  },
+  {
+    "time": "2020-09-07 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.2091377091377044,
+    "trend_strength": -1.3650257400257422
+  },
+  {
+    "time": "2020-09-07 13:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.0878594249201283,
+    "trend_strength": -0.5630990415335427
+  },
+  {
+    "time": "2020-09-08 10:05:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.26764539808018123,
+    "trend_strength": 0.5335968379446641
+  },
+  {
+    "time": "2020-09-08 15:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.09231115614094006,
+    "trend_strength": 0.9156816390859037
+  },
+  {
+    "time": "2020-09-10 11:10:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12757118020275862,
+    "trend_strength": 0.8819345661450808
+  },
+  {
+    "time": "2020-09-14 09:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.21532871273803714,
+    "trend_strength": 1.5536190924791933
+  },
+  {
+    "time": "2020-09-23 14:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.21497919556171877,
+    "trend_strength": -1.9514563106796212
+  },
+  {
+    "time": "2020-10-06 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1618489259116717,
+    "trend_strength": 0.4880367612105912
+  },
+  {
+    "time": "2020-10-12 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.18030730636563214,
+    "trend_strength": 1.2935089369708375
+  },
+  {
+    "time": "2020-10-19 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1533045650692735,
+    "trend_strength": -0.3298887122416606
+  },
+  {
+    "time": "2020-10-29 14:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.15013280979327995,
+    "trend_strength": -1.7421180274858492
+  },
+  {
+    "time": "2020-11-04 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.19142766526211097,
+    "trend_strength": 0.17522993973991507
+  },
+  {
+    "time": "2020-11-04 10:55:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.2677147413989545,
+    "trend_strength": -0.3652312599680963
+  },
+  {
+    "time": "2020-11-04 12:10:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.23779183543439392,
+    "trend_strength": -0.2118509079324691
+  },
+  {
+    "time": "2020-11-05 10:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.13895737146443113,
+    "trend_strength": 1.3547223093818446
+  },
+  {
+    "time": "2020-11-16 10:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.29849801704497575,
+    "trend_strength": 5.934731246308337
+  },
+  {
+    "time": "2020-11-17 09:20:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17069135233627075,
+    "trend_strength": 6.20730098226067
+  },
+  {
+    "time": "2020-12-08 09:40:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2739779263174284,
+    "trend_strength": 5.466539717083794
+  },
+  {
+    "time": "2020-12-09 10:25:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.21326321939818738,
+    "trend_strength": 4.706884798909336
+  },
+  {
+    "time": "2020-12-28 09:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.21915260990835675,
+    "trend_strength": 3.776729977420648
+  },
+  {
+    "time": "2020-12-29 15:15:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1429135561029734,
+    "trend_strength": 3.5645649598525786
+  },
+  {
+    "time": "2021-01-05 09:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.24565618892215982,
+    "trend_strength": 6.61729634743318
+  },
+  {
+    "time": "2021-01-05 15:05:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.193026371456778,
+    "trend_strength": 7.603652517275421
+  },
+  {
+    "time": "2021-01-06 10:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.37806850953084536,
+    "trend_strength": 7.276587887740018
+  },
+  {
+    "time": "2021-01-06 15:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24441217101767576,
+    "trend_strength": 5.698611455492193
+  },
+  {
+    "time": "2021-01-08 09:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.3011020505646755,
+    "trend_strength": 7.519703845235255
+  },
+  {
+    "time": "2021-01-08 14:40:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.23856958698163533,
+    "trend_strength": 8.535099027305746
+  },
+  {
+    "time": "2021-01-20 09:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.3319529900917045,
+    "trend_strength": 7.705081563196805
+  },
+  {
+    "time": "2021-01-20 15:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.23547880690737819,
+    "trend_strength": 6.404348339832203
+  },
+  {
+    "time": "2021-01-29 09:40:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.3922278542119237,
+    "trend_strength": -0.763939174511215
+  },
+  {
+    "time": "2021-02-01 11:40:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.26455026455026437,
+    "trend_strength": -2.0004873294347068
+  },
+  {
+    "time": "2021-02-02 09:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.3705959995938689,
+    "trend_strength": 0.43117744610281755
+  },
+  {
+    "time": "2021-02-15 11:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1910434811626139,
+    "trend_strength": 1.1790469516468278
+  },
+  {
+    "time": "2021-02-15 13:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10613582042153509,
+    "trend_strength": 1.033696033696038
+  },
+  {
+    "time": "2021-02-16 09:30:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2175279560643132,
+    "trend_strength": 2.0281380268642875
+  },
+  {
+    "time": "2021-02-18 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.19538188277086957,
+    "trend_strength": -0.034931912374194525
+  },
+  {
+    "time": "2021-02-23 13:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.21061283197205452,
+    "trend_strength": -1.3142754404890367
+  },
+  {
+    "time": "2021-03-02 09:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.43498168498168666,
+    "trend_strength": -0.21426875593541667
+  },
+  {
+    "time": "2021-03-02 11:25:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.22771855010661018,
+    "trend_strength": -0.7677611940298448
+  },
+  {
+    "time": "2021-03-03 10:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.24731571962842264,
+    "trend_strength": -1.734226082760285
+  },
+  {
+    "time": "2021-03-03 15:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1388037332243337,
+    "trend_strength": -0.5180019074869029
+  },
+  {
+    "time": "2021-03-04 09:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3087319691954112,
+    "trend_strength": -1.1928202665386072
+  },
+  {
+    "time": "2021-03-15 09:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.31606324709773026,
+    "trend_strength": -0.3279479141548277
+  },
+  {
+    "time": "2021-03-16 12:55:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.10065208788561734,
+    "trend_strength": 0.08792002890520348
+  },
+  {
+    "time": "2021-03-18 09:15:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.18779022125102338,
+    "trend_strength": 0.9261472275334609
+  },
+  {
+    "time": "2021-03-25 09:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.17183039018716495,
+    "trend_strength": -2.0614359733530763
+  },
+  {
+    "time": "2021-03-26 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.213623046875001,
+    "trend_strength": -0.8483886718749917
+  },
+  {
+    "time": "2021-04-01 09:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.22507928929509433,
+    "trend_strength": 1.5391501551682958
+  },
+  {
+    "time": "2021-04-06 14:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08307599355531763,
+    "trend_strength": 2.772556390977446
+  },
+  {
+    "time": "2021-04-08 09:15:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.09869086982927554,
+    "trend_strength": 2.0518422295701466
+  },
+  {
+    "time": "2021-04-29 10:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.21872704200894982,
+    "trend_strength": 1.189808321645623
+  },
+  {
+    "time": "2021-05-04 14:20:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09578056925867302,
+    "trend_strength": -0.5132312804082036
+  },
+  {
+    "time": "2021-05-10 10:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19289356911053676,
+    "trend_strength": 1.2679647658785282
+  },
+  {
+    "time": "2021-05-14 10:40:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18203261203979332,
+    "trend_strength": -1.9639865996649872
+  },
+  {
+    "time": "2021-05-25 09:50:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.23637867864318732,
+    "trend_strength": -0.7889138399716291
+  },
+  {
+    "time": "2021-05-27 14:50:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.11114666307404764,
+    "trend_strength": -0.5104326299658055
+  },
+  {
+    "time": "2021-06-01 09:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15983436853002128,
+    "trend_strength": 1.0463768115942003
+  },
+  {
+    "time": "2021-07-12 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.16254499013119816,
+    "trend_strength": 0.03715314060139588
+  },
+  {
+    "time": "2021-07-30 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.11226165342984464,
+    "trend_strength": -1.396317147548658
+  },
+  {
+    "time": "2021-08-03 13:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.06419234360410964,
+    "trend_strength": -0.9447945845004833
+  },
+  {
+    "time": "2021-08-18 12:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.10865628395509187,
+    "trend_strength": -4.256308100929615
+  },
+  {
+    "time": "2021-08-24 09:50:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.21108041903372135,
+    "trend_strength": -4.426000243220248
+  },
+  {
+    "time": "2021-08-25 15:05:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13041976161686075,
+    "trend_strength": -3.380290205562265
+  },
+  {
+    "time": "2021-09-01 10:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1657751268948769,
+    "trend_strength": -0.9074051920086179
+  },
+  {
+    "time": "2021-09-13 10:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.17640996978324322,
+    "trend_strength": -2.3340261645677995
+  },
+  {
+    "time": "2021-09-27 10:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13463977345772213,
+    "trend_strength": -0.9497750212817778
+  },
+  {
+    "time": "2021-09-30 09:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18502958685664067,
+    "trend_strength": -3.5195845325991737
+  },
+  {
+    "time": "2021-10-07 09:50:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2942370129870128,
+    "trend_strength": -5.799974173553714
+  },
+  {
+    "time": "2021-10-07 12:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13497878904743268,
+    "trend_strength": -5.038565368299274
+  },
+  {
+    "time": "2021-10-22 13:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_downtrend_normal",
+    "volatility": 0.08138462373175523,
+    "trend_strength": -1.7312318014938686
+  },
+  {
+    "time": "2021-10-26 09:15:00",
+    "old_regime": "low_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13763943864699593,
+    "trend_strength": -0.9420654911838813
+  },
+  {
+    "time": "2021-11-01 12:10:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.10305705530424694,
+    "trend_strength": -1.6962461695607576
+  },
+  {
+    "time": "2021-11-15 09:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.17961464494357623,
+    "trend_strength": 0.009525019050029436
+  },
+  {
+    "time": "2021-11-22 10:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1133786848072544,
+    "trend_strength": 1.2408667170571819
+  },
+  {
+    "time": "2021-12-01 11:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14353259034109947,
+    "trend_strength": -2.6720514841082403
+  },
+  {
+    "time": "2021-12-02 10:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.36467830164105386,
+    "trend_strength": -1.6716592862724717
+  },
+  {
+    "time": "2021-12-03 12:05:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1700680272108856,
+    "trend_strength": 0.05120327700974027
+  },
+  {
+    "time": "2021-12-08 09:55:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2778665530343378,
+    "trend_strength": 2.5658712403678825
+  },
+  {
+    "time": "2021-12-09 11:50:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11709601873536421,
+    "trend_strength": 1.8364409961206443
+  },
+  {
+    "time": "2021-12-15 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2040816326530608,
+    "trend_strength": -0.46508648302370215
+  },
+  {
+    "time": "2021-12-17 15:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.08696439894917936,
+    "trend_strength": 0.48636651870640923
+  },
+  {
+    "time": "2021-12-21 10:45:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.17332135062266862,
+    "trend_strength": -0.721530363332906
+  },
+  {
+    "time": "2021-12-29 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.13176057221733956,
+    "trend_strength": 1.429915924206297
+  },
+  {
+    "time": "2022-01-03 14:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09762447120077955,
+    "trend_strength": 0.6080739053404138
+  },
+  {
+    "time": "2022-01-06 10:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14661412993677267,
+    "trend_strength": -1.1699807568954463
+  },
+  {
+    "time": "2022-01-21 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.22185141643596304,
+    "trend_strength": -3.5280063711175904
+  },
+  {
+    "time": "2022-01-24 15:20:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.11633944195527642,
+    "trend_strength": -4.707228429129093
+  },
+  {
+    "time": "2022-01-26 10:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.27729704216488404,
+    "trend_strength": -6.656112334801765
+  },
+  {
+    "time": "2022-02-03 11:45:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13724951962668017,
+    "trend_strength": -5.071369750205864
+  },
+  {
+    "time": "2022-02-16 12:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.0808698871718919,
+    "trend_strength": -0.9343882144318678
+  },
+  {
+    "time": "2022-02-17 10:15:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.15710237677583583,
+    "trend_strength": 0.39670759681553647
+  },
+  {
+    "time": "2022-02-25 11:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18815331010452938,
+    "trend_strength": -1.7282229965156763
+  },
+  {
+    "time": "2022-03-02 10:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.20283774958937614,
+    "trend_strength": -0.9765895553400843
+  },
+  {
+    "time": "2022-03-10 09:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.3445589645254063,
+    "trend_strength": -1.7743288590604103
+  },
+  {
+    "time": "2022-03-14 09:30:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18234938545234644,
+    "trend_strength": -2.5564174894217206
+  },
+  {
+    "time": "2022-03-17 11:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13573592477475768,
+    "trend_strength": 0.3311759845772477
+  },
+  {
+    "time": "2022-03-24 14:10:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.06996038862503225,
+    "trend_strength": 0.2965926334666819
+  },
+  {
+    "time": "2022-03-25 14:40:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09185366624525981,
+    "trend_strength": 0.18597898230088872
+  },
+  {
+    "time": "2022-03-30 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1616736140870346,
+    "trend_strength": 1.6484865012271501
+  },
+  {
+    "time": "2022-04-05 12:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.0705177175765382,
+    "trend_strength": 0.9906759906759783
+  },
+  {
+    "time": "2022-04-08 14:40:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.08120300751879722,
+    "trend_strength": -1.3094736842105161
+  },
+  {
+    "time": "2022-04-14 13:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.08180367118914876,
+    "trend_strength": -0.48393854748602205
+  },
+  {
+    "time": "2022-04-26 10:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18500071154119405,
+    "trend_strength": -2.306816564679084
+  },
+  {
+    "time": "2022-04-28 09:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.20151289682539797,
+    "trend_strength": -3.9142071759259185
+  },
+  {
+    "time": "2022-04-29 14:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.08563368930082496,
+    "trend_strength": -1.3335684062059296
+  },
+  {
+    "time": "2022-05-03 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.17990311363042794,
+    "trend_strength": -0.873082876037699
+  },
+  {
+    "time": "2022-05-09 09:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.15110087782414666,
+    "trend_strength": -2.873075262627721
+  },
+  {
+    "time": "2022-05-20 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.21129663986806727,
+    "trend_strength": -1.3102453102452998
+  },
+  {
+    "time": "2022-05-24 09:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13309035811544168,
+    "trend_strength": -0.5166977210835628
+  },
+  {
+    "time": "2022-05-27 09:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.26143656831183737,
+    "trend_strength": -0.3222333859623948
+  },
+  {
+    "time": "2022-05-30 09:20:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2062882344572504,
+    "trend_strength": 0.6430502205150066
+  },
+  {
+    "time": "2022-05-31 14:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.06759483454398639,
+    "trend_strength": 1.4378531073446417
+  },
+  {
+    "time": "2022-06-03 09:25:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17295788323825728,
+    "trend_strength": 1.1618521665250694
+  },
+  {
+    "time": "2022-06-10 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2297410192147034,
+    "trend_strength": -1.9934210526315777
+  },
+  {
+    "time": "2022-06-14 15:30:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.149240724198786,
+    "trend_strength": -5.989019368613692
+  },
+  {
+    "time": "2022-06-16 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2682251346577431,
+    "trend_strength": -5.69073423904747
+  },
+  {
+    "time": "2022-06-16 12:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.19527393202712093,
+    "trend_strength": -5.882352941176464
+  },
+  {
+    "time": "2022-06-20 09:05:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.25329280648429453,
+    "trend_strength": -8.044917257683226
+  },
+  {
+    "time": "2022-06-21 11:10:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.23500700501649513,
+    "trend_strength": -7.4944637772856675
+  },
+  {
+    "time": "2022-06-24 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.29544664581160796,
+    "trend_strength": -9.663422546634234
+  },
+  {
+    "time": "2022-06-24 14:45:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1583251702849863,
+    "trend_strength": -7.317014830170625
+  },
+  {
+    "time": "2022-06-27 09:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.31095374279359,
+    "trend_strength": -6.408484270734038
+  },
+  {
+    "time": "2022-06-28 14:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14526699849102342,
+    "trend_strength": -5.1040517105470595
+  },
+  {
+    "time": "2022-07-04 10:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.32180303313986147,
+    "trend_strength": -8.588630406290969
+  },
+  {
+    "time": "2022-07-05 09:15:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.26020491136770313,
+    "trend_strength": -7.15888762400392
+  },
+  {
+    "time": "2022-07-18 10:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2522485504268825,
+    "trend_strength": 0.45461808884626304
+  },
+  {
+    "time": "2022-07-20 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2295478467292257,
+    "trend_strength": 2.4463081987772406
+  },
+  {
+    "time": "2022-07-20 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.09225299822244401,
+    "trend_strength": 1.9822019215624567
+  },
+  {
+    "time": "2022-07-25 11:50:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12631343617259186,
+    "trend_strength": 2.350547730829418
+  },
+  {
+    "time": "2022-07-28 10:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.26709520115261026,
+    "trend_strength": 2.9387121799844746
+  },
+  {
+    "time": "2022-08-01 11:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15408320493066008,
+    "trend_strength": 3.31432973805855
+  },
+  {
+    "time": "2022-08-04 15:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.07783039550995251,
+    "trend_strength": 2.991098833640289
+  },
+  {
+    "time": "2022-08-09 09:15:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11577107907383036,
+    "trend_strength": 3.1116207951070374
+  },
+  {
+    "time": "2022-08-24 15:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.07922869194545268,
+    "trend_strength": -0.9490704577409673
+  },
+  {
+    "time": "2022-08-30 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14054102673652494,
+    "trend_strength": -1.7865575318747087
+  },
+  {
+    "time": "2022-09-13 09:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.3112454328115802,
+    "trend_strength": -1.7485001578781252
+  },
+  {
+    "time": "2022-09-19 10:25:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16312647507982944,
+    "trend_strength": -4.216877227081322
+  },
+  {
+    "time": "2022-09-28 10:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2884877299853865,
+    "trend_strength": -10.98890622291558
+  },
+  {
+    "time": "2022-09-29 12:35:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16567840948726553,
+    "trend_strength": -10.412452040460419
+  },
+  {
+    "time": "2022-10-04 09:50:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.3183927337348188,
+    "trend_strength": -8.171216309606095
+  },
+  {
+    "time": "2022-10-04 12:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1418212312549329,
+    "trend_strength": -7.471512430939222
+  },
+  {
+    "time": "2022-10-14 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.3205128205128216,
+    "trend_strength": -4.246361746361744
+  },
+  {
+    "time": "2022-10-17 14:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.10453561589924808,
+    "trend_strength": -2.9295798898071603
+  },
+  {
+    "time": "2022-10-19 10:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.20421973560190693,
+    "trend_strength": -0.3146675689392488
+  },
+  {
+    "time": "2022-10-21 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.19271631170627945,
+    "trend_strength": -2.020062262193004
+  },
+  {
+    "time": "2022-10-24 09:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2419041135855306,
+    "trend_strength": 0.31313818924438935
+  },
+  {
+    "time": "2022-10-25 09:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2101912375768468,
+    "trend_strength": 1.0375914271134585
+  },
+  {
+    "time": "2022-10-25 13:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.09734728644438759,
+    "trend_strength": 1.1448040885860353
+  },
+  {
+    "time": "2022-10-26 11:40:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11963167943543898,
+    "trend_strength": 1.7103704956860113
+  },
+  {
+    "time": "2022-11-11 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4587562608040447,
+    "trend_strength": 6.991157306856956
+  },
+  {
+    "time": "2022-11-11 13:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11160714285714309,
+    "trend_strength": 6.792233910891085
+  },
+  {
+    "time": "2022-11-24 14:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08439103429652146,
+    "trend_strength": 1.9321045998739739
+  },
+  {
+    "time": "2022-11-28 13:45:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.08549541744562361,
+    "trend_strength": 0.41413980210661144
+  },
+  {
+    "time": "2022-11-30 09:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17451810484597627,
+    "trend_strength": 1.1207440100882566
+  },
+  {
+    "time": "2022-12-09 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.18644617380025708,
+    "trend_strength": -2.0371271076524087
+  },
+  {
+    "time": "2022-12-14 15:10:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_downtrend_normal",
+    "volatility": 0.07678027090829706,
+    "trend_strength": -1.33402855767689
+  },
+  {
+    "time": "2022-12-19 10:35:00",
+    "old_regime": "low_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14966209106002534,
+    "trend_strength": -3.2542150924864948
+  },
+  {
+    "time": "2023-01-04 09:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2730375426621199,
+    "trend_strength": -5.590443686006824
+  },
+  {
+    "time": "2023-01-05 10:35:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.20875083500334005,
+    "trend_strength": -3.0678022712090858
+  },
+  {
+    "time": "2023-01-06 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.31344984802431447,
+    "trend_strength": -2.1043882978723354
+  },
+  {
+    "time": "2023-01-09 14:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.09767420481706192,
+    "trend_strength": 1.2821750321750365
+  },
+  {
+    "time": "2023-01-10 10:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.24571153007095756,
+    "trend_strength": 1.4635910625301427
+  },
+  {
+    "time": "2023-01-10 14:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.14553872246797314,
+    "trend_strength": 1.6797689716027457
+  },
+  {
+    "time": "2023-02-03 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2540806898675703,
+    "trend_strength": 4.240837696335073
+  },
+  {
+    "time": "2023-02-08 09:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19816804650343364,
+    "trend_strength": 3.8000924784216976
+  },
+  {
+    "time": "2023-02-23 10:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.18729514593413146,
+    "trend_strength": 0.6321211175277147
+  },
+  {
+    "time": "2023-03-03 13:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.09251528758715669,
+    "trend_strength": -1.066182277681251
+  },
+  {
+    "time": "2023-03-06 12:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12584079469018614,
+    "trend_strength": 0.10757717492983175
+  },
+  {
+    "time": "2023-03-13 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.21197121774600122,
+    "trend_strength": -2.7622714148219485
+  },
+  {
+    "time": "2023-03-15 09:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.265273311897109,
+    "trend_strength": -2.918810289389063
+  },
+  {
+    "time": "2023-03-16 14:15:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.12357085113754394,
+    "trend_strength": -3.293451899757497
+  },
+  {
+    "time": "2023-03-22 14:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.06459509077310047,
+    "trend_strength": -0.49500237981913453
+  },
+  {
+    "time": "2023-03-23 11:50:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.11531678198344916,
+    "trend_strength": -0.12187401076291478
+  },
+  {
+    "time": "2023-03-28 14:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.07557982131576624,
+    "trend_strength": 0.47220467466837057
+  },
+  {
+    "time": "2023-03-30 09:15:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1387831848502482,
+    "trend_strength": 1.2864305860231957
+  },
+  {
+    "time": "2023-04-04 13:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.07045974986788521,
+    "trend_strength": 2.729654747225653
+  },
+  {
+    "time": "2023-04-07 09:55:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.18965289110395425,
+    "trend_strength": 2.3379129360913837
+  },
+  {
+    "time": "2023-04-10 10:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2386013621968678,
+    "trend_strength": 3.7458244761615487
+  },
+  {
+    "time": "2023-04-11 10:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17654066933824153,
+    "trend_strength": 3.739954510993171
+  },
+  {
+    "time": "2023-04-14 09:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2303459454847944,
+    "trend_strength": 4.5640489698417515
+  },
+  {
+    "time": "2023-04-14 12:15:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11044560553927285,
+    "trend_strength": 4.585191793041932
+  },
+  {
+    "time": "2023-04-26 10:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12588943623426133,
+    "trend_strength": 0.7218390804597757
+  },
+  {
+    "time": "2023-05-02 09:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15520871773720957,
+    "trend_strength": 1.114572253456927
+  },
+  {
+    "time": "2023-05-12 13:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.07358109295378967,
+    "trend_strength": -0.21063960639606466
+  },
+  {
+    "time": "2023-05-22 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.08756380411336116,
+    "trend_strength": 1.7326954701749018
+  },
+  {
+    "time": "2023-06-16 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.17759055053070597,
+    "trend_strength": 2.747904018502456
+  },
+  {
+    "time": "2023-06-19 09:05:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12094273309903114,
+    "trend_strength": 2.4971056439942108
+  },
+  {
+    "time": "2023-06-26 10:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1299272826337503,
+    "trend_strength": 0.6784509314947924
+  },
+  {
+    "time": "2023-07-03 10:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.08894956766373185,
+    "trend_strength": 1.055603822762826
+  },
+  {
+    "time": "2023-07-10 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.18816799638717202,
+    "trend_strength": -2.897787144362487
+  },
+  {
+    "time": "2023-07-11 09:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16004918067538781,
+    "trend_strength": -1.4690606914972515
+  },
+  {
+    "time": "2023-07-12 11:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12822668796771255,
+    "trend_strength": -0.6408181283107737
+  },
+  {
+    "time": "2023-07-24 09:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.1948146152411368,
+    "trend_strength": 0.49325402582329575
+  },
+  {
+    "time": "2023-07-24 14:15:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.10624033006704674,
+    "trend_strength": 0.8866425992779764
+  },
+  {
+    "time": "2023-08-01 09:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.14772704118018856,
+    "trend_strength": 2.012551704464415
+  },
+  {
+    "time": "2023-08-04 12:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.10942515319521684,
+    "trend_strength": -0.14662970528158675
+  },
+  {
+    "time": "2023-08-18 11:30:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.13227513227512785,
+    "trend_strength": -3.8327261687917424
+  },
+  {
+    "time": "2023-09-01 14:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.06130300596118597,
+    "trend_strength": -0.44243859129921914
+  },
+  {
+    "time": "2023-09-04 13:25:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.07257504680564467,
+    "trend_strength": 0.130319540568398
+  },
+  {
+    "time": "2023-09-25 13:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.08032902769744754,
+    "trend_strength": -1.5152196731143959
+  },
+  {
+    "time": "2023-10-05 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.22248425923865506,
+    "trend_strength": -4.788973680112131
+  },
+  {
+    "time": "2023-10-05 10:20:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16885136636303347,
+    "trend_strength": -4.276827371695179
+  },
+  {
+    "time": "2023-10-10 09:05:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.19554422814957736,
+    "trend_strength": -2.828360504460164
+  },
+  {
+    "time": "2023-10-17 09:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.2020532983835749,
+    "trend_strength": -1.6376146788990882
+  },
+  {
+    "time": "2023-10-18 10:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12588444675955968,
+    "trend_strength": -0.771042236402299
+  },
+  {
+    "time": "2023-10-24 13:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1289446895147618,
+    "trend_strength": -4.805225653206655
+  },
+  {
+    "time": "2023-10-31 09:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.21328807650849999,
+    "trend_strength": -5.527371969818601
+  },
+  {
+    "time": "2023-11-01 09:30:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.2181901699586574,
+    "trend_strength": -5.343247588424421
+  },
+  {
+    "time": "2023-11-02 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.24494310998735444,
+    "trend_strength": -2.799462705436162
+  },
+  {
+    "time": "2023-11-03 09:10:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.228249194414609,
+    "trend_strength": -1.5789473684210413
+  },
+  {
+    "time": "2023-11-06 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2294539437396575,
+    "trend_strength": 0.106563706563715
+  },
+  {
+    "time": "2023-11-08 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2731473484194144,
+    "trend_strength": 2.321644498186217
+  },
+  {
+    "time": "2023-11-09 14:20:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12002968006634492,
+    "trend_strength": 1.4214787656584271
+  },
+  {
+    "time": "2023-11-15 09:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.297708288712786,
+    "trend_strength": 3.4505247376311825
+  },
+  {
+    "time": "2023-11-20 11:15:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.10546500479386724,
+    "trend_strength": 3.7427293064877
+  },
+  {
+    "time": "2023-12-11 14:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.07192570497768139,
+    "trend_strength": 2.3804235154745936
+  },
+  {
+    "time": "2023-12-14 09:35:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.18044893190921302,
+    "trend_strength": 2.830753504672896
+  },
+  {
+    "time": "2024-01-09 09:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.24764078837412845,
+    "trend_strength": 1.4217434726779739
+  },
+  {
+    "time": "2024-01-11 10:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.14893971586884927,
+    "trend_strength": -0.8245844269466442
+  },
+  {
+    "time": "2024-01-15 12:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.11498818757709434,
+    "trend_strength": -1.2461583491877635
+  },
+  {
+    "time": "2024-01-26 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.22194715950318056,
+    "trend_strength": -2.9474155960561728
+  },
+  {
+    "time": "2024-01-29 10:30:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1839587932303188,
+    "trend_strength": -1.32671081677704
+  },
+  {
+    "time": "2024-01-30 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.23547880690737835,
+    "trend_strength": -0.7890109890109878
+  },
+  {
+    "time": "2024-02-01 09:35:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2658735996973449,
+    "trend_strength": -1.0239811681624298
+  },
+  {
+    "time": "2024-02-05 09:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2101740567674008,
+    "trend_strength": 1.944007998857308
+  },
+  {
+    "time": "2024-02-06 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2827530897201247,
+    "trend_strength": 1.4085216640276332
+  },
+  {
+    "time": "2024-02-06 13:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.11175131743525575,
+    "trend_strength": 1.8745514568681005
+  },
+  {
+    "time": "2024-02-16 12:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.07567654834217794,
+    "trend_strength": 2.681875971182356
+  },
+  {
+    "time": "2024-02-21 08:50:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.10231307801873894,
+    "trend_strength": 2.942704676309513
+  },
+  {
+    "time": "2024-03-06 13:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09210131144258957,
+    "trend_strength": 0.7203924316748404
+  },
+  {
+    "time": "2024-03-11 08:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.13012297117428556,
+    "trend_strength": 1.0019468780420027
+  },
+  {
+    "time": "2024-03-18 15:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.0698928965191371,
+    "trend_strength": 1.470507166482905
+  },
+  {
+    "time": "2024-03-20 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.16835679826720512,
+    "trend_strength": 1.3073742246726414
+  },
+  {
+    "time": "2024-03-22 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.23299161230195498,
+    "trend_strength": 4.392890427373186
+  },
+  {
+    "time": "2024-03-25 09:05:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1606524962926356,
+    "trend_strength": 4.206813947298378
+  },
+  {
+    "time": "2024-04-11 13:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.10925610013225825,
+    "trend_strength": 0.9076881792566582
+  },
+  {
+    "time": "2024-04-17 09:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.21979552054740273,
+    "trend_strength": -2.876636034530751
+  },
+  {
+    "time": "2024-04-17 14:35:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1159489824477255,
+    "trend_strength": -3.4026028547439044
+  },
+  {
+    "time": "2024-04-22 10:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2899942001159965,
+    "trend_strength": -3.4229315413691794
+  },
+  {
+    "time": "2024-04-22 15:05:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14349489795918344,
+    "trend_strength": -2.994559151785735
+  },
+  {
+    "time": "2024-04-29 09:05:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.17223494412150303,
+    "trend_strength": -0.9439649267022862
+  },
+  {
+    "time": "2024-05-07 09:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24713117109523014,
+    "trend_strength": 1.3510795225962242
+  },
+  {
+    "time": "2024-05-27 10:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12417298849459499,
+    "trend_strength": 0.4549775906559703
+  },
+  {
+    "time": "2024-05-28 09:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.18632705199869462,
+    "trend_strength": 1.4737125184886428
+  },
+  {
+    "time": "2024-06-03 09:40:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2133364648777737,
+    "trend_strength": -0.2836004932182559
+  },
+  {
+    "time": "2024-06-07 13:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08188035834698004,
+    "trend_strength": 1.1550910316925072
+  },
+  {
+    "time": "2024-06-10 13:30:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.07268850552432751,
+    "trend_strength": 0.39959294436905507
+  },
+  {
+    "time": "2024-06-11 09:10:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.20005826939885316,
+    "trend_strength": 0.08021753908904394
+  },
+  {
+    "time": "2024-06-12 14:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.06581494386372609,
+    "trend_strength": 0.25067750677507084
+  },
+  {
+    "time": "2024-06-14 10:00:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2018182504055246,
+    "trend_strength": 2.5211249009770156
+  },
+  {
+    "time": "2024-07-10 13:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.05201327235225599,
+    "trend_strength": 4.310106716886383
+  },
+  {
+    "time": "2024-07-15 14:50:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.09737800699678868,
+    "trend_strength": 3.3975006311537443
+  },
+  {
+    "time": "2024-07-19 15:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09992598075499483,
+    "trend_strength": 0.25453367875646604
+  },
+  {
+    "time": "2024-07-26 08:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14777667607352604,
+    "trend_strength": -3.2534703683929522
+  },
+  {
+    "time": "2024-08-01 12:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.08275374716405676,
+    "trend_strength": -0.4556105180942463
+  },
+  {
+    "time": "2024-08-06 11:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.6284712072493439,
+    "trend_strength": -12.209149371528786
+  },
+  {
+    "time": "2024-08-07 13:40:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1938181153978855,
+    "trend_strength": -7.5287682909504205
+  },
+  {
+    "time": "2024-08-09 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.5288373698207401,
+    "trend_strength": -6.403296859457147
+  },
+  {
+    "time": "2024-08-09 11:10:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.2337110481586393,
+    "trend_strength": -5.437677053824361
+  },
+  {
+    "time": "2024-08-14 10:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.13048119884544404,
+    "trend_strength": -0.8414060337669427
+  },
+  {
+    "time": "2024-08-16 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.26870288034022877,
+    "trend_strength": 1.619756427604875
+  },
+  {
+    "time": "2024-08-22 14:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08220184905806349,
+    "trend_strength": 2.099241808827511
+  },
+  {
+    "time": "2024-08-28 09:20:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2033518674971002,
+    "trend_strength": 0.813505707605567
+  },
+  {
+    "time": "2024-08-29 14:05:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.09388093920468023,
+    "trend_strength": 0.46070835639179963
+  },
+  {
+    "time": "2024-08-30 10:15:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.14240537408418502,
+    "trend_strength": 1.3577615839406023
+  },
+  {
+    "time": "2024-08-30 15:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.09034133312384662,
+    "trend_strength": 1.074374484465226
+  },
+  {
+    "time": "2024-09-03 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12204964664658505,
+    "trend_strength": 0.5684167011161637
+  },
+  {
+    "time": "2024-09-09 14:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.16799311228239644,
+    "trend_strength": -5.9157724533294145
+  },
+  {
+    "time": "2024-09-10 09:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2990618900711452,
+    "trend_strength": -5.683120317320397
+  },
+  {
+    "time": "2024-09-12 09:30:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.27218860576620973,
+    "trend_strength": -5.359079583760817
+  },
+  {
+    "time": "2024-09-25 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.23980093512330938,
+    "trend_strength": -0.5113077679449342
+  },
+  {
+    "time": "2024-09-25 10:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.17129883030266607,
+    "trend_strength": -1.4112388250319357
+  },
+  {
+    "time": "2024-09-27 10:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.2641456972056157,
+    "trend_strength": 0.784095648547181
+  },
+  {
+    "time": "2024-10-02 14:30:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.15877628110665984,
+    "trend_strength": -3.3270376289408823
+  },
+  {
+    "time": "2024-10-10 10:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.15797788309636746,
+    "trend_strength": -0.8789314950452561
+  },
+  {
+    "time": "2024-10-15 11:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12266331454523358,
+    "trend_strength": 1.0183082600056867
+  },
+  {
+    "time": "2024-10-16 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.09586358815370899,
+    "trend_strength": 0.605368360936609
+  },
+  {
+    "time": "2024-10-23 11:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14575149886293415,
+    "trend_strength": -1.079594790159195
+  },
+  {
+    "time": "2024-10-25 09:55:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2330425457320219,
+    "trend_strength": -0.8928829218998044
+  },
+  {
+    "time": "2024-11-04 10:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.2420427158647061,
+    "trend_strength": -1.452152414194301
+  },
+  {
+    "time": "2024-11-05 12:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_downtrend_normal",
+    "volatility": 0.08010486454995797,
+    "trend_strength": -1.2365278182347648
+  },
+  {
+    "time": "2024-11-06 10:20:00",
+    "old_regime": "low_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.18985371926548467,
+    "trend_strength": -0.9586056644880208
+  },
+  {
+    "time": "2024-11-06 12:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14242052518867693,
+    "trend_strength": -1.1111919662348824
+  },
+  {
+    "time": "2024-11-08 09:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.22757835936691603,
+    "trend_strength": -0.5293265749456876
+  },
+  {
+    "time": "2024-11-15 14:10:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.155038759689925,
+    "trend_strength": -7.223255813953476
+  },
+  {
+    "time": "2024-11-19 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.24581783375753125,
+    "trend_strength": -4.597989949748751
+  },
+  {
+    "time": "2024-11-21 13:45:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.10781671159029649,
+    "trend_strength": -3.3992452830188826
+  },
+  {
+    "time": "2024-12-02 09:30:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.30030357961867027,
+    "trend_strength": -3.909952606635061
+  },
+  {
+    "time": "2024-12-02 10:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.19983838207351506,
+    "trend_strength": -3.576670233909186
+  },
+  {
+    "time": "2024-12-13 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.27330139372822077,
+    "trend_strength": -0.6821646341463623
+  },
+  {
+    "time": "2024-12-23 09:50:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.2929141604990739,
+    "trend_strength": -2.351698231335104
+  },
+  {
+    "time": "2024-12-26 09:00:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1459305282242875,
+    "trend_strength": -1.219625444977557
+  },
+  {
+    "time": "2025-01-03 09:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.27800544934984156,
+    "trend_strength": -0.570631105597777
+  },
+  {
+    "time": "2025-01-06 10:10:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.25289252610328505,
+    "trend_strength": 1.4161981461784
+  },
+  {
+    "time": "2025-01-07 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.37162449953147486,
+    "trend_strength": 3.1581693500298074
+  },
+  {
+    "time": "2025-01-08 11:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24527577528473077,
+    "trend_strength": 2.942669453568235
+  },
+  {
+    "time": "2025-01-14 13:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08981323176142217,
+    "trend_strength": 1.043781245265884
+  },
+  {
+    "time": "2025-01-16 09:20:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.25453151291827397,
+    "trend_strength": 2.4250782764276106
+  },
+  {
+    "time": "2025-01-31 09:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.21602471322719566,
+    "trend_strength": 0.920157265991235
+  },
+  {
+    "time": "2025-02-05 09:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.27195528324196444,
+    "trend_strength": 1.32204665161777
+  },
+  {
+    "time": "2025-02-05 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.0881834215167541,
+    "trend_strength": 1.246612466124657
+  },
+  {
+    "time": "2025-02-06 10:55:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1239077955094108,
+    "trend_strength": 1.8775235531628627
+  },
+  {
+    "time": "2025-02-21 14:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.08764241893076156,
+    "trend_strength": 4.207447567413311
+  },
+  {
+    "time": "2025-02-24 15:30:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.0934713833764742,
+    "trend_strength": 3.272936439459303
+  },
+  {
+    "time": "2025-03-05 09:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2115148694953183,
+    "trend_strength": -0.06366597571810241
+  },
+  {
+    "time": "2025-03-05 10:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.20945541591861064,
+    "trend_strength": -1.1736983842010984
+  },
+  {
+    "time": "2025-03-06 11:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12488980311489956,
+    "trend_strength": 0.5671466353217769
+  },
+  {
+    "time": "2025-03-12 09:25:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.25378026858412117,
+    "trend_strength": -0.46706143597334904
+  },
+  {
+    "time": "2025-03-17 09:10:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19277008539922086,
+    "trend_strength": 1.35084155542659
+  },
+  {
+    "time": "2025-04-01 10:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.23233116208015814,
+    "trend_strength": -2.613990791623351
+  },
+  {
+    "time": "2025-04-10 11:25:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.14624742405105035,
+    "trend_strength": -5.466883821932664
+  },
+  {
+    "time": "2025-04-17 12:20:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_downtrend_normal",
+    "volatility": 0.08108167335043096,
+    "trend_strength": -3.4000613591041695
+  },
+  {
+    "time": "2025-04-18 09:25:00",
+    "old_regime": "low_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.17613723387961305,
+    "trend_strength": -3.122989738091589
+  },
+  {
+    "time": "2025-04-23 12:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.07802312904811612,
+    "trend_strength": -0.4773305401765756
+  },
+  {
+    "time": "2025-04-25 09:00:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.221393614542067,
+    "trend_strength": 0.4256265757081425
+  },
+  {
+    "time": "2025-04-25 12:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.09512535407770445,
+    "trend_strength": 0.7457827759692164
+  },
+  {
+    "time": "2025-04-28 10:25:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1310228233305166,
+    "trend_strength": 0.9681952662721833
+  },
+  {
+    "time": "2025-05-02 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19330713651920345,
+    "trend_strength": 1.200828157349914
+  },
+  {
+    "time": "2025-05-08 13:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.06962051623093392,
+    "trend_strength": 3.5154204247890717
+  },
+  {
+    "time": "2025-05-12 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1574868415599491,
+    "trend_strength": 3.6785610675950124
+  },
+  {
+    "time": "2025-05-16 13:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.05703693141309252,
+    "trend_strength": 4.200769998574065
+  },
+  {
+    "time": "2025-05-21 09:40:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.16398117781263277,
+    "trend_strength": 3.7744189362612333
+  },
+  {
+    "time": "2025-05-29 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2567305023591449,
+    "trend_strength": 4.476131001942825
+  },
+  {
+    "time": "2025-05-29 11:15:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.15063503002855352,
+    "trend_strength": 4.629221226740184
+  },
+  {
+    "time": "2025-06-04 09:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.30835284933645496,
+    "trend_strength": 5.040983606557374
+  },
+  {
+    "time": "2025-06-11 09:40:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2639392939623882,
+    "trend_strength": 8.975493969720304
+  },
+  {
+    "time": "2025-06-17 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.3898202742061517,
+    "trend_strength": 7.5161611138737
+  },
+  {
+    "time": "2025-06-17 12:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.21838378028614425,
+    "trend_strength": 5.806492199295418
+  },
+  {
+    "time": "2025-06-19 13:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10472610096670387,
+    "trend_strength": 4.987468671679193
+  },
+  {
+    "time": "2025-06-20 09:20:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.26170528233802126,
+    "trend_strength": 4.513567587845445
+  },
+  {
+    "time": "2025-06-24 15:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10329696597175901,
+    "trend_strength": 5.992589936655908
+  },
+  {
+    "time": "2025-06-25 09:50:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4077983994551374,
+    "trend_strength": 5.57389749702026
+  },
+  {
+    "time": "2025-06-25 15:20:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12929787849401841,
+    "trend_strength": 5.011313564368232
+  },
+  {
+    "time": "2025-06-27 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.34254807692307576,
+    "trend_strength": 3.011418269230777
+  },
+  {
+    "time": "2025-07-01 09:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2723899477146198,
+    "trend_strength": 4.027744982290438
+  },
+  {
+    "time": "2025-07-10 14:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10256495780661046,
+    "trend_strength": 1.8561755778659792
+  },
+  {
+    "time": "2025-07-11 10:30:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.28634324776139286,
+    "trend_strength": 2.4365658672227983
+  },
+  {
+    "time": "2025-07-23 10:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.30332909953874165,
+    "trend_strength": 0.06902199344875037
+  },
+  {
+    "time": "2025-07-24 09:00:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.14721605395180598,
+    "trend_strength": 1.485895221646514
+  },
+  {
+    "time": "2025-07-24 11:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1691837913674983,
+    "trend_strength": 0.9370306181398051
+  },
+  {
+    "time": "2025-07-29 09:35:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.2819330657733277,
+    "trend_strength": 0.07545855583932867
+  },
+  {
+    "time": "2025-07-30 09:15:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2303620441772303,
+    "trend_strength": 1.3883806038426334
+  },
+  {
+    "time": "2025-08-04 13:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.11647784407052338,
+    "trend_strength": -1.3684889723134637
+  },
+  {
+    "time": "2025-08-05 11:15:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.16919912414571012,
+    "trend_strength": -0.3704133766836903
+  },
+  {
+    "time": "2025-08-07 09:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.26231996436408084,
+    "trend_strength": 0.12645802055664943
+  },
+  {
+    "time": "2025-08-07 14:05:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.0856023441872714,
+    "trend_strength": 0.31977414150725714
+  },
+  {
+    "time": "2025-08-08 09:55:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.25357799369747785,
+    "trend_strength": 0.5847886029411671
+  },
+  {
+    "time": "2025-08-11 10:45:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.1405071403921055,
+    "trend_strength": 0.4434602553778793
+  },
+  {
+    "time": "2025-08-20 15:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.12553499814646485,
+    "trend_strength": -2.0470629865534344
+  },
+  {
+    "time": "2025-08-22 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.26609013803425907,
+    "trend_strength": -0.660069848661216
+  },
+  {
+    "time": "2025-08-25 09:00:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.19972486035834286,
+    "trend_strength": -0.2645318482422655
+  },
+  {
+    "time": "2025-09-02 11:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.1178082649599769,
+    "trend_strength": -1.0264358404491727
+  },
+  {
+    "time": "2025-09-03 11:05:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.12720953822106437,
+    "trend_strength": -0.49994179955765866
+  },
+  {
+    "time": "2025-09-05 13:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.06841975105102593,
+    "trend_strength": 0.4875937680323165
+  },
+  {
+    "time": "2025-09-09 09:45:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1644010403886737,
+    "trend_strength": 1.142791709607226
+  },
+  {
+    "time": "2025-09-23 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.2744691869497663,
+    "trend_strength": 7.488865872604862
+  },
+  {
+    "time": "2025-09-23 11:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.12459765341085959,
+    "trend_strength": 6.659744574810506
+  },
+  {
+    "time": "2025-09-29 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.0734368443138897,
+    "trend_strength": 3.6676458245908554
+  },
+  {
+    "time": "2025-10-01 09:20:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2131751166500203,
+    "trend_strength": 3.6846499008661002
+  },
+  {
+    "time": "2025-10-02 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4157180322199491,
+    "trend_strength": 5.696489812386527
+  },
+  {
+    "time": "2025-10-10 12:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1503536487230525,
+    "trend_strength": 6.157228975195183
+  },
+  {
+    "time": "2025-10-24 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.35805760284355204,
+    "trend_strength": 6.230332967435064
+  },
+  {
+    "time": "2025-10-24 11:00:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.25173351373150765,
+    "trend_strength": 5.995355614242786
+  },
+  {
+    "time": "2025-10-27 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.399176382906156,
+    "trend_strength": 7.936157043063047
+  },
+  {
+    "time": "2025-10-27 10:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.29593282072035443,
+    "trend_strength": 7.071972379603399
+  },
+  {
+    "time": "2025-10-27 14:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10354712025356187,
+    "trend_strength": 6.460266949527097
+  },
+  {
+    "time": "2025-10-29 08:45:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.22254633238615273,
+    "trend_strength": 6.226456609751795
+  },
+  {
+    "time": "2025-10-29 09:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.42903832321727986,
+    "trend_strength": 5.350234078261632
+  },
+  {
+    "time": "2025-10-29 10:55:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2495403204623083,
+    "trend_strength": 5.608965939935203
+  },
+  {
+    "time": "2025-10-30 10:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4313138868112664,
+    "trend_strength": 4.145287958115193
+  },
+  {
+    "time": "2025-10-30 13:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2894409937888193,
+    "trend_strength": 3.9747826086956555
+  },
+  {
+    "time": "2025-11-05 13:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.5080268238162962,
+    "trend_strength": -1.2366642958748295
+  },
+  {
+    "time": "2025-11-05 14:40:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3857750975523271,
+    "trend_strength": -1.203884356154669
+  },
+  {
+    "time": "2025-11-06 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.7469491250202954,
+    "trend_strength": -0.1927953134563196
+  },
+  {
+    "time": "2025-11-06 10:30:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.5730911655792629,
+    "trend_strength": -1.1911479456885703
+  },
+  {
+    "time": "2025-11-06 11:50:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.3355035047020362,
+    "trend_strength": -0.2649729352191247
+  },
+  {
+    "time": "2025-11-10 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3157868090977011,
+    "trend_strength": -1.8153628067688499
+  },
+  {
+    "time": "2025-11-10 09:45:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.5335174491589254,
+    "trend_strength": -0.9912126537785565
+  },
+  {
+    "time": "2025-11-11 09:00:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.3196752197007418,
+    "trend_strength": 2.030119969369514
+  },
+  {
+    "time": "2025-11-13 13:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.14891041162227547,
+    "trend_strength": 1.9139830508474416
+  },
+  {
+    "time": "2025-11-17 10:30:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.30928987541455993,
+    "trend_strength": -0.6364663942266033
+  },
+  {
+    "time": "2025-11-17 13:15:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_sideways_normal",
+    "volatility": 0.1552390059735998,
+    "trend_strength": -0.5733286968616906
+  },
+  {
+    "time": "2025-11-19 11:55:00",
+    "old_regime": "low_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3046199625477758,
+    "trend_strength": -3.653708026575681
+  },
+  {
+    "time": "2025-11-20 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.493303375299683,
+    "trend_strength": -0.8342852121957752
+  },
+  {
+    "time": "2025-11-24 09:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3237555645487636,
+    "trend_strength": -4.486429681074662
+  },
+  {
+    "time": "2025-11-25 09:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.5368177805473336,
+    "trend_strength": -3.456924754634675
+  },
+  {
+    "time": "2025-11-25 11:55:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.21836047675370404,
+    "trend_strength": -3.4196160494950454
+  },
+  {
+    "time": "2025-11-27 11:40:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.20101137800253244,
+    "trend_strength": -0.30796460176991314
+  },
+  {
+    "time": "2025-12-01 09:45:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.4231366459627349,
+    "trend_strength": -2.558423913043489
+  },
+  {
+    "time": "2025-12-02 09:25:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.30616782061868647,
+    "trend_strength": -0.6287238772788051
+  },
+  {
+    "time": "2025-12-03 10:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.33992776534986235,
+    "trend_strength": 1.3354037267080634
+  },
+  {
+    "time": "2025-12-03 12:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.13989753282928913,
+    "trend_strength": 1.9368036211699167
+  },
+  {
+    "time": "2025-12-05 09:15:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.2652971201714028,
+    "trend_strength": 0.8001764446405084
+  },
+  {
+    "time": "2025-12-05 13:00:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10768126346015988,
+    "trend_strength": 2.6910414139663987
+  },
+  {
+    "time": "2025-12-08 10:05:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.3133101524776104,
+    "trend_strength": 3.3482411628107047
+  },
+  {
+    "time": "2025-12-08 11:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.14338411009939042,
+    "trend_strength": 3.530925624088537
+  },
+  {
+    "time": "2025-12-09 09:25:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2581535006347061,
+    "trend_strength": 3.6765208475734763
+  },
+  {
+    "time": "2025-12-09 15:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.09925709414200712,
+    "trend_strength": 3.600170502983804
+  },
+  {
+    "time": "2025-12-11 09:50:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.30431250833525053,
+    "trend_strength": 3.7061868794025163
+  },
+  {
+    "time": "2025-12-12 10:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_uptrend_high",
+    "volatility": 0.2831808825499649,
+    "trend_strength": 2.9277858299940442
+  },
+  {
+    "time": "2025-12-12 15:15:00",
+    "old_regime": "normal_uptrend_high",
+    "new_regime": "low_uptrend_high",
+    "volatility": 0.10065486296386347,
+    "trend_strength": 3.008488964346354
+  },
+  {
+    "time": "2025-12-15 14:20:00",
+    "old_regime": "low_uptrend_high",
+    "new_regime": "normal_sideways_low",
+    "volatility": 0.13464270273608767,
+    "trend_strength": 0.9822741028966819
+  },
+  {
+    "time": "2025-12-18 09:20:00",
+    "old_regime": "normal_sideways_low",
+    "new_regime": "high_downtrend_low",
+    "volatility": 0.362546496431088,
+    "trend_strength": -1.2412033779028966
+  },
+  {
+    "time": "2025-12-19 09:00:00",
+    "old_regime": "high_downtrend_low",
+    "new_regime": "normal_sideways_low",
+    "volatility": 0.29354207436399593,
+    "trend_strength": -0.48992234534508416
+  },
+  {
+    "time": "2025-12-19 10:50:00",
+    "old_regime": "normal_sideways_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.22586109542631286,
+    "trend_strength": -1.3122529644268823
+  },
+  {
+    "time": "2025-12-19 14:30:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "normal_sideways_low",
+    "volatility": 0.16413905011545873,
+    "trend_strength": -0.9113149847094857
+  },
+  {
+    "time": "2025-12-24 09:45:00",
+    "old_regime": "normal_sideways_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.2111547983107613,
+    "trend_strength": 1.5490146109412273
+  },
+  {
+    "time": "2025-12-30 13:40:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "low_uptrend_low",
+    "volatility": 0.06861365235749366,
+    "trend_strength": 4.059113300492615
+  },
+  {
+    "time": "2026-01-02 12:10:00",
+    "old_regime": "low_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.15674523137209861,
+    "trend_strength": 5.45502218636547
+  },
+  {
+    "time": "2026-01-05 09:15:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "high_uptrend_low",
+    "volatility": 0.4107642435276877,
+    "trend_strength": 8.503263910475605
+  },
+  {
+    "time": "2026-01-06 12:10:00",
+    "old_regime": "high_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.1632119227133885,
+    "trend_strength": 8.542083397445758
+  },
+  {
+    "time": "2026-01-06 13:40:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.19854869066658337,
+    "trend_strength": 8.954001980047204
+  },
+  {
+    "time": "2026-01-07 09:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5200666201042256,
+    "trend_strength": 8.737495298984594
+  },
+  {
+    "time": "2026-01-07 11:15:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2887186644364674,
+    "trend_strength": 8.026325602207471
+  },
+  {
+    "time": "2026-01-08 09:55:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.3964720349404217,
+    "trend_strength": 7.7359750667853975
+  },
+  {
+    "time": "2026-01-08 12:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.25740987983978536,
+    "trend_strength": 6.295327102803741
+  },
+  {
+    "time": "2026-01-14 13:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.10598640450259222,
+    "trend_strength": 4.193041444338848
+  },
+  {
+    "time": "2026-01-15 10:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2868513541451324,
+    "trend_strength": 4.520622286541238
+  },
+  {
+    "time": "2026-01-15 14:10:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.13583880461851863,
+    "trend_strength": 3.7490995533784806
+  },
+  {
+    "time": "2026-01-16 09:35:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.33086248559805215,
+    "trend_strength": 4.058596816786811
+  },
+  {
+    "time": "2026-01-29 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5892916213789542,
+    "trend_strength": 4.264306979821365
+  },
+  {
+    "time": "2026-01-29 12:35:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.2654298566678753,
+    "trend_strength": 5.167220809700777
+  },
+  {
+    "time": "2026-02-04 09:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.7455045754143476,
+    "trend_strength": 3.8881423177833234
+  },
+  {
+    "time": "2026-02-04 10:20:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.46232970399956275,
+    "trend_strength": 3.672922252010722
+  },
+  {
+    "time": "2026-02-06 12:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.4553445344246229,
+    "trend_strength": -2.672987694169861
+  },
+  {
+    "time": "2026-02-09 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5662493503177735,
+    "trend_strength": 2.0871896342631038
+  },
+  {
+    "time": "2026-02-09 11:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.3188978888959745,
+    "trend_strength": 1.853434530263406
+  },
+  {
+    "time": "2026-02-10 15:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.16539044938686764,
+    "trend_strength": 1.028847383906872
+  },
+  {
+    "time": "2026-02-12 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.32168583061160516,
+    "trend_strength": 2.8145944253053523
+  },
+  {
+    "time": "2026-02-19 14:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.16147811971477766,
+    "trend_strength": 5.049080849544894
+  },
+  {
+    "time": "2026-02-20 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.20609674721895876,
+    "trend_strength": 5.264293738544307
+  },
+  {
+    "time": "2026-02-23 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5444350264067312,
+    "trend_strength": 7.192206754906426
+  },
+  {
+    "time": "2026-02-23 10:50:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.29643863063418274,
+    "trend_strength": 5.7673736851181125
+  },
+  {
+    "time": "2026-02-26 10:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.4683075582661716,
+    "trend_strength": 7.574057939446751
+  },
+  {
+    "time": "2026-02-26 14:50:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24247268851585158,
+    "trend_strength": 8.71489475086599
+  },
+  {
+    "time": "2026-02-27 09:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.5034295426264818,
+    "trend_strength": 8.260038240917781
+  },
+  {
+    "time": "2026-02-27 14:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.29003669545771577,
+    "trend_strength": 7.972632242475185
+  },
+  {
+    "time": "2026-03-05 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 1.4576402191081088,
+    "trend_strength": -3.1827805222300434
+  },
+  {
+    "time": "2026-03-05 14:45:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.44574394580292676,
+    "trend_strength": -3.732157602925555
+  },
+  {
+    "time": "2026-03-05 15:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_downtrend_high",
+    "volatility": 0.6293038970417543,
+    "trend_strength": -5.7781187940061445
+  },
+  {
+    "time": "2026-03-06 13:30:00",
+    "old_regime": "normal_downtrend_high",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.38854003139717386,
+    "trend_strength": -7.145909645909643
+  },
+  {
+    "time": "2026-03-09 15:05:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "high_downtrend_low",
+    "volatility": 0.8004125167236519,
+    "trend_strength": -13.619276795005195
+  },
+  {
+    "time": "2026-03-10 11:10:00",
+    "old_regime": "high_downtrend_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.8213296160531418,
+    "trend_strength": -4.678050837248535
+  },
+  {
+    "time": "2026-03-10 15:35:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "normal_downtrend_high",
+    "volatility": 0.308337230854511,
+    "trend_strength": -5.089729598641919
+  },
+  {
+    "time": "2026-03-11 09:20:00",
+    "old_regime": "normal_downtrend_high",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.6503141347939282,
+    "trend_strength": -2.709953112944393
+  },
+  {
+    "time": "2026-03-11 12:55:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "low_sideways_low",
+    "volatility": 0.19610138734414562,
+    "trend_strength": -0.8982614294913087
+  },
+  {
+    "time": "2026-03-13 11:55:00",
+    "old_regime": "low_sideways_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.3248939612575964,
+    "trend_strength": -4.967860422405883
+  },
+  {
+    "time": "2026-03-16 13:35:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "low_downtrend_low",
+    "volatility": 0.2254908762922342,
+    "trend_strength": -2.042860611947539
+  },
+  {
+    "time": "2026-03-17 09:00:00",
+    "old_regime": "low_downtrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.3953316416556032,
+    "trend_strength": 1.5598164921773765
+  },
+  {
+    "time": "2026-03-17 13:35:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "low_uptrend_low",
+    "volatility": 0.18501115940326524,
+    "trend_strength": 2.2829789733348935
+  },
+  {
+    "time": "2026-03-18 09:30:00",
+    "old_regime": "low_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.41918079627977084,
+    "trend_strength": 4.51286606682332
+  },
+  {
+    "time": "2026-03-18 11:50:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "low_uptrend_low",
+    "volatility": 0.2123012477282531,
+    "trend_strength": 4.6947914883906705
+  },
+  {
+    "time": "2026-03-19 09:15:00",
+    "old_regime": "low_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.563270015245786,
+    "trend_strength": 3.4502451687337725
+  },
+  {
+    "time": "2026-03-20 12:45:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "low_uptrend_low",
+    "volatility": 0.18357233408518564,
+    "trend_strength": 3.227209865160776
+  },
+  {
+    "time": "2026-03-24 10:35:00",
+    "old_regime": "low_uptrend_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.5938856967410856,
+    "trend_strength": -3.096100706171328
+  },
+  {
+    "time": "2026-03-27 13:55:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.35450294162015433,
+    "trend_strength": -4.370147214112665
+  },
+  {
+    "time": "2026-03-27 15:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_downtrend_high",
+    "volatility": 0.34414336206362217,
+    "trend_strength": -3.9650896012897583
+  },
+  {
+    "time": "2026-03-30 13:15:00",
+    "old_regime": "normal_downtrend_high",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.3463286426107434,
+    "trend_strength": -6.701482049316453
+  },
+  {
+    "time": "2026-04-01 09:20:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "high_downtrend_low",
+    "volatility": 0.8090365110640955,
+    "trend_strength": -5.736668149748928
+  },
+  {
+    "time": "2026-04-01 10:45:00",
+    "old_regime": "high_downtrend_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.3439219609804923,
+    "trend_strength": -3.916958479239626
+  },
+  {
+    "time": "2026-04-02 09:00:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "normal_sideways_low",
+    "volatility": 0.4855292398419346,
+    "trend_strength": -0.6252648144785381
+  },
+  {
+    "time": "2026-04-02 10:00:00",
+    "old_regime": "normal_sideways_low",
+    "new_regime": "high_downtrend_low",
+    "volatility": 0.622500631648642,
+    "trend_strength": -1.4090992254680605
+  },
+  {
+    "time": "2026-04-03 10:05:00",
+    "old_regime": "high_downtrend_low",
+    "new_regime": "normal_downtrend_low",
+    "volatility": 0.489874450276635,
+    "trend_strength": -2.752606752730878
+  },
+  {
+    "time": "2026-04-03 14:55:00",
+    "old_regime": "normal_downtrend_low",
+    "new_regime": "low_downtrend_low",
+    "volatility": 0.22870998685472696,
+    "trend_strength": -2.3025988560059734
+  },
+  {
+    "time": "2026-04-06 09:00:00",
+    "old_regime": "low_downtrend_low",
+    "new_regime": "normal_sideways_low",
+    "volatility": 0.3260841096201372,
+    "trend_strength": -0.2264254721016884
+  },
+  {
+    "time": "2026-04-07 09:00:00",
+    "old_regime": "normal_sideways_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.4445761707172506,
+    "trend_strength": 2.2890733056708195
+  },
+  {
+    "time": "2026-04-08 12:25:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "low_uptrend_low",
+    "volatility": 0.18315018315018336,
+    "trend_strength": 7.345416383026997
+  },
+  {
+    "time": "2026-04-08 15:10:00",
+    "old_regime": "low_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.29981271752497735,
+    "trend_strength": 7.713385472345675
+  },
+  {
+    "time": "2026-04-10 11:50:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.22627889778463517,
+    "trend_strength": 6.428651811838848
+  },
+  {
+    "time": "2026-04-13 15:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_high",
+    "volatility": 0.14526319235301913,
+    "trend_strength": 4.218606782768108
+  },
+  {
+    "time": "2026-04-14 11:25:00",
+    "old_regime": "low_uptrend_high",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.20084117007702945,
+    "trend_strength": 7.1570735472488725
+  },
+  {
+    "time": "2026-04-24 10:05:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "high_uptrend_low",
+    "volatility": 0.4270026976307764,
+    "trend_strength": 4.161022167487692
+  },
+  {
+    "time": "2026-04-24 15:05:00",
+    "old_regime": "high_uptrend_low",
+    "new_regime": "normal_uptrend_low",
+    "volatility": 0.17101842018530147,
+    "trend_strength": 3.8005639579594916
+  },
+  {
+    "time": "2026-04-28 12:40:00",
+    "old_regime": "normal_uptrend_low",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.1942070409780397,
+    "trend_strength": 4.646642234548338
+  },
+  {
+    "time": "2026-05-04 09:25:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.45734689884562896,
+    "trend_strength": 4.174329876736447
+  },
+  {
+    "time": "2026-05-04 13:10:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.17057976651041407,
+    "trend_strength": 5.934947700243577
+  },
+  {
+    "time": "2026-05-06 09:50:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 1.033101278319524,
+    "trend_strength": 11.375228498818494
+  },
+  {
+    "time": "2026-05-06 11:05:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.3089712812305495,
+    "trend_strength": 10.78998844136214
+  },
+  {
+    "time": "2026-05-07 09:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.6441510707722323,
+    "trend_strength": 9.007175986698167
+  },
+  {
+    "time": "2026-05-07 12:30:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.3369064888252551,
+    "trend_strength": 7.1743812914853615
+  },
+  {
+    "time": "2026-05-18 11:30:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_sideways_normal",
+    "volatility": 0.7395808238978557,
+    "trend_strength": 0.13111298482293962
+  },
+  {
+    "time": "2026-05-18 12:45:00",
+    "old_regime": "high_sideways_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.5768707482993216,
+    "trend_strength": -0.469841269841266
+  },
+  {
+    "time": "2026-05-18 14:20:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.5552740349099171,
+    "trend_strength": -1.585965212188541
+  },
+  {
+    "time": "2026-05-21 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_sideways_normal",
+    "volatility": 0.6326738188070645,
+    "trend_strength": -0.8134853364977185
+  },
+  {
+    "time": "2026-05-21 11:40:00",
+    "old_regime": "normal_sideways_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.29879657105176527,
+    "trend_strength": 1.6497692054071957
+  },
+  {
+    "time": "2026-05-22 14:05:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.1685073899626465,
+    "trend_strength": 2.1566915705700924
+  },
+  {
+    "time": "2026-05-26 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.5248564072093483,
+    "trend_strength": 4.4343434343434405
+  },
+  {
+    "time": "2026-06-08 14:20:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.5887342361180652,
+    "trend_strength": -9.949903104770527
+  },
+  {
+    "time": "2026-06-09 10:35:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.7442105690067746,
+    "trend_strength": -8.154276675994664
+  },
+  {
+    "time": "2026-06-09 12:10:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.3655463880672723,
+    "trend_strength": -7.536021310085977
+  },
+  {
+    "time": "2026-06-10 09:00:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "high_downtrend_normal",
+    "volatility": 0.7856068232978486,
+    "trend_strength": -5.381859212922618
+  },
+  {
+    "time": "2026-06-11 11:55:00",
+    "old_regime": "high_downtrend_normal",
+    "new_regime": "normal_downtrend_normal",
+    "volatility": 0.6751705585608949,
+    "trend_strength": -9.231117887016348
+  },
+  {
+    "time": "2026-06-12 10:50:00",
+    "old_regime": "normal_downtrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.49917910408110155,
+    "trend_strength": 2.540633019674934
+  },
+  {
+    "time": "2026-06-15 09:45:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "high_uptrend_normal",
+    "volatility": 0.899516878226417,
+    "trend_strength": 4.92794554276198
+  },
+  {
+    "time": "2026-06-15 11:40:00",
+    "old_regime": "high_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.31220366560785145,
+    "trend_strength": 4.612971090717842
+  },
+  {
+    "time": "2026-06-15 13:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.23504074384700416,
+    "trend_strength": 4.634521997535687
+  },
+  {
+    "time": "2026-06-16 10:35:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.4832528766884343,
+    "trend_strength": 5.584443566631945
+  },
+  {
+    "time": "2026-06-16 12:35:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.24457499708537686,
+    "trend_strength": 6.720718163431851
+  },
+  {
+    "time": "2026-06-16 15:20:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.24945980104370538,
+    "trend_strength": 6.143157819634701
+  },
+  {
+    "time": "2026-06-17 13:00:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "low_uptrend_normal",
+    "volatility": 0.21965910937754052,
+    "trend_strength": 6.436824516496029
+  },
+  {
+    "time": "2026-06-18 09:00:00",
+    "old_regime": "low_uptrend_normal",
+    "new_regime": "normal_uptrend_normal",
+    "volatility": 0.31975548983766655,
+    "trend_strength": 8.550053746662515
+  },
+  {
+    "time": "2026-06-22 10:15:00",
+    "old_regime": "normal_uptrend_normal",
+    "new_regime": "normal_uptrend_high",
+    "volatility": 0.5422998649599675,
+    "trend_strength": 6.916522433763819
+  }
+]
