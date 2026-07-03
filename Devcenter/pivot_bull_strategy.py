@@ -38,12 +38,12 @@ DEFAULT_BULL_PARAMS = {
     "direction_mode": "long_only",
 }
 
-# 하이브리드 전략용 BULL 레짐 피봇 롱 파라미터 (2019-2025 최적)
+# 하이브리드 전략용 BULL 레짐 피봇 롱 파라미터 (2019-2025 최적 + 확정 지연 단축 연구 적용)
 HYBRID_BULL_PARAMS = {
     "base_pct": 1.272989526401749,
     "base_multiplier": 1.3341908735602903,
     "atr_weight": 0.20831334967633547,
-    "confirmation_bars": 1,
+    "confirmation_bars": 2,  # 확정 지연 단축 연구: 1 → 2로 변경 (포획률 57.0% → 61.3% 개선)
     "min_wave_pct": 0.07699392762885474,
     "min_pivot_interval_bars": 28,
     "direction_mode": "long_only",
