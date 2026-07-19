@@ -43,12 +43,12 @@ DB_PATH = "c:/Project/SkyPredictor v1/Devcenter/duckdb/market_data.duckdb"
 TABLE_NAME = "futures_5min"
 SESSION_BOUNDARY_HOUR = 8
 
-# BULL 피봇 롱 최적 파라미터 (2019-2025 WFO 결과)
+# BULL 피봇 롱 최적 파라미터 (2019-2025 WFO 결과 + 확정 지연 단축 연구 적용)
 PIVOT_CFG = pv.HybridAdaptivePivotConfig(
     base_pct=1.272989526401749,
     base_multiplier=1.3341908735602903,
     atr_weight=0.20831334967633547,
-    confirmation_bars=1,
+    confirmation_bars=2,  # 확정 지연 단축 연구: 1 → 2로 변경 (포획률 57.0% → 61.3% 개선)
 )
 FILTER_CFG = pv.FilterConfig(
     enabled=True,
