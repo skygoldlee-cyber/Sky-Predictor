@@ -2,7 +2,7 @@
 
 > 문서 ID: `DESIGN-KDE-RETURN-001`
 > 작성일: 2026-07-19
-> 상태: 설계 (구현 전)
+> 상태: Phase 1 완료, Phase 2/3 진행 예정
 > 목적: SkyPredictor 기존 아키텍처에 확률밀도함수(KDE)를 이용한 평균회귀 로직을 추가하는 설계
 
 ---
@@ -320,26 +320,30 @@ class PivotGate:
 
 ## 7. 구현 우선순위
 
-### Phase 1: 오프라인 프로토타입 (권장 첫 단계)
+### Phase 1: 오프라인 프로토타입 ✅ 완료
 
-1. `indicators/return_distribution.py` 구현
-2. 백테스트 데이터로 KDE 피처 생성
-3. `Devcenter/ml/ml_dataset.csv`에 KDE 피처 추가
-4. 기존 XGBoost 필터 모델과 비교
+1. `indicators/return_distribution.py` 구현 ✅
+2. `indicators/mean_reversion_signal.py` 구현 ✅
+3. 백테스트 데이터로 KDE 피처 생성 ✅
+4. `Devcenter/ml/ml_dataset.csv`에 KDE 피처 추가 ✅
+5. 기존 XGBoost 필터 모델과 비교 ✅
 
-### Phase 2: 실시간 통합
+### Phase 2: 실시간 통합 (남은 설계 항목)
 
-1. `indicators/mean_reversion_signal.py` 구현
-2. `AdaptiveIndicatorManager`에 연동
-3. `TransformerPredictor`에 로깅/결합 인터페이스 추가
+1. `AdaptiveIndicatorManager`에 KDE/평균회귀 신호 연동
+2. 실시간 1분봉 파이프라인에서 KDE 피처 생성
+3. `TransformerPredictor`에 KDE 채널 로깅/결합 인터페이스 추가
 4. Paper trading / 소규모 실전 테스트
+5. 거래 방향에 따른 direction-aware KDE 피처 실시간 갱신
 
-### Phase 3: 고도화
+### Phase 3: 고도화 (남은 설계 항목)
 
-1. 다중 timeframe KDE (1분/5분/15분)
+1. 다중 timeframe KDE (1분/5분/15분) — 현재 1분/5분 완료
 2. Regime별 KDE 분리 (BULL/BEAR/NEUTRAL마다 별도 KDE)
 3. Bayesian 업데이트 (HMM 또는 온라인 감마 분포)
 4. 슬리피지/체결 지연을 고려한 실행 전략
+5. KDE 피처를 딥러닝 모델(Transformer/Mamba/PatchTST) 입력에 통합
+6. Walk-forward / 롤링 윈도우 검증으로 통계적 유의성 확보
 
 ---
 
@@ -378,3 +382,50 @@ class PivotGate:
 - `docs/ZIGZAG_PIVOT_COMPREHENSIVE_GUIDE.md`
 - `docs/ML_PREDICTION_GUIDE.md`
 - `Devcenter/ml/ML_MODELS_INVENTORY.md`
+
+---
+
+## 11. Phase 1 구현 결과
+
+### 11.1 생성된 모듈
+
+| 파일 | 설명 |
+|------|------|
+| `indicators/return_distribution.py` | 롤링 KDE 추정기 (PDF/CDF/Z-score/꼬리확률) |
+| `indicators/mean_reversion_signal.py` | KDE + ZigZag/VWAP/ATR/ADX 평균회귀 신호 생성기 |
+| `tests/indicators/test_return_distribution.py` | KDE 추정기 및 신호 생성기 단위 테스트 |
+| `Devcenter/ml/generate_kde_features.py` | CSV 백테스트 데이터용 KDE 피처 생성 CLI |
+| `Devcenter/ml/generate_kde_features_parquet.py` | DuckDB 1분봉 parquet용 KDE 피처 생성 CLI |
+| `Devcenter/ml/compare_kde_filter.py` | ml_dataset.csv 병합 + XGBoost 기반성능 비교 |
+| `Devcenter/ml/optimize_kde_params.py` | KDE window/bandwidth grid search |
+
+### 11.2 최적 KDE 파라미터
+
+```json
+{
+  "window": 5000,
+  "bandwidth": 0.002,
+  "grid_points": 1024,
+  "refit_every": 100
+}
+```
+
+### 11.3 XGBoost 필터 성능 비교
+
+Test set (2025-06-25 ~ 2026-06-19, 240건 기준):
+
+| 지표 | Baseline | KDE-enhanced | Diff |
+|------|----------|--------------|------|
+| accuracy | 0.5125 | 0.5292 | +0.0167 |
+| precision | 0.4588 | 0.4848 | +0.0260 |
+| recall | 0.3545 | 0.4364 | +0.0818 |
+| f1 | 0.4000 | 0.4593 | +0.0593 |
+| roc_auc | 0.4870 | **0.5508** | **+0.0638** |
+
+- KDE 모델은 **threshold ≥ 0.55**에서 baseline 대비 총 PnL 우수
+- KDE 추가로 피처 중요도가 `entry_month`/`entry_hour` 등 달력 피처 집중에서 기술적 지표로 분산
+
+### 11.4 남은 설계 항목
+
+- Phase 2: 실시간 `AdaptiveIndicatorManager` 연동, `TransformerPredictor` 로깅/결합
+- Phase 3: Regime별 KDE, 다중 timeframe, 딥러닝 입력 통합, walk-forward 검증
