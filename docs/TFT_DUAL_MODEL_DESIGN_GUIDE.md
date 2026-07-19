@@ -542,7 +542,7 @@ python train_tft.py \
 # train_tft.py (실제 파일 — 주요 부분 발췌)
 
 from config import FUTURE_KNOWN_DIM, HORIZON_SEC, PAST_UNKNOWN_DIM
-from prediction.tft_model import TemporalFusionTransformer
+from prediction.models.tft_model import TemporalFusionTransformer
 
 # NPZ 로드 (X, past_known, future_known, y)
 data = np.load("dataset_tft_5m.npz")

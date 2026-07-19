@@ -70,7 +70,7 @@ def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = Non
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
-        from prediction.tft_model import TemporalFusionTransformer
+        from prediction.models.tft_model import TemporalFusionTransformer
     except Exception as e:
         raise RuntimeError("torch is required for training; install torch first") from e
 

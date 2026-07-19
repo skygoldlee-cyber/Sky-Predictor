@@ -23,10 +23,10 @@
 
 | 모델 | 파일 | 아키텍처 | 특징 |
 |------|------|----------|------|
-| **PriceTransformer** | `model.py` | Transformer Encoder | 기본 Transformer, 안정적 |
-| **PatchTST** | `patch_tst_model.py` | Patch-based Transformer | 연산 효율, 국소 패턴 포착 |
-| **Mamba** | `mamba_model.py` | Mamba SSM | State Space Model, 장기 의존성 |
-| **TFT** | `tft_model.py` | Temporal Fusion Transformer | 시간 기반 가변 선택, 해석 가능 |
+| **PriceTransformer** | `prediction/models/model.py` | Transformer Encoder | 기본 Transformer, 안정적 |
+| **PatchTST** | `prediction/models/patch_tst_model.py` | Patch-based Transformer | 연산 효율, 국소 패턴 포착 |
+| **Mamba** | `prediction/models/mamba_model.py` | Mamba SSM | State Space Model, 장기 의존성 |
+| **TFT** | `prediction/models/tft_model.py` | Temporal Fusion Transformer | 시간 기반 가변 선택, 해석 가능 |
 
 ### 공통 특징
 

@@ -19,8 +19,7 @@ Usage:
     --d-model 64 --n-heads 4 --n-layers 3 --d-ff 256
 
   # Step 3: predictor.py 에서 PatchTST 사용
-  #   TransformerPredictor 의 model import 경로만 바꾸면 된다:
-  #   from prediction.patch_tst_model import PatchTSTModel as PriceTransformer
+  #   from prediction.models.patch_tst_model import PatchTSTModel as PriceTransformer
   #   (또는 config.json 에 "model_class": "patch_tst" 를 추가해 자동 선택 가능)
 
 검증 지표:
@@ -102,10 +101,10 @@ def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = Non
         import torch
         import torch.nn as nn
         from torch.utils.data import DataLoader, TensorDataset
-        from prediction.patch_tst_model import PatchTSTModel
+        from prediction.models.patch_tst_model import PatchTSTModel
     except ImportError as e:
         raise RuntimeError(
-            "torch 와 prediction/patch_tst_model.py 가 필요합니다. "
+            "torch 와 prediction/models/patch_tst_model.py 가 필요합니다. "
             "torch 를 먼저 설치하세요."
         ) from e
 

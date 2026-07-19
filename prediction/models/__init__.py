@@ -3,7 +3,7 @@
 from .model import PriceTransformer
 from .tft_model import TemporalFusionTransformer
 from .mamba_model import MambaModel
-from .pivot_models import PatchTSTModel
+from .patch_tst_model import PatchTSTModel
 
 __all__ = [
     "PriceTransformer",

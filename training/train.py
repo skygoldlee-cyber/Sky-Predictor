@@ -109,7 +109,7 @@ Args:
         import torch.nn as nn
         from torch.utils.data import DataLoader, TensorDataset
 
-        from prediction.model import PriceTransformer
+        from prediction.models.model import PriceTransformer
     except Exception as e:
         raise RuntimeError("torch is required for training; install torch first") from e
 

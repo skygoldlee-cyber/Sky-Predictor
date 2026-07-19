@@ -96,10 +96,10 @@ def run(args: argparse.Namespace, now_fn: Optional[Callable[[], datetime]] = Non
         import torch
         import torch.nn as nn
         from torch.utils.data import DataLoader, TensorDataset
-        from prediction.mamba_model import MambaModel
+        from prediction.models.mamba_model import MambaModel
     except ImportError as e:
         raise RuntimeError(
-            "torch 와 prediction/mamba_model.py 가 필요합니다."
+            "torch 와 prediction/models/mamba_model.py 가 필요합니다."
         ) from e
 
     set_seed(42)
