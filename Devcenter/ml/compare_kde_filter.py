@@ -22,12 +22,23 @@ OUTPUT_DIR = Path(__file__).parent / "ml_models"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def load_merged_dataset() -> pd.DataFrame:
-    """Load ml_dataset and merge KDE features by entry_time."""
+def load_merged_dataset(kde_csv: str | None = None) -> pd.DataFrame:
+    """Load ml_dataset and merge KDE features by entry_time.
+
+    Args:
+        kde_csv: Optional filename for KDE feature CSV. Defaults to
+            ``futures_5min_with_kde.csv`` if available, otherwise
+            ``futures_1min_with_kde.csv``.
+    """
     df = pd.read_csv(DATA_DIR / "ml_dataset.csv")
     df["entry_time"] = pd.to_datetime(df["entry_time"])
 
-    kde_path = DATA_DIR / "futures_1min_with_kde.csv"
+    if kde_csv:
+        kde_path = DATA_DIR / kde_csv
+    else:
+        kde_path = DATA_DIR / "futures_5min_with_kde.csv"
+        if not kde_path.exists():
+            kde_path = DATA_DIR / "futures_1min_with_kde.csv"
     if not kde_path.exists():
         raise FileNotFoundError(f"KDE features not found: {kde_path}")
 
@@ -38,11 +49,18 @@ def load_merged_dataset() -> pd.DataFrame:
     kde_cols = [c for c in kde.columns if c.endswith(("_kde_cdf", "_kde_pdf", "_kde_zscore", "_kde_left_tail", "_kde_right_tail", "_kde_ready"))]
     kde = kde[["timestamp"] + kde_cols]
 
-    merged = df.merge(
+    # Use merge_asof so an entry at e.g. 10:23:17 aligns with the most recent
+    # fully-closed 1-minute bar (10:23:00), avoiding exact-timestamp misses
+    # and preventing look-ahead leakage.
+    df = df.sort_values("entry_time").reset_index(drop=True)
+    kde = kde.sort_values("timestamp").reset_index(drop=True)
+    merged = pd.merge_asof(
+        df,
         kde,
         left_on="entry_time",
         right_on="timestamp",
-        how="left",
+        direction="backward",
+        allow_exact_matches=False,
     )
     merged = merged.drop(columns=["timestamp"])
     return merged
@@ -108,19 +126,34 @@ def prepare_xy(df: pd.DataFrame, feature_cols: list) -> tuple:
     return X, y
 
 
-def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFrame, y_val: pd.Series) -> xgb.XGBClassifier:
-    """Train XGBoost classifier."""
+def compute_scale_pos_weight(y_train: pd.Series) -> float:
+    """Compute XGBoost scale_pos_weight for binary imbalanced labels."""
+    counts = y_train.value_counts()
+    if len(counts) < 2:
+        return 1.0
+    neg, pos = counts.get(0, 1), counts.get(1, 1)
+    return float(neg / max(pos, 1))
+
+
+def train_xgboost(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_val: pd.DataFrame,
+    y_val: pd.Series,
+) -> xgb.XGBClassifier:
+    """Train XGBoost classifier with early stopping and class imbalance handling."""
     model = xgb.XGBClassifier(
-        n_estimators=100,
+        n_estimators=1000,
         max_depth=4,
         learning_rate=0.05,
         subsample=0.7,
         colsample_bytree=0.7,
         random_state=42,
-        use_label_encoder=False,
         eval_metric="logloss",
         reg_alpha=0.5,
         reg_lambda=2.0,
+        early_stopping_rounds=20,
+        scale_pos_weight=compute_scale_pos_weight(y_train),
     )
     model.fit(
         X_train, y_train,
@@ -128,6 +161,40 @@ def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFrame
         verbose=False,
     )
     return model
+
+
+def find_best_threshold(
+    y_true: pd.Series,
+    y_proba: np.ndarray,
+    *,
+    metric: str = "f1",
+    min_pos_rate: float = 0.05,
+) -> float:
+    """Select classification threshold on validation set.
+
+    Args:
+        y_true: True binary labels.
+        y_proba: Predicted probabilities of the positive class.
+        metric: "f1" or "pnl".  For "pnl``, y_true must be aligned with a
+            ``net_krw`` column supplied separately by the caller.
+        min_pos_rate: Minimum fraction of samples predicted positive to avoid
+            degenerate thresholds.
+    """
+    best_thr = 0.5
+    best_score = -np.inf
+    for thr in np.arange(0.10, 0.95, 0.01):
+        pred = (y_proba >= thr).astype(int)
+        pos_rate = pred.mean()
+        if pos_rate < min_pos_rate or pos_rate > (1.0 - min_pos_rate):
+            continue
+        if metric == "f1":
+            score = f1_score(y_true, pred, zero_division=0)
+        else:
+            score = float(y_true[pred.astype(bool)].sum()) if hasattr(y_true, "sum") else -np.inf
+        if score > best_score:
+            best_score = score
+            best_thr = thr
+    return best_thr
 
 
 def evaluate_classification(y_true: pd.Series, y_pred: np.ndarray, y_proba: np.ndarray) -> dict:
@@ -181,7 +248,11 @@ def main() -> None:
     df = add_direction_aware_kde_features(df)
 
     # Only use rows where KDE features exist
-    df_kde = df[df["ret_log_1m_kde_ready"].notna()].copy()
+    ready_cols = [c for c in df.columns if c.endswith("_kde_ready")]
+    if ready_cols:
+        df_kde = df[df[ready_cols].notna().any(axis=1)].copy()
+    else:
+        raise ValueError("No KDE *_kde_ready columns found after merge")
     print(f"Rows with KDE features: {len(df_kde)} ({len(df_kde)/len(df)*100:.1f}%)")
     print(f"KDE period: {df_kde['entry_time'].min()} ~ {df_kde['entry_time'].max()}")
 
@@ -192,8 +263,8 @@ def main() -> None:
     missing_baseline = set(baseline_features) - set(available_baseline)
     if missing_baseline:
         print(f"Warning: missing baseline features {missing_baseline}")
-    available_kde = [c for c in kde_features if c in df_kde.columns]
-    missing_kde = set(kde_features) - set(available_kde)
+    available_kde = [c for c in kde_features if c not in baseline_features and c in df_kde.columns]
+    missing_kde = set(kde_features) - set(baseline_features) - set(available_kde)
     if missing_kde:
         print(f"Warning: missing KDE features {missing_kde}")
 
@@ -214,16 +285,22 @@ def main() -> None:
     # Baseline model
     print("\n[1/4] Training baseline XGBoost...")
     model_b = train_xgboost(X_train_b, y_train, X_val_b, y_val)
-    y_pred_b = model_b.predict(X_test_b)
+    y_proba_b_val = model_b.predict_proba(X_val_b)[:, 1]
     y_proba_b = model_b.predict_proba(X_test_b)[:, 1]
+    best_thr_b = find_best_threshold(y_val, y_proba_b_val, metric="f1", min_pos_rate=0.10)
+    y_pred_b = (y_proba_b >= best_thr_b).astype(int)
     metrics_b = evaluate_classification(y_test, y_pred_b, y_proba_b)
+    print(f"  Baseline threshold (tuned on validation): {best_thr_b:.2f}")
 
     # KDE model
     print("[2/4] Training KDE-enhanced XGBoost...")
     model_k = train_xgboost(X_train_k, y_train, X_val_k, y_val)
-    y_pred_k = model_k.predict(X_test_k)
+    y_proba_k_val = model_k.predict_proba(X_val_k)[:, 1]
     y_proba_k = model_k.predict_proba(X_test_k)[:, 1]
+    best_thr_k = find_best_threshold(y_val, y_proba_k_val, metric="f1", min_pos_rate=0.10)
+    y_pred_k = (y_proba_k >= best_thr_k).astype(int)
     metrics_k = evaluate_classification(y_test, y_pred_k, y_proba_k)
+    print(f"  KDE threshold (tuned on validation): {best_thr_k:.2f}")
 
     # Print classification metrics
     print("\n[3/4] Classification Metrics on Test Set")

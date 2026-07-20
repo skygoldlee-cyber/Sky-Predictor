@@ -128,6 +128,19 @@ class TestReturnDataFrameHelpers:
         # After window+ samples should be ready
         assert out["ret_kde_ready"].iloc[-1]
 
+    def test_add_return_features_respects_session_boundary(self):
+        df = pd.DataFrame({
+            "session": ["A", "A", "A", "B", "B", "B"],
+            "close": [100, 101, 102, 200, 199, 201],
+        })
+        out = add_return_features(df, close_col="close", timeframes=(1, 2), session_col="session")
+        # Boundary between sessions A and B must be NaN.
+        assert pd.isna(out["ret_log_1m"].iloc[3])
+        assert pd.isna(out["ret_log_2m"].iloc[3])
+        assert pd.isna(out["ret_log_2m"].iloc[4])
+        # Within session A, 1-min return should be computed.
+        assert abs(out["ret_log_1m"].iloc[1] - np.log(101 / 100)) < 1e-6
+
     def test_build_kde_features_refit_every(self):
         rng = np.random.default_rng(14)
         returns = rng.normal(0, 0.01, 600)
@@ -275,3 +288,87 @@ class TestMeanReversionSignalGenerator:
         )
         assert sig_no_pivot.action == "HOLD"
         assert "no_zigzag_low" in sig_no_pivot.suppressions
+
+    def test_supertrend_direction_filter(self):
+        gen = MeanReversionSignalGenerator(require_zigzag_pivot=False, require_vwap_cross=False)
+        m_buy = self._make_metrics(0.01, 0.01, 0.99)
+        # BUY-the-dip is allowed in an uptrend (supertrend_direction=1).
+        assert gen.generate(
+            metrics=m_buy, current_price=100.0, vwap=99.0, atr_current=0.5, adx=20.0,
+            supertrend_direction=1,
+        ).action == "BUY"
+        # BUY-the-dip is suppressed in a downtrend.
+        sig = gen.generate(
+            metrics=m_buy, current_price=100.0, vwap=99.0, atr_current=0.5, adx=20.0,
+            supertrend_direction=-1,
+        )
+        assert sig.action == "HOLD"
+        assert "st_downtrend_no_long_mean_rev" in sig.suppressions
+
+        gen.reset()
+        m_sell = self._make_metrics(0.99, 0.99, 0.01)
+        # SELL-the-rally is allowed in a downtrend (supertrend_direction=-1).
+        assert gen.generate(
+            metrics=m_sell, current_price=100.0, vwap=101.0, atr_current=0.5, adx=20.0,
+            supertrend_direction=-1,
+        ).action == "SELL"
+        # SELL-the-rally is suppressed in an uptrend.
+        sig = gen.generate(
+            metrics=m_sell, current_price=100.0, vwap=101.0, atr_current=0.5, adx=20.0,
+            supertrend_direction=1,
+        )
+        assert sig.action == "HOLD"
+        assert "st_uptrend_no_short_mean_rev" in sig.suppressions
+
+    def test_cooldown_auto_increments_without_bar_index(self):
+        gen = MeanReversionSignalGenerator(
+            require_zigzag_pivot=False,
+            require_vwap_cross=False,
+            cooldown_bars=2,
+        )
+        m = self._make_metrics(0.01, 0.01, 0.99)
+        sig1 = gen.generate(
+            metrics=m, current_price=100.0, vwap=99.0, atr_current=0.5, adx=20.0,
+        )
+        assert sig1.action == "BUY"
+        # Immediate next bar should still be in cooldown.
+        sig2 = gen.generate(
+            metrics=m, current_price=100.0, vwap=99.0, atr_current=0.5, adx=20.0,
+        )
+        assert sig2.action == "HOLD"
+        assert "cooldown" in sig2.suppressions
+
+    def test_upper_tail_threshold_used_asymmetrically(self):
+        # With upper_tail_threshold=0.90, SELL should trigger when right tail
+        # probability is below 1 - 0.90 = 0.10.
+        gen = MeanReversionSignalGenerator(
+            lower_tail_threshold=0.02,
+            upper_tail_threshold=0.90,
+            strong_tail_prob=0.005,
+            normal_tail_prob=0.10,
+            require_zigzag_pivot=False,
+            require_vwap_cross=False,
+        )
+        # right_tail_prob=0.06 -> SELL (below 0.10 boundary).
+        m = self._make_metrics(0.94, 0.94, 0.06)
+        sig = gen.generate(
+            metrics=m, current_price=100.0, vwap=101.0, atr_current=0.5, adx=20.0,
+        )
+        assert sig.action == "SELL"
+
+    def test_weak_strength_is_reachable(self):
+        gen = MeanReversionSignalGenerator(
+            lower_tail_threshold=0.02,
+            upper_tail_threshold=0.98,
+            strong_tail_prob=0.005,
+            normal_tail_prob=0.05,
+            require_zigzag_pivot=False,
+            require_vwap_cross=False,
+        )
+        # tail_prob between lower_tail_threshold and normal_tail_prob -> WEAK.
+        m = self._make_metrics(0.03, 0.03, 0.97)
+        sig = gen.generate(
+            metrics=m, current_price=100.0, vwap=99.0, atr_current=0.5, adx=20.0,
+        )
+        assert sig.action == "BUY"
+        assert sig.strength == "WEAK"

@@ -277,10 +277,12 @@ class ReturnDistributionEstimator:
         if quad is None:  # pragma: no cover
             return float(self.evaluate(x).cdf)
 
-        dataset_min = float(np.min(self._kde.dataset))
-        dataset_max = float(np.max(self._kde.dataset))
+        dataset = np.asarray(self._kde.dataset)
+        dataset_min = float(np.min(dataset))
+        dataset_max = float(np.max(dataset))
         factor = float(self._kde.factor)
-        lower = dataset_min - 5.0 * factor
+        data_std = float(np.std(dataset))
+        lower = dataset_min - 5.0 * factor * data_std
         try:
             result, _ = quad(lambda y: float(self._kde(y)[0]), lower, x, limit=100)
             return float(np.clip(result, 0.0, 1.0))
@@ -298,6 +300,7 @@ def add_return_features(
     close_col: str = "close",
     timeframes: Tuple[int, ...] = (1, 5),
     prefix: str = "ret",
+    session_col: Optional[str] = None,
 ) -> "pd.DataFrame":
     """Add log-return columns for multiple timeframes to a DataFrame.
 
@@ -306,6 +309,9 @@ def add_return_features(
         close_col: Name of the close price column (case-insensitive fallback).
         timeframes: Tuple of bar lengths, e.g. (1, 5) for 1-min and 5-min.
         prefix: Column prefix.
+        session_col: Optional column name grouping bars by trading session.
+            When provided, shifts are computed per session so overnight/session
+            gaps do not create spurious returns.
 
     Returns:
         DataFrame with added ``{prefix}_log_{tf}m`` columns.
@@ -316,9 +322,17 @@ def add_return_features(
     closes = pd.to_numeric(df[cc], errors="coerce")
 
     out = df.copy()
+    if session_col and session_col in out.columns:
+        grouper = out[session_col]
+    else:
+        grouper = None
+
     for tf in timeframes:
         col_name = f"{prefix}_log_{tf}m"
-        out[col_name] = np.log(closes / closes.shift(tf))
+        if grouper is not None:
+            out[col_name] = np.log(closes / closes.groupby(grouper).shift(tf))
+        else:
+            out[col_name] = np.log(closes / closes.shift(tf))
     return out
 
 
@@ -334,12 +348,18 @@ def build_kde_features(
     outlier_clip: float = 5.0,
     prefix: Optional[str] = None,
     refit_every: int = 1,
+    regime_col: Optional[str] = None,
 ) -> "pd.DataFrame":
     """Build rolling KDE metrics for a single return column.
 
-    This is intended for offline backtesting. Each row uses the prior
-    ``window`` returns (not including the current row) to fit the KDE and then
+    This is intended for offline backtesting. Each row fits the KDE on the
+    current rolling window (which includes the current row's return) and then
     evaluates the current row's return.
+
+    If ``regime_col`` is provided, a separate estimator is maintained for each
+    regime state (e.g., bull/bear/neutral) so the PDF/CDF/tail probabilities
+    are computed against the conditional return distribution of the current
+    regime.
 
     Args:
         df: DataFrame containing ``return_col``.
@@ -349,6 +369,7 @@ def build_kde_features(
         prefix: Output column prefix. Defaults to ``{return_col}_kde``.
         refit_every: Refit the KDE every N rows. ``1`` means exact refit at
             every row (slow), larger values trade some staleness for speed.
+        regime_col: Optional column name to split estimation by regime.
 
     Returns:
         DataFrame with added KDE metric columns.
@@ -356,7 +377,8 @@ def build_kde_features(
     import pandas as pd
 
     prefix = prefix or f"{return_col}_kde"
-    est = ReturnDistributionEstimator(
+
+    common_kwargs = dict(
         window=window,
         min_samples=min_samples,
         bandwidth=bandwidth,
@@ -364,10 +386,23 @@ def build_kde_features(
         grid_points=grid_points,
         outlier_clip=outlier_clip,
     )
+    default_est = ReturnDistributionEstimator(**common_kwargs)
+    regime_ests: dict = {}
 
     returns = pd.to_numeric(df[return_col], errors="coerce").to_numpy(dtype=float)
+    regimes = df[regime_col].to_numpy() if regime_col and regime_col in df.columns else None
     rows: List[dict] = []
     refit_every = max(1, int(refit_every))
+
+    def _get_est(idx: int):
+        if regimes is None:
+            return default_est
+        regime = regimes[idx]
+        if pd.isna(regime):
+            return default_est
+        if regime not in regime_ests:
+            regime_ests[regime] = ReturnDistributionEstimator(**common_kwargs)
+        return regime_ests[regime]
 
     for idx, ret in enumerate(returns):
         if math.isnan(ret):
@@ -384,6 +419,7 @@ def build_kde_features(
             })
             continue
 
+        est = _get_est(idx)
         # Refit the distribution either every row or every refit_every rows.
         if refit_every == 1 or (idx % refit_every) == 0:
             metrics = est.update(float(ret))

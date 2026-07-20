@@ -42,10 +42,11 @@ class MeanReversionSignalGenerator:
     AdaptiveSuperTrend, or simple dictionaries.
 
     Args:
-        lower_tail_threshold: CDF tail below which a LONG candidate is
-            considered (default 0.02 = bottom 2%).
-        upper_tail_threshold: CDF tail above which a SHORT candidate is
-            considered (default 0.98 = top 2%).
+        lower_tail_threshold: BUY tail-probability below which the signal is
+            STRONG or NORMAL (default 0.02 = bottom 2%).
+        upper_tail_threshold: CDF threshold for the SELL side.  The derived
+            tail-probability boundary is ``1 - upper_tail_threshold``
+            (default 0.98 -> 0.02 = top 2%).
         adx_max_for_mean_reversion: ADX below this value allows mean-reversion
             trades. Above it, the signal is suppressed.
         vwap_dev_threshold: Minimum absolute VWAP deviation as a fraction of
@@ -56,7 +57,10 @@ class MeanReversionSignalGenerator:
         require_vwap_cross: If True, price must be on the mean-reverting side
             of VWAP.
         strong_tail_prob: Tail probability threshold for STRONG signals.
-        normal_tail_prob: Tail probability threshold for NORMAL signals.
+        normal_tail_prob: WEAK-entry tail probability threshold.  Signals with
+            tail probability between ``lower_tail_threshold`` (BUY) or
+            ``1 - upper_tail_threshold`` (SELL) and this value are classified
+            as WEAK (default 0.05).
     """
 
     def __init__(
@@ -70,11 +74,19 @@ class MeanReversionSignalGenerator:
         require_zigzag_pivot: bool = True,
         require_vwap_cross: bool = True,
         strong_tail_prob: float = 0.01,
-        normal_tail_prob: float = 0.02,
+        normal_tail_prob: float = 0.05,
     ) -> None:
-        if not (0.0 < lower_tail_threshold < upper_tail_threshold < 1.0):
+        # Validate thresholds so signal strengths are well-ordered:
+        # STRONG < NORMAL < WEAK.  For SELL, the NORMAL boundary is derived
+        # from upper_tail_threshold as 1 - upper_tail_threshold.
+        right_normal_threshold = 1.0 - float(upper_tail_threshold)
+        if not (0.0 < strong_tail_prob < lower_tail_threshold < normal_tail_prob < 1.0):
             raise ValueError(
-                "Thresholds must satisfy 0 < lower < upper < 1"
+                "BUY thresholds must satisfy 0 < strong < normal-entry < weak-entry < 1"
+            )
+        if not (0.0 < strong_tail_prob < right_normal_threshold < normal_tail_prob < 1.0):
+            raise ValueError(
+                "SELL thresholds must satisfy 0 < strong < (1-upper) < weak-entry < 1"
             )
 
         self.lower_tail_threshold = float(lower_tail_threshold)
@@ -87,6 +99,7 @@ class MeanReversionSignalGenerator:
         self.require_vwap_cross = bool(require_vwap_cross)
         self.strong_tail_prob = float(strong_tail_prob)
         self.normal_tail_prob = float(normal_tail_prob)
+        self._right_normal_threshold = right_normal_threshold
 
         self._last_signal_bar: Dict[str, int] = {"BUY": -self.cooldown_bars, "SELL": -self.cooldown_bars}
         self._current_bar: int = 0
@@ -122,7 +135,12 @@ class MeanReversionSignalGenerator:
         Returns:
             MeanReversionSignal with action, strength, reason, suppressions.
         """
-        if bar_index is not None:
+        # Cooldown requires a monotonic bar counter. If the caller does not
+        # provide one, auto-increment so the first signal does not permanently
+        # lock out all later signals.
+        if bar_index is None:
+            self._current_bar += 1
+        else:
             self._current_bar = int(bar_index)
 
         if metrics is None or not metrics.is_ready:
@@ -138,15 +156,21 @@ class MeanReversionSignalGenerator:
         # 1. Tail detection
         # left_tail_prob  = P(R <= current) — small values mean extreme low tail
         # right_tail_prob = P(R >= current) — small values mean extreme high tail
+        #
+        # normal_tail_prob is the WEAK-entry threshold.  lower_tail_threshold
+        # (BUY) and 1 - upper_tail_threshold (SELL) are the NORMAL-entry
+        # thresholds.  strong_tail_prob is the STRONG threshold.
         tail_action: Optional[str] = None
         tail_prob = 0.0
-        if metrics.left_tail_prob < self.lower_tail_threshold:
+        if metrics.left_tail_prob < self.normal_tail_prob:
             tail_action = "BUY"
             tail_prob = metrics.left_tail_prob
-        elif metrics.right_tail_prob < self.lower_tail_threshold:
-            tail_action = "SELL"
-            tail_prob = metrics.right_tail_prob
-        else:
+        if metrics.right_tail_prob < self.normal_tail_prob:
+            # Prefer the more extreme tail if both sides trigger.
+            if tail_action is None or metrics.right_tail_prob < tail_prob:
+                tail_action = "SELL"
+                tail_prob = metrics.right_tail_prob
+        if tail_action is None:
             return MeanReversionSignal(
                 action="HOLD",
                 strength="NONE",
@@ -159,17 +183,13 @@ class MeanReversionSignalGenerator:
             suppressions.append("adx_too_high")
 
         # 3. SuperTrend direction filter (do not fight the trend)
+        # BUY-the-dip is only safe in an uptrend; SELL-the-rally only in a
+        # downtrend.  The previous logic was inverted.
         if supertrend_direction is not None:
             if tail_action == "BUY" and supertrend_direction == -1:
-                pass  # price below ST band; still allowed
+                suppressions.append("st_downtrend_no_long_mean_rev")
             if tail_action == "SELL" and supertrend_direction == 1:
-                pass  # price above ST band; still allowed
-            # More aggressive filter: if ST direction aligns with the tail,
-            # it is likely a trend continuation, not mean reversion.
-            if tail_action == "BUY" and supertrend_direction == 1:
-                suppressions.append("st_uptrend_no_long_mean_rev")
-            if tail_action == "SELL" and supertrend_direction == -1:
-                suppressions.append("st_downtrend_no_short_mean_rev")
+                suppressions.append("st_uptrend_no_short_mean_rev")
 
         # 4. VWAP side filter
         vwap_dev = (current_price - vwap) / current_price if current_price > 0 and vwap > 0 else 0.0
@@ -209,9 +229,13 @@ class MeanReversionSignalGenerator:
             )
 
         # 8. Strength assignment
-        if tail_prob < self.strong_tail_prob or tail_prob > (1.0 - self.strong_tail_prob):
+        # Tail probability is always the *small* tail prob (< normal_tail_prob),
+        # so the upper branches (tail_prob > 1 - strong/normal) were dead code.
+        if tail_prob < self.strong_tail_prob:
             strength = "STRONG"
-        elif tail_prob < self.normal_tail_prob or tail_prob > (1.0 - self.normal_tail_prob):
+        elif (tail_action == "BUY" and tail_prob < self.lower_tail_threshold) or (
+            tail_action == "SELL" and tail_prob < self._right_normal_threshold
+        ):
             strength = "NORMAL"
         else:
             strength = "WEAK"

@@ -60,7 +60,7 @@ def load_parquet_files(
     df = con.execute(query).fetchdf()
     con.close()
 
-    _logger.info("Loaded %d rows from %d files", len(df), df[timestamp_col].nunique())
+    _logger.info("Loaded %d rows", len(df))
 
     # Parse timestamp: YYYYMMDD HHMM
     df[timestamp_col] = pd.to_datetime(
@@ -91,8 +91,12 @@ def generate_kde_features_from_parquet(
     """Load 1-minute parquet data and append KDE return features."""
     df = load_parquet_files(glob_pattern, symbol=symbol)
 
-    # 1. Add log-returns
-    df = add_return_features(df, close_col="close", timeframes=timeframes)
+    # Add session date so overnight gaps do not create spurious 1-min returns.
+    session_col = "session_date"
+    df[session_col] = df["timestamp"].dt.strftime("%Y%m%d")
+
+    # 1. Add log-returns within each session only (boundary rows become NaN)
+    df = add_return_features(df, close_col="close", timeframes=timeframes, session_col=session_col)
 
     # 2. Add KDE features per timeframe
     for tf in timeframes:
