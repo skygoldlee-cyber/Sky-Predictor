@@ -206,11 +206,23 @@ def select_threshold_by_pnl(
     thresholds: np.ndarray | None = None,
     min_trades: int = 50,
     metric: str = "pnl",
-) -> float:
-    """Pick threshold maximizing a chosen metric on validation data."""
+    n_thresholds: int = 20,
+) -> tuple[float, float, np.ndarray]:
+    """Pick threshold maximizing a chosen metric on validation data.
+
+    If ``thresholds`` is not provided, uses quantile-based thresholds computed
+    from the validation predictions so the grid adapts to both classifier
+    probabilities and regressor outputs.
+
+    Returns the chosen threshold, the best validation score, and the grid used.
+    """
     if thresholds is None:
-        thresholds = np.arange(0.10, 0.95, 0.05)
-    best_thr = 0.5
+        if len(y_proba_val) == 0:
+            thresholds = np.array([0.0])
+        else:
+            qs = np.linspace(0.05, 0.95, n_thresholds)
+            thresholds = np.unique(np.quantile(y_proba_val, qs))
+    best_thr = float(thresholds[0]) if len(thresholds) else 0.0
     best_score = -np.inf
     for thr in thresholds:
         mask = y_proba_val >= thr
@@ -220,8 +232,8 @@ def select_threshold_by_pnl(
         score = _metric_score(subset, metric)
         if score > best_score:
             best_score = score
-            best_thr = thr
-    return best_thr
+            best_thr = float(thr)
+    return best_thr, best_score, thresholds
 
 
 def train_xgboost_filter(
@@ -270,7 +282,7 @@ def stage1_filter(
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_xgboost_filter(train_df, val_df, feature_cols)
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -280,11 +292,14 @@ def stage1_filter(
     filt_val = apply(val_df)
     filt_test = apply(test_df)
 
+    proba_test = model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1]
     metrics = classification_metrics(
         test_df["is_win"],
-        (model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1] >= threshold).astype(int),
-        model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1],
+        (proba_test >= threshold).astype(int),
+        proba_test,
     )
+    metrics["threshold"] = round(threshold, 6)
+    metrics["val_score"] = round(val_score, 2)
     return filt_train, filt_val, filt_test, metrics
 
 
@@ -332,7 +347,7 @@ def stage2_entry_timing(
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_random_forest_entry(train_df, val_df, feature_cols)
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -342,11 +357,14 @@ def stage2_entry_timing(
     opt_val = apply(val_df)
     opt_test = apply(test_df)
 
+    proba_test = model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1]
     metrics = classification_metrics(
         test_df["is_win"],
-        (model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1] >= threshold).astype(int),
-        model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1],
+        (proba_test >= threshold).astype(int),
+        proba_test,
     )
+    metrics["threshold"] = round(threshold, 6)
+    metrics["val_score"] = round(val_score, 2)
     return opt_train, opt_val, opt_test, metrics
 
 
@@ -494,7 +512,7 @@ def stage3_exit_timing(
                           for i in range(len(X_val_scaled) - sequence_length)])
     proba_val = model.predict(X_val_seq, verbose=0).flatten()
     df_val_for_thr = df_val_sorted.iloc[sequence_length:].copy()
-    threshold = select_threshold_by_pnl(df_val_for_thr, proba_val, min_trades=30, metric=metric)
+    threshold, val_score, _ = select_threshold_by_pnl(df_val_for_thr, proba_val, min_trades=30, metric=metric)
 
     # Predict on test
     df_test_sorted = test_df.sort_values("entry_time").reset_index(drop=True)
@@ -512,6 +530,8 @@ def stage3_exit_timing(
         (proba_test >= threshold).astype(int),
         proba_test,
     )
+    metrics["threshold"] = round(threshold, 6)
+    metrics["val_score"] = round(val_score, 2)
     return final_test, metrics
 
 
@@ -532,7 +552,7 @@ def stage3_exit_filter(
     proba_train = model.predict_proba(train_df[feature_cols].fillna(0).astype(float))[:, 1]
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
     proba_test = model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
     final_train = train_df.assign(exit_score=proba_train).loc[proba_train >= threshold].copy()
     final_val = val_df.assign(exit_score=proba_val).loc[proba_val >= threshold].copy()
@@ -547,6 +567,8 @@ def stage3_exit_filter(
             (df_test_scored["exit_score"] >= threshold).astype(int),
             df_test_scored["exit_score"],
         )
+    metrics["threshold"] = round(threshold, 6)
+    metrics["val_score"] = round(val_score, 2)
     return final_test, metrics
 
 
@@ -598,7 +620,7 @@ def stage3_exit_regression(
     """
     model = train_xgboost_regressor(train_df, val_df, feature_cols, target_col=target_col)
     pred_val = model.predict(val_df[feature_cols].fillna(0).astype(float))
-    threshold = select_threshold_by_pnl(val_df, pred_val, min_trades=min_trades, metric=metric)
+    threshold, val_score, _ = select_threshold_by_pnl(val_df, pred_val, min_trades=min_trades, metric=metric)
 
     def apply(df):
         pred = model.predict(df[feature_cols].fillna(0).astype(float))
@@ -618,6 +640,8 @@ def stage3_exit_regression(
             (df_test_scored["exit_score"] >= threshold).astype(int),
             df_test_scored["exit_score"],
         )
+    metrics["threshold"] = round(threshold, 6)
+    metrics["val_score"] = round(val_score, 2)
     return final_test, metrics
 
 
