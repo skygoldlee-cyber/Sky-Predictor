@@ -2,7 +2,7 @@
 
 > 문서 ID: `DESIGN-KDE-RETURN-001`
 > 작성일: 2026-07-19
-> 상태: Phase 1 완료, Phase 2/3 진행 예정
+> 상태: Phase 1 완료, Pullback Momentum 실패 후 KDE 파이프라인 강화 진행 중
 > 목적: SkyPredictor 기존 아키텍처에 확률밀도함수(KDE)를 이용한 평균회귀 로직을 추가하는 설계
 
 ---
@@ -771,3 +771,90 @@ Sharpe ≥ 2.0 달성을 위해 두 가지 개선을 시도.
 
 - Phase 2: 실시간 `AdaptiveIndicatorManager` 연동, `TransformerPredictor` 로깅/결합
 - Phase 3: Regime별 KDE, 다중 timeframe, 딥러닝 입력 통합, walk-forward 검증
+
+---
+
+## 12. Pullback Momentum 실패 후 KDE 파이프라인 강화 (2026-07-21)
+
+### 12.1 전환 배경
+
+`PULLBACK_MOMENTUM_STRATEGY_DESIGN_v2`의 rule-based pullback momentum 전략을 구현·백테스트한 결과, random control 및 rule-based signal 모두에서 **모든 risk_per_trade 구간에서 CAGR이 음수**였습니다. 이에 따라 entry 신호 개선보다 우선적으로 **exit/sizing 시스템이 생존 가능해야 한다**는 판단 하에, 기존 KDE 평균회귀 파이프라인으로 복귀하여 강화하기로 결정했습니다.
+
+### 12.2 강화 1: LSTM exit → deterministic XGBoost regression exit
+
+`ml_full_pipeline_kde.py`의 3-stage 파이프라인에서 비결정론적이고 overfit 우려가 큰 LSTM exit 단계를 아래와 같이 개선했습니다.
+
+| 변경 항목 | 내용 |
+|----------|------|
+| `stage3_exit_regression` 신규 | XGBoost regressor가 `pnl_per_contract`(계약당 PnL)을 예측 |
+| `select_threshold_by_pnl` 개선 | validation 예측값 분포 기반 quantile grid(5%~95%, 20구간) 사용, classifier와 regressor 모두 적용 가능 |
+| fixed threshold 지원 | `stage1_threshold`, `stage2_threshold`, `stage3_threshold` 인자 추가로 reproducible 실험 가능 |
+| threshold/val_score 추적 | 각 stage metrics에 선택된 threshold와 validation score 기록 |
+| `--stage3-type` CLI | `lstm`, `xgb_cls`, `xgb_reg`, `none` 중 선택 가능 |
+
+### 12.3 Stage 3 threshold 튜닝 결과
+
+stage1=0.5, stage2=0.5 고정, stage3=xgb_reg 상태에서 regression threshold를 조정한 결과입니다 (test 2025-2026, 1 tick/side).
+
+| stage3_thr (KRW) | 거래 수 | 승률 | 총 PnL | PF | Sharpe | CAGR | MDD | MAR |
+|------------------|--------|------|--------|----|--------|------|-----|-----|
+| 0 | 377 | 41.9% | +2.31M | 1.15 | 0.76 | 15.35% | 2.08M | 0.74 |
+| 1,000 | 377 | 41.9% | +2.31M | 1.15 | 0.76 | 15.35% | 2.08M | 0.74 |
+| 2,000 | 376 | 42.0% | +2.33M | 1.15 | 0.77 | 15.45% | 2.08M | 0.74 |
+| **3,000** | **367** | **42.0%** | **+2.62M** | **1.17** | **0.86** | **17.29%** | **1.77M** | **0.97** |
+| 5,000 | 283 | 41.3% | +1.78M | 1.14 | 0.61 | 11.90% | 2.34M | 0.51 |
+| 7,500 | 71 | 52.1% | +1.55M | 1.30 | 0.79 | 11.66% | 1.07M | 1.09 |
+| 10,000 | 27 | 55.6% | +1.13M | 1.73 | 0.97 | 9.24% | 0.22M | 4.23 |
+| 15,000 | 3 | 33.3% | -0.31M | 0.32 | -0.67 | -13.55% | 0.45M | -2.99 |
+| 20,000 | 0 | - | 0 | - | - | - | - | - |
+
+- **stage3_thr=3,000 KRW**가 현재 가장 균형 잡힌 설정 (거래 수 367, PF 1.17, Sharpe 0.86, CAGR 17.29%, MAR 0.97)
+- threshold 10,000 이상은 거래 수가 급감 (27건 이하)하여 통계적 신뢰성이 떨어짐
+
+### 12.4 Threshold robustness (stage1/2 고정 실험)
+
+stage3=xgb_reg(threshold=0), stage1/2 threshold를 0.3/0.5/0.7로 고정해 비교한 결과입니다.
+
+| s1 | s2 | 거래 수 | PnL | PF | Sharpe | CAGR | MAR |
+|----|----|--------|-----|----|--------|------|-----|
+| 0.5 | 0.5 | 377 | **+2.31M** | 1.15 | **0.76** | 15.35% | 0.74 |
+| 0.5 | 0.5(none) | 384 | +1.89M | 1.12 | 0.60 | 12.61% | 0.48 |
+| 0.3 | 0.3 | 24 | -0.29M | 0.87 | -0.27 | -2.39% | -0.15 |
+| 0.3 | 0.5 | 20 | -0.49M | 0.78 | -0.44 | -3.76% | -0.29 |
+| 0.3 | 0.7 | 7 | +0.05M | 1.05 | 0.04 | 0.87% | 0.21 |
+| 0.5 | 0.3 | 37 | -2.13M | 0.52 | -1.23 | -16.86% | -0.68 |
+
+- **s1=0.5, s2=0.5가 유일하게 양수 PnL/CAGR를 내는 sweet spot**
+- stage1/2 threshold가 0.3/0.7로만 벗어나도 수익/손실이 크게 변동 → threshold 선택의 민감도가 높음
+
+### 12.5 Stage 1/2 metric 실험 요약
+
+`select_threshold_by_pnl`을 pnl/sharpe/pf/sharpe_x_pf로 바꾸어 실험한 결과, 다음과 같았습니다.
+
+- stage1 metric 변경은 threshold 선택에 거의 영향을 주지 않음 (AUC 0.52 수준의 약한 예측력)
+- stage2 metric=`pf`는 validation에서 과도하게 낮은 threshold를 선택해 test에서 붕괴
+- **stage1=pnl, stage2=pnl 또는 sharpe 조합이 가장 안정**
+
+### 12.6 현재 한계 및 다음 단계
+
+| 지표 | 현재 최고치 | 목표 | 격차 |
+|------|------------|------|------|
+| PF | 1.17 | 1.8 | 0.63 |
+| Sharpe | 0.86 | 2.0 | 1.14 |
+| CAGR | 17.29% | - | 양수 확보 |
+| MAR | 0.97 | 1.5+ | 0.53 |
+
+목표 달성을 위해 다음 단계를 제안합니다.
+
+1. **Stage 1/2 모델 강화**: Random Forest → XGBoost, hyperparameter tuning, feature engineering
+2. **Regime별 모델/threshold**: trend/volatile regime별로 별도 학습 및 threshold 최적화
+3. **Cost-aware/R-multiple label**: binary `is_win` 대신 `pnl_per_contract` 회귀로 직접 학습
+4. **Feature 추가**: 거래량/미결, 세션별 통계, 거시(basis, VIX, USD/KRW)
+5. **Position sizing**: 예측 score 기반 fractional Kelly, daily/weekly loss limit
+6. **Walk-forward + slippage 감도**: 2025/2026 fold 분리, 1/2/3 tick slippage에서 안정성 확인
+
+### 12.7 관련 커밋
+
+- `ac59dbe`: deterministic XGBoost regression exit filter 추가
+- `00d3e51`: quantile 기반 threshold grid 및 per-stage threshold 추적
+- `1e7d8a3`: stage3_exit_filter에 fixed_threshold 옵션 추가
