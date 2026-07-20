@@ -400,9 +400,15 @@ def train_lstm_exit(
     feature_cols: list,
     sequence_length: int = 10,
     config: dict | None = None,
+    seed: int = 42,
 ):
     if config is None:
         config = {}
+    # Reset all RNGs so every LSTM training call is reproducible.
+    random.seed(seed)
+    np.random.seed(seed)
+    if tf is not None:
+        tf.random.set_seed(seed)
     df_sorted = pd.concat([train_df, val_df]).sort_values("entry_time").reset_index(drop=True)
 
     X_raw = df_sorted[feature_cols].fillna(0).astype(float).values

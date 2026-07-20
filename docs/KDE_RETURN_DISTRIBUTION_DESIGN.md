@@ -724,6 +724,33 @@ Sharpe ≥ 2.0 달성을 위해 두 가지 개선을 시도.
 - Stage 3 threshold를 `sharpe`로 바꿔도 LSTM의 내부 non-determinism으로 인해 평균 Sharpe가 크게 개선되지는 않음.
 - **LSTM을 그대로 유지하되, 실행 간 재현성을 확보**하기 위해 매 run마다 `tf.random.set_seed(42)`를 재설정하거나, LSTM 자체를 더 강건한 구조(예: dropout 제거, seed 고정 per call)로 개선하는 것이 우선.
 
+#### 11.3.13 LSTM non-determinism 확보 시도
+
+`train_lstm_exit` 시작 시 `random.seed(42)`, `np.random.seed(42)`, `tf.random.set_seed(42)`를 재설정하고, `TF_ENABLE_ONEDNN_OPTS=0` 및 `tf.config.experimental.enable_op_determinism()`을 적용하여 3회 반복 실험.
+
+**결과 (test 2025-2026)**
+
+| Run | Variant | 거래 수 | 승률 | 총 PnL | test Sharpe |
+|-----|---------|--------|------|--------|-------------|
+| 1 | Baseline | 631 | 40.41% | -9,103,172 | -1.78 |
+| 1 | **KDE** | 384 | 42.19% | **+1,888,692** | **0.60** |
+| 2 | Baseline | 631 | 40.41% | -9,103,172 | -1.78 |
+| 2 | **KDE** | 384 | 42.19% | **+1,888,692** | **0.60** |
+| 3 | Baseline | 631 | 40.41% | -9,103,172 | -1.78 |
+| 3 | **KDE** | 384 | 42.19% | **+1,888,692** | **0.60** |
+
+> 3회 모두 동일한 값.
+
+- 3회 모두 **완전히 동일한 결과**를 산출 → 재현성은 확보됨.
+- 그러나 LSTM exit filter가 **모든 거래를 통과**시키는 threshold를 선택하면서, KDE Sharpe가 **0.60**으로 이전 난수 시드에 따른 우연한 우수 결과(평균 1.06, 최고 1.59)보다 크게 하락.
+- 이는 이전 LSTM의 좋은 결과가 **난수 seed에 따른 과최적화/운**에 가까웠음을 시사.
+
+**시사점**
+
+- 단순 seed 고정만으로는 LSTM exit filter의 성능을 보장할 수 없음.
+- LSTM 대신 **deterministic한 rule-based exit** 또는 더 강건한 **XGB/LightGBM exit model**로 대체하는 방향이 더 안전함.
+- 현재 2-stage(stage1 filter + stage2 entry)만으로는 Sharpe 0.60 수준에 머무르므로, **Regime 세분화 + 추가 피처 + Position sizing + R-multiple label** 등 추가 개선이 필요.
+
 ### 11.4 Phase 1.5 핵심 버그 수정
 
 재검증 전에 발견된 구현상 문제를 수정했습니다.
