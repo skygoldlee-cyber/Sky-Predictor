@@ -700,6 +700,30 @@ Sharpe 7.09 등 극단적인 성능에 대한 의문을 해소하기 위해 merg
 - Sharpe 평균 1.06, 표준편차 0.46으로 여전히 변동성이 있음.
 - LSTM 단계에서 seed를 고정했음에도 불구하고 결과가 일부 변동 → TensorFlow CPU 연산의 non-determinism(병렬 연산, dropout 등) 영향 가능. 추가로 `tf.config.experimental.enable_op_determinism()` 또는 LSTM 제거/교체 고려.
 
+#### 11.3.12 Threshold objective 변경 및 LSTM 대체 실험
+
+Sharpe ≥ 2.0 달성을 위해 두 가지 개선을 시도.
+
+1. **Threshold objective 확장**: `select_threshold_by_pnl`이 validation PnL만 최대화하던 것을 `sharpe`, `pf`, `sharpe_x_pf` 중 선택 가능하도록 변경. Stage 3(LSTM exit filter) threshold 선택에 `sharpe` 적용.
+2. **LSTM 대체 실험**: 비결정론적인 LSTM exit 단계를
+   - (A) XGBoost 기반 deterministic exit filter로 교체
+   - (B) 완전히 제거(stage1+stage2 결과를 그대로 사용)해 봄.
+
+**결과 (test 2025-2026, look-ahead 배제)**
+
+| 구성 | Variant | 거래 수 | 승률 | 총 PnL | 평균 PnL | test Sharpe |
+|------|---------|--------|------|--------|---------|-------------|
+| LSTM 유지 + stage3 metric=sharpe | Baseline | 292± | 40.6% | -8,495,934 | -29,123 | -2.06 |
+| LSTM 유지 + stage3 metric=sharpe | **KDE** | 183± | 47.6% | **+2,850,486** | **+15,576** | **1.06±0.46** |
+| (A) XGB exit filter | Baseline | 251 | 43.43% | -768,479 | -3,062 | -0.21 |
+| (A) XGB exit filter | **KDE** | 197 | 43.65% | **+343,800** | **+1,745** | **0.15** |
+| (B) LSTM 제거(stage1+stage2) | Baseline | 631 | 40.41% | -9,103,172 | -14,427 | -1.78 |
+| (B) LSTM 제거(stage1+stage2) | **KDE** | 384 | 42.19% | **+1,888,692** | **+4,918** | **0.60** |
+
+- LSTM exit filter가 **KDE 파이프라인의 수익성 핵심**. XGB exit filter나 제거 시 Sharpe/PnL 모두 크게 하락.
+- Stage 3 threshold를 `sharpe`로 바꿔도 LSTM의 내부 non-determinism으로 인해 평균 Sharpe가 크게 개선되지는 않음.
+- **LSTM을 그대로 유지하되, 실행 간 재현성을 확보**하기 위해 매 run마다 `tf.random.set_seed(42)`를 재설정하거나, LSTM 자체를 더 강건한 구조(예: dropout 제거, seed 고정 per call)로 개선하는 것이 우선.
+
 ### 11.4 Phase 1.5 핵심 버그 수정
 
 재검증 전에 발견된 구현상 문제를 수정했습니다.

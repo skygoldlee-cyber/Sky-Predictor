@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Tuple
 
 os.environ.setdefault("PYTHONHASHSEED", "42")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 random.seed(42)
 
 import joblib
@@ -170,24 +171,51 @@ def split_by_year(df: pd.DataFrame, train_years: tuple, val_year: int, test_year
     return train, val, test
 
 
+def _metric_score(df: pd.DataFrame, metric: str) -> float:
+    net = df["net_krw"]
+    if len(net) < 2:
+        return -np.inf
+    if metric == "pnl":
+        return float(net.sum())
+    if metric == "avg_pnl":
+        return float(net.mean())
+    if metric == "sharpe":
+        s = net.std()
+        return float(np.sqrt(len(net)) * net.mean() / s) if s and s > 0 else -np.inf
+    if metric == "pf":
+        wins = net[net > 0].sum()
+        losses = abs(net[net < 0].sum())
+        return float(wins / losses) if losses > 0 else np.inf
+    if metric == "sharpe_x_pf":
+        s = net.std()
+        sharpe = float(np.sqrt(len(net)) * net.mean() / s) if s and s > 0 else -np.inf
+        wins = net[net > 0].sum()
+        losses = abs(net[net < 0].sum())
+        pf = float(wins / losses) if losses > 0 else 0.0
+        return sharpe * pf
+    return float(net.sum())
+
+
 def select_threshold_by_pnl(
     df_val: pd.DataFrame,
     y_proba_val: np.ndarray,
     thresholds: np.ndarray | None = None,
     min_trades: int = 50,
+    metric: str = "pnl",
 ) -> float:
-    """Pick threshold maximizing total PnL on validation data."""
+    """Pick threshold maximizing a chosen metric on validation data."""
     if thresholds is None:
         thresholds = np.arange(0.10, 0.95, 0.05)
     best_thr = 0.5
-    best_pnl = -np.inf
+    best_score = -np.inf
     for thr in thresholds:
         mask = y_proba_val >= thr
         if mask.sum() < min_trades:
             continue
-        pnl = df_val.loc[mask, "net_krw"].sum()
-        if pnl > best_pnl:
-            best_pnl = pnl
+        subset = df_val.loc[mask].copy()
+        score = _metric_score(subset, metric)
+        if score > best_score:
+            best_score = score
             best_thr = thr
     return best_thr
 
@@ -234,10 +262,11 @@ def stage1_filter(
     test_df: pd.DataFrame,
     feature_cols: list,
     min_trades: int = 300,
+    metric: str = "pnl",
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_xgboost_filter(train_df, val_df, feature_cols)
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades)
+    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -295,10 +324,11 @@ def stage2_entry_timing(
     test_df: pd.DataFrame,
     feature_cols: list,
     min_trades: int = 100,
+    metric: str = "pnl",
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_random_forest_entry(train_df, val_df, feature_cols)
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades)
+    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -428,6 +458,7 @@ def stage3_exit_timing(
     feature_cols: list,
     sequence_length: int = 10,
     lstm_config: dict | None = None,
+    metric: str = "sharpe",
 ) -> Tuple[pd.DataFrame, dict]:
     if lstm_config is None:
         lstm_config = {}
@@ -453,7 +484,7 @@ def stage3_exit_timing(
                           for i in range(len(X_val_scaled) - sequence_length)])
     proba_val = model.predict(X_val_seq, verbose=0).flatten()
     df_val_for_thr = df_val_sorted.iloc[sequence_length:].copy()
-    threshold = select_threshold_by_pnl(df_val_for_thr, proba_val, min_trades=30)
+    threshold = select_threshold_by_pnl(df_val_for_thr, proba_val, min_trades=30, metric=metric)
 
     # Predict on test
     df_test_sorted = test_df.sort_values("entry_time").reset_index(drop=True)
@@ -470,6 +501,39 @@ def stage3_exit_timing(
         df_test_for_pred["is_win"],
         (proba_test >= threshold).astype(int),
         proba_test,
+    )
+    return final_test, metrics
+
+
+def stage3_exit_filter(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    feature_cols: list,
+    min_trades: int = 30,
+    metric: str = "sharpe",
+) -> Tuple[pd.DataFrame, dict]:
+    """Deterministic final exit filter using an XGBoost classifier.
+
+    Replaces the LSTM exit stage with a reproducible, seed-fixed XGB model.
+    Threshold is chosen on validation data using the specified metric.
+    """
+    model = train_xgboost_filter(train_df, val_df, feature_cols)
+    proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
+    threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+
+    def apply(df):
+        proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
+        return df.assign(exit_score=proba).loc[proba >= threshold].copy()
+
+    final_train = apply(train_df)
+    final_val = apply(val_df)
+    final_test = apply(test_df)
+
+    metrics = classification_metrics(
+        final_test["is_win"],
+        (final_test["exit_score"] >= threshold).astype(int),
+        final_test["exit_score"],
     )
     return final_test, metrics
 
@@ -519,12 +583,14 @@ def run_pipeline(
     train_years: tuple,
     val_year: int,
     test_year: int | tuple,
-    lstm_config: dict | None = None,
-    sequence_length: int = 10,
+    stage1_metric: str = "pnl",
+    stage2_metric: str = "pnl",
+    stage3_metric: str = "sharpe",
 ) -> Tuple[pd.DataFrame, dict]:
     print(f"\n{'='*80}")
     print(f"Running full pipeline: {variant}")
     print(f"  train: {train_years}, val: {val_year}, test: {test_year}")
+    print(f"  stage metrics: stage1={stage1_metric}, stage2={stage2_metric}, stage3={stage3_metric}")
     print(f"{'='*80}")
 
     train_df, val_df, test_df = split_by_year(df, train_years, val_year, test_year)
@@ -535,7 +601,7 @@ def run_pipeline(
     # Stage 1: XGBoost filter
     print("\n[Stage 1/3] XGBoost trade filter")
     filt_train, filt_val, filt_test, metrics1 = stage1_filter(
-        train_df, val_df, test_df, feature_cols_stage1
+        train_df, val_df, test_df, feature_cols_stage1, metric=stage1_metric
     )
     print(f"  Filter metrics: {metrics1}")
     print(f"  Filtered -> train: {len(filt_train)}, val: {len(filt_val)}, test: {len(filt_test)}")
@@ -543,17 +609,26 @@ def run_pipeline(
     # Stage 2: RF entry timing
     print("\n[Stage 2/3] Random Forest entry timing")
     opt_train, opt_val, opt_test, metrics2 = stage2_entry_timing(
-        filt_train, filt_val, filt_test, feature_cols_stage2
+        filt_train, filt_val, filt_test, feature_cols_stage2, metric=stage2_metric
     )
     print(f"  Entry metrics: {metrics2}")
     print(f"  Optimized -> train: {len(opt_train)}, val: {len(opt_val)}, test: {len(opt_test)}")
 
-    # Stage 3: LSTM exit timing
+    # Stage 3: LSTM exit timing (or bypass for stage1+stage2 only test)
     print("\n[Stage 3/3] LSTM exit timing")
-    final_test, metrics3 = stage3_exit_timing(
-        opt_train, opt_val, opt_test, feature_cols_stage2,
-        sequence_length=sequence_length, lstm_config=lstm_config,
-    )
+    use_lstm = os.environ.get("SKIP_LSTM_STAGE", "0") != "1"
+    if use_lstm:
+        final_test, metrics3 = stage3_exit_timing(
+            opt_train, opt_val, opt_test, feature_cols_stage2,
+            sequence_length=10, metric=stage3_metric,
+        )
+    else:
+        final_test = opt_test.copy()
+        metrics3 = classification_metrics(
+            final_test["is_win"],
+            np.ones(len(final_test), dtype=int),
+            np.ones(len(final_test)) * 0.5,
+        )
     print(f"  Exit metrics: {metrics3}")
     print(f"  Final test trades: {len(final_test)}")
 
@@ -569,7 +644,7 @@ def run_pipeline(
     }
 
 
-def walk_forward_validation(df: pd.DataFrame, lstm_config: dict, sequence_length: int) -> list:
+def walk_forward_validation(df: pd.DataFrame, *args, **kwargs) -> list:
     """Run multiple train/val/test year splits and compare baseline vs KDE."""
     folds = [
         ((2019, 2020, 2021, 2022, 2023), 2024, 2025),
@@ -582,10 +657,7 @@ def walk_forward_validation(df: pd.DataFrame, lstm_config: dict, sequence_length
         print(f"# Walk-forward fold: train={train_years}, val={val_year}, test={test_year}")
         print(f"{'#'*80}")
         for use_kde, variant in [(False, "Baseline"), (True, "KDE-enhanced")]:
-            final_test, info = run_pipeline(
-                df, use_kde, variant, train_years, val_year, test_year,
-                lstm_config=lstm_config, sequence_length=sequence_length,
-            )
+            final_test, info = run_pipeline(df, use_kde, variant, train_years, val_year, test_year)
             info["fold"] = f"{train_years[-1]}->{test_year}"
             results.append(info)
             suffix = f"{train_years[-1]}_{test_year}"
