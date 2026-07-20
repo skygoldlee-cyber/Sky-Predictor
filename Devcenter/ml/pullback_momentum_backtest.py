@@ -136,8 +136,8 @@ class Position:
         self.trailing_stop = self.stop_price
 
 
-def _contracts(capital: float, atr: float) -> int:
-    risk_amount = capital * RISK_PER_TRADE
+def _contracts(capital: float, atr: float, risk_per_trade: float = RISK_PER_TRADE) -> int:
+    risk_amount = capital * risk_per_trade
     risk_per_contract = atr * CONTRACT_MULTIPLIER
     if risk_per_contract <= 0 or np.isnan(risk_per_contract):
         return 0
@@ -160,6 +160,7 @@ DEFAULT_PARAMS = {
     "entry_window_end": "15:15",
     "random_control": False,
     "random_entry_prob": 0.05,
+    "risk_per_trade": RISK_PER_TRADE,
 }
 
 
@@ -228,7 +229,7 @@ def run_backtest(df: pd.DataFrame, params: dict | None = None) -> dict:
                 bb_upper_lag = df.loc[i, "bb_upper_lag"]
                 rsi_lag = df.loc[i, "rsi14_lag"]
                 atr_lag = df.loc[i, "atr14_lag"]
-                contracts = _contracts(capital, atr_lag)
+                contracts = _contracts(capital, atr_lag, params["risk_per_trade"])
 
                 # Long entry only in bull regime: pullback before it bounces
                 if regime == "bull":
@@ -262,7 +263,7 @@ def run_backtest(df: pd.DataFrame, params: dict | None = None) -> dict:
                 if not params["long_only"] and np.random.rand() < 0.5:
                     side = "short"
                 atr_lag = df.loc[i, "atr14_lag"]
-                contracts = _contracts(capital, atr_lag)
+                contracts = _contracts(capital, atr_lag, params["risk_per_trade"])
                 pending_entry = (side, contracts)
 
         # Execute pending entry at current bar's open
@@ -398,6 +399,7 @@ def report(trades: list[dict], final_capital: float, peak: float) -> None:
     mdd = (running_peak - equity).max()
     calmar = (total_pnl / INITIAL_CAPITAL) / (mdd / INITIAL_CAPITAL) if mdd > 0 else 0.0
 
+    cagr, mar, mdd_daily = _cagr_mar(trades)
     print(f"\nTrades: {len(df)}")
     print(f"Win rate: {win_rate:.2f}%")
     print(f"Total PnL: {total_pnl:,.0f} KRW")
@@ -405,7 +407,10 @@ def report(trades: list[dict], final_capital: float, peak: float) -> None:
     print(f"Profit Factor: {pf:.2f}")
     print(f"Sharpe Ratio: {sharpe:.2f}")
     print(f"Calmar Ratio: {calmar:.2f}")
-    print(f"Max Drawdown: {mdd:,.0f} KRW ({mdd/INITIAL_CAPITAL*100:.2f}%)")
+    print(f"Max Drawdown (trade curve): {mdd:,.0f} KRW ({mdd/INITIAL_CAPITAL*100:.2f}%)")
+    print(f"Max Drawdown (daily): {mdd_daily:,.0f} KRW ({mdd_daily/INITIAL_CAPITAL*100:.2f}%)")
+    print(f"CAGR: {cagr*100:.2f}%")
+    print(f"MAR: {mar:.2f}")
     print(f"Final Capital: {final_capital:,.0f} KRW")
 
     df["year"] = pd.to_datetime(df["entry_time"]).dt.year
@@ -419,9 +424,30 @@ def report(trades: list[dict], final_capital: float, peak: float) -> None:
     print(yearly)
 
 
+def _cagr_mar(trades: list[dict]) -> tuple:
+    """Compute CAGR and MAR from daily equity curve."""
+    if not trades:
+        return 0.0, 0.0, 0.0
+    df = pd.DataFrame(trades)
+    df["date"] = pd.to_datetime(df["entry_time"]).dt.date
+    daily_pnl = df.groupby("date")["net_pnl"].sum().sort_index()
+    equity = INITIAL_CAPITAL + daily_pnl.cumsum()
+    running_peak = equity.cummax()
+    mdd = (running_peak - equity).max()
+    mdd_pct = mdd / INITIAL_CAPITAL
+    days = max((daily_pnl.index[-1] - daily_pnl.index[0]).days, 1)
+    years = days / 365.25
+    if equity.iloc[-1] <= 0:
+        cagr = -1.0
+    else:
+        cagr = (equity.iloc[-1] / INITIAL_CAPITAL) ** (1 / years) - 1
+    mar = cagr / mdd_pct if mdd_pct > 0 else 0.0
+    return cagr, mar, mdd
+
+
 def _metrics(trades: list[dict]) -> dict:
     if not trades:
-        return {"trades": 0, "win_rate": 0, "total_pnl": 0, "avg_pnl": 0, "pf": 0, "sharpe": 0, "calmar": 0, "mdd": 0}
+        return {"trades": 0, "win_rate": 0, "total_pnl": 0, "avg_pnl": 0, "pf": 0, "sharpe": 0, "calmar": 0, "mdd": 0, "cagr": 0, "mar": 0}
     df = pd.DataFrame(trades)
     net = df["net_pnl"]
     wins = net[net > 0]
@@ -432,6 +458,7 @@ def _metrics(trades: list[dict]) -> dict:
     running_peak = equity.cummax()
     mdd = (running_peak - equity).max()
     calmar = (net.sum() / INITIAL_CAPITAL) / (mdd / INITIAL_CAPITAL) if mdd > 0 else 0.0
+    cagr, mar, _ = _cagr_mar(trades)
     return {
         "trades": len(df),
         "win_rate": (len(wins) / len(df)) * 100,
@@ -441,6 +468,8 @@ def _metrics(trades: list[dict]) -> dict:
         "sharpe": sharpe,
         "calmar": calmar,
         "mdd": mdd,
+        "cagr": cagr,
+        "mar": mar,
     }
 
 
@@ -449,6 +478,7 @@ def main() -> None:
     parser.add_argument("--sweep", action="store_true", help="Run a small parameter sweep")
     parser.add_argument("--random-control", action="store_true", help="Replace signals with random entries (same exit/sizing)")
     parser.add_argument("--random-entry-prob", type=float, default=0.05)
+    parser.add_argument("--sweep-exit-random", action="store_true", help="Sweep exit parameters under random control")
     args = parser.parse_args()
 
     np.random.seed(42)
@@ -462,25 +492,40 @@ def main() -> None:
         params = {"random_control": True, "random_entry_prob": args.random_entry_prob}
         print("=== RANDOM CONTROL GROUP ===")
 
-    if not args.sweep:
+    if not args.sweep and not args.sweep_exit_random:
         result = run_backtest(df, params)
         report(result["trades"], result["final_capital"], result["peak"])
         return
 
-    param_grid = {
-        "adx_threshold": [20, 25, 30],
-        "rsi_long_low": [25, 30],
-        "rsi_long_high": [45, 50],
-        "stop_atr": [0.75, 1.0, 1.25],
-        "target_atr": [1.5, 2.0, 2.5],
-        "time_stop_bars": [12, 16, 24],
-        "trailing_width_atr": [0.5, 0.75, 1.0],
-        "long_only": [True, False],
-    }
+    if args.sweep_exit_random:
+        param_grid = {
+            "stop_atr": [1.0, 1.5, 2.0],
+            "target_atr": [2.0, 3.0, 4.0],
+            "trailing_width_atr": [0.0, 0.75],
+            "time_stop_bars": [16, 24],
+            "long_only": [True],
+            "random_entry_prob": [0.0025],
+        }
+        base_params = {"random_control": True}
+        print("=== Random-control exit parameter sweep ===")
+    else:
+        param_grid = {
+            "adx_threshold": [20, 25, 30],
+            "rsi_long_low": [25, 30],
+            "rsi_long_high": [45, 50],
+            "stop_atr": [0.75, 1.0, 1.25],
+            "target_atr": [1.5, 2.0, 2.5],
+            "time_stop_bars": [12, 16, 24],
+            "trailing_width_atr": [0.5, 0.75, 1.0],
+            "long_only": [True, False],
+        }
+        base_params = {}
+        print(f"Running sweep over combinations...")
 
     best_score = -np.inf
     best_params = None
     best_metrics = None
+    top_by_pnl = []
 
     keys = list(param_grid.keys())
     total = 1
@@ -489,13 +534,13 @@ def main() -> None:
     print(f"Running sweep over {total} combinations...")
 
     for i, values in enumerate(product(*param_grid.values())):
-        params = dict(zip(keys, values))
+        params = {**base_params, **dict(zip(keys, values))}
         result = run_backtest(df, params)
         if not result["trades"]:
             continue
         m = _metrics(result["trades"])
         score = m["sharpe"]
-        if m["trades"] < 100:
+        if m["trades"] < 50:
             score -= 1.0
         if m["pf"] < 1.0:
             score -= 1.0
@@ -505,12 +550,18 @@ def main() -> None:
             best_score = score
             best_params = params
             best_metrics = m
+        top_by_pnl.append((m["total_pnl"], params, m))
         if (i + 1) % 50 == 0 or (i + 1) == total:
-            print(f"  {i+1}/{total} done (best sharpe so far: {best_score:.2f})")
+            print(f"  {i+1}/{total} done (best sharpe so far: {best_score:.2f}, best pnl: {max(p[0] for p in top_by_pnl):,.0f})")
 
     print("\n=== Best by Sharpe (with trade/PF/MDD penalties) ===")
     print(f"Params: {best_params}")
     print(f"Metrics: {best_metrics}")
+
+    top_by_pnl.sort(key=lambda x: x[0], reverse=True)
+    print("\n=== Top 5 by total PnL ===")
+    for pnl, p, m in top_by_pnl[:5]:
+        print(f"  PnL={pnl:,.0f} | params={p} | metrics={m}")
 
 
 if __name__ == "__main__":
