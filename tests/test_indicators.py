@@ -12,7 +12,7 @@ import pytest
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent))
 
-from kospi_indicators import (
+from indicators import (
     WilderRMA,
     AdaptiveSuperTrend, SuperTrendState,
     AdaptiveZigZag, AdaptiveZigZagConfig, ZigZagState, AdaptiveIndicatorManager, validate_consistency,

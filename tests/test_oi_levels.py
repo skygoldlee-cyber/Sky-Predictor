@@ -517,52 +517,52 @@ class TestCalcIvPeakRange:
 
     def test_typical_case_iv20_dte5(self):
         """IV=20%, DTE=5일, F=350 → 2σ ≈ 19.8pt → 20.0pt (2.5 배수 반올림)."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r = calc_iv_peak_range(350.0, 0.20, 5.0)
         # 350 * 0.20 * sqrt(5/252) * 2.0 ≈ 19.8 → 20.0
         assert r == pytest.approx(20.0, abs=2.5)
 
     def test_high_iv_wider_range(self):
         """IV=35% → 범위가 기본(IV=20%)보다 넓어야 한다."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r_low  = calc_iv_peak_range(350.0, 0.20, 5.0)
         r_high = calc_iv_peak_range(350.0, 0.35, 5.0)
         assert r_high > r_low
 
     def test_low_iv_narrower_but_above_min(self):
         """IV=8%(매우 낮음) → min_range_pt(10pt) 이상 보장."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r = calc_iv_peak_range(350.0, 0.08, 5.0)
         assert r >= 10.0
 
     def test_long_dte_wider_range(self):
         """DTE=20일 → DTE=5일보다 범위가 넓어야 한다."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r_short = calc_iv_peak_range(350.0, 0.20, 5.0)
         r_long  = calc_iv_peak_range(350.0, 0.20, 20.0)
         assert r_long > r_short
 
     def test_capped_at_max_range(self):
         """IV=100%(극단) → max_range_pt(40pt) 이하 보장."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r = calc_iv_peak_range(350.0, 1.00, 30.0)
         assert r <= 40.0
 
     def test_zero_iv_returns_min_range(self):
         """IV=0 → min_range_pt(fallback) 반환."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r = calc_iv_peak_range(350.0, 0.0, 5.0)
         assert r == pytest.approx(10.0)
 
     def test_zero_price_returns_min_range(self):
         """F=0 → min_range_pt 반환 (safe fallback)."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         r = calc_iv_peak_range(0.0, 0.20, 5.0)
         assert r == pytest.approx(10.0)
 
     def test_result_is_multiple_of_strike_step(self):
         """결과가 행사가 간격(2.5pt) 배수이어야 한다."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         for iv in (0.15, 0.20, 0.25, 0.35):
             r = calc_iv_peak_range(350.0, iv, 5.0)
             # 2.5pt 배수 여부 — 부동소수 오차 허용
@@ -571,7 +571,7 @@ class TestCalcIvPeakRange:
 
     def test_result_monotone_in_iv(self):
         """IV가 증가할수록 범위도 단조 증가 (min/max 범위 내)."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         ivs = [0.10, 0.15, 0.20, 0.25, 0.30, 0.40]
         results = [calc_iv_peak_range(350.0, iv, 5.0) for iv in ivs]
         for i in range(len(results) - 1):
@@ -594,7 +594,7 @@ class TestCalcOiLevelsIvDynamic:
 
     def test_iv_range_used_matches_calc(self):
         """IV 기반 범위가 calc_iv_peak_range()와 일치해야 한다."""
-        from prediction.option_features import calc_iv_peak_range
+        from prediction.features.option_features import calc_iv_peak_range
         expected = calc_iv_peak_range(PRICE, 0.20, 7.0)
         r = calc_oi_levels(CALLS, PUTS, PRICE, atm_iv=0.20,
                            default_days_to_expiry=7.0)

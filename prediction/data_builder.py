@@ -40,8 +40,8 @@ except ImportError:
     _zz_settings_from_dict = None  # type: ignore[assignment]
 
 from prediction.features import ADAPT_KEYS, CD_KEYS, MS5_KEYS, OB_KEYS, calc_candle_features, calc_multiscale_features, calc_orderbook_features, get_opt_keys
-from prediction.option_features import build_option_snapshot
-from prediction.time_features import build_time_features
+from prediction.features.option_features import build_option_snapshot
+from prediction.features.time_features import build_time_features
 from data.tick_processor import RealTimeTickProcessor
 from core.utils import normalize_adaptive_indicator_symbol, parse_chetime, safe_float
 

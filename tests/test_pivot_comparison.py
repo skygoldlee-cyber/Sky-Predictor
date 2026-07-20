@@ -1,7 +1,7 @@
 """세 가지 피봇 클래스 비교 테스트."""
 
-from indicators.percent_adaptive_pivot import PercentAdaptivePivot, PercentAdaptivePivotConfig
-from indicators.atr_adaptive_pivot import ATRAdaptivePivot, ATRAdaptivePivotConfig
+from indicators import PercentAdaptivePivot, PercentAdaptivePivotConfig
+from indicators import ATRAdaptivePivot, ATRAdaptivePivotConfig
 from indicators.hybrid_adaptive_pivot import HybridAdaptivePivot, HybridAdaptivePivotConfig
 
 

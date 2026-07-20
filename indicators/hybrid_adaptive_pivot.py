@@ -265,7 +265,7 @@ class HybridAdaptivePivot:
         self._last_fractal = None
         if self.config.use_fractal_confirmation:
             try:
-                from .fractal_confirmation import FractalConfirmation, FractalConfig
+                from .experimental.fractal_confirmation import FractalConfirmation, FractalConfig
                 self._fractal = FractalConfirmation(FractalConfig(
                     lookback=self.config.fractal_lookback,
                     volume_spike_ratio=self.config.fractal_volume_spike,

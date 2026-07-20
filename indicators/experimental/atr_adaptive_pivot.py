@@ -52,7 +52,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 try:
-    from .wilder_smooth import WilderRMA
+    from ..wilder_smooth import WilderRMA
 except ImportError:
     from wilder_smooth import WilderRMA  # type: ignore
 
