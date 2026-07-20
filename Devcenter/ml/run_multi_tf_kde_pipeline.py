@@ -7,6 +7,7 @@ held-out test period.
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import sys
@@ -104,44 +105,52 @@ def _test_sharpe(final_df: pd.DataFrame) -> float:
     return 0.0
 
 
-def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+def _pipeline_metrics(df: pd.DataFrame, info: dict) -> dict:
+    f = info["final"]
+    return {
+        "variant": info["variant"],
+        "trades": int(f["n_trades"]),
+        "win_pct": float(f["win_rate"]),
+        "total_pnl": float(f["total_pnl"]),
+        "avg_pnl": float(f["avg_pnl"]),
+        "test_sharpe": float(_test_sharpe(df)),
+    }
 
-    params_path = OUTPUT_DIR / "kde_best_params_5min_multi.json"
-    if not params_path.exists():
-        raise FileNotFoundError(f"Best params not found: {params_path}")
 
-    best = json.loads(params_path.read_text())
-    _logger.info("Using best single-tf params: %s", best)
+def _run_single_experiment(skip_kde_generation: bool = False) -> Tuple[dict, dict]:
+    if not skip_kde_generation:
+        params_path = OUTPUT_DIR / "kde_best_params_5min_multi.json"
+        if not params_path.exists():
+            raise FileNotFoundError(f"Best params not found: {params_path}")
 
-    _logger.info("Loading 5m OHLC data")
-    df_5m = load_5min_txt(DEFAULT_DATA_PATH)
+        best = json.loads(params_path.read_text())
+        _logger.info("Using best single-tf params: %s", best)
 
-    _logger.info("Building multi-timeframe KDE features (5m, 15m, 30m, 60m)")
-    kde_df = build_multi_tf_kde_features(
-        df_5m,
-        timeframes_minutes=(5, 15, 30, 60),
-        window=int(best["window"]),
-        min_samples=max(50, int(best["window"]) // 6),
-        bandwidth=_coerce_bandwidth(best["bandwidth"]),
-        grid_points=int(best["grid_points"]),
-        refit_every=int(best["refit_every"]),
-        use_regime=True,
-    )
+        _logger.info("Loading 5m OHLC data")
+        df_5m = load_5min_txt(DEFAULT_DATA_PATH)
 
-    trades = pd.read_csv(DATA_DIR / "ml_dataset.csv")
-    trades = apply_trading_costs(trades, slippage_ticks=SLIPPAGE_TICKS)
+        _logger.info("Building multi-timeframe KDE features (5m, 15m, 30m, 60m)")
+        kde_df = build_multi_tf_kde_features(
+            df_5m,
+            timeframes_minutes=(5, 15, 30, 60),
+            window=int(best["window"]),
+            min_samples=max(50, int(best["window"]) // 6),
+            bandwidth=_coerce_bandwidth(best["bandwidth"]),
+            grid_points=int(best["grid_points"]),
+            refit_every=int(best["refit_every"]),
+            use_regime=True,
+        )
 
-    merged = merge_kde_with_trades(kde_df, trades)
-    merged = add_direction_aware_kde_features(merged)
-    merged = merged.drop_duplicates(subset=["entry_time"], keep="first")
+        trades = pd.read_csv(DATA_DIR / "ml_dataset.csv")
+        trades = apply_trading_costs(trades, slippage_ticks=SLIPPAGE_TICKS)
 
-    out_path = DATA_DIR / "ml_dataset_with_kde.csv"
-    merged.to_csv(out_path, index=False)
-    _logger.info("Saved %s", out_path)
+        merged = merge_kde_with_trades(kde_df, trades)
+        merged = add_direction_aware_kde_features(merged)
+        merged = merged.drop_duplicates(subset=["entry_time"], keep="first")
+
+        out_path = DATA_DIR / "ml_dataset_with_kde.csv"
+        merged.to_csv(out_path, index=False)
+        _logger.info("Saved %s", out_path)
 
     df = load_data(slippage_ticks=SLIPPAGE_TICKS)
     final_b, info_b = run_pipeline(
@@ -152,20 +161,65 @@ def main() -> None:
         df, True, "KDE_MultiTF",
         (2019, 2020, 2021, 2022, 2023), 2024, (2025, 2026),
     )
+    return (final_b, info_b), (final_k, info_k)
 
-    final_b.to_csv(OUTPUT_DIR / "final_trades_baseline_multitf.csv", index=False)
-    final_k.to_csv(OUTPUT_DIR / "final_trades_kde_multitf.csv", index=False)
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Run multi-timeframe KDE pipeline once or repeatedly."
+    )
+    parser.add_argument(
+        "--skip-kde-generation",
+        action="store_true",
+        help="Reuse existing ml_dataset_with_kde.csv instead of regenerating KDE features.",
+    )
+    parser.add_argument(
+        "--n-runs",
+        type=int,
+        default=1,
+        help="Number of repetitions (useful for seed-stability checks).",
+    )
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+    results_b: list[dict] = []
+    results_k: list[dict] = []
+    for run in range(1, args.n_runs + 1):
+        print(f"\n========== Run {run}/{args.n_runs} ==========")
+        (final_b, info_b), (final_k, info_k) = _run_single_experiment(
+            skip_kde_generation=args.skip_kde_generation
+        )
+        results_b.append(_pipeline_metrics(final_b, info_b))
+        results_k.append(_pipeline_metrics(final_k, info_k))
+
+        final_b.to_csv(OUTPUT_DIR / f"final_trades_baseline_multitf_run{run}.csv", index=False)
+        final_k.to_csv(OUTPUT_DIR / f"final_trades_kde_multitf_run{run}.csv", index=False)
 
     print("\n=== Multi-timeframe KDE full pipeline comparison (test 2025-2026) ===")
-    final_dfs = {"Baseline_MultiTF": final_b, "KDE_MultiTF": final_k}
-    for info in [info_b, info_k]:
-        f = info["final"]
-        df = final_dfs[info["variant"]]
-        print(
-            f"{info['variant']:<20} trades={f['n_trades']:<5} win%={f['win_rate']:.2f} "
-            f"total_pnl={f['total_pnl']:>15,.0f} avg_pnl={f['avg_pnl']:>12,.0f} "
-            f"test_sharpe={_test_sharpe(df):.2f}"
-        )
+    for metrics_b, metrics_k in zip(results_b, results_k):
+        for m in [metrics_b, metrics_k]:
+            print(
+                f"{m['variant']:<20} trades={m['trades']:<5} win%={m['win_pct']:.2f} "
+                f"total_pnl={m['total_pnl']:>15,.0f} avg_pnl={m['avg_pnl']:>12,.0f} "
+                f"test_sharpe={m['test_sharpe']:.2f}"
+            )
+
+    if args.n_runs > 1:
+        import statistics
+        for variant, results in [("Baseline_MultiTF", results_b), ("KDE_MultiTF", results_k)]:
+            sharpes = [r["test_sharpe"] for r in results]
+            pnls = [r["total_pnl"] for r in results]
+            trades = [r["trades"] for r in results]
+            print(
+                f"\n{variant} stability over {args.n_runs} runs: "
+                f"Sharpe mean={statistics.mean(sharpes):.2f} std={statistics.stdev(sharpes):.2f} | "
+                f"PnL mean={statistics.mean(pnls):,.0f} std={statistics.stdev(pnls):,.0f} | "
+                f"trades mean={statistics.mean(trades):.0f}"
+            )
 
 
 if __name__ == "__main__":

@@ -14,13 +14,19 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import random
 import sys
 import warnings
 from pathlib import Path
 from typing import Any, Tuple
 
+os.environ.setdefault("PYTHONHASHSEED", "42")
+random.seed(42)
+
 import joblib
 import numpy as np
+np.random.seed(42)
 import pandas as pd
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier
@@ -39,6 +45,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 try:
     import tensorflow as tf
+    tf.random.set_seed(42)
+    try:
+        tf.config.experimental.enable_op_determinism()
+    except Exception:
+        pass
     from tensorflow import keras
     from tensorflow.keras.layers import (
         LSTM, Dense, Dropout, BatchNormalization, Bidirectional,
