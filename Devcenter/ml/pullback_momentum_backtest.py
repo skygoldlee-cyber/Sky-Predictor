@@ -158,6 +158,8 @@ DEFAULT_PARAMS = {
     "long_only": False,
     "entry_window_start": "09:20",
     "entry_window_end": "15:15",
+    "random_control": False,
+    "random_entry_prob": 0.05,
 }
 
 
@@ -252,6 +254,16 @@ def run_backtest(df: pd.DataFrame, params: dict | None = None) -> dict:
                     zscore_ok = df.loc[i, "ret_zscore_lag"] > 1.0
                     if trend_ok and pullback and rsi_ok and zscore_ok and contracts > 0:
                         pending_entry = ("short", contracts)
+
+        # Random control group: ignore signal and enter randomly with fixed probability
+        if params["random_control"] and position is None and cooldown_bars == 0 and in_entry_window(ts, entry_start, entry_end):
+            if np.random.rand() < params["random_entry_prob"]:
+                side = "long"
+                if not params["long_only"] and np.random.rand() < 0.5:
+                    side = "short"
+                atr_lag = df.loc[i, "atr14_lag"]
+                contracts = _contracts(capital, atr_lag)
+                pending_entry = (side, contracts)
 
         # Execute pending entry at current bar's open
         if pending_entry is not None and position is None and cooldown_bars == 0:
@@ -435,14 +447,23 @@ def _metrics(trades: list[dict]) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sweep", action="store_true", help="Run a small parameter sweep")
+    parser.add_argument("--random-control", action="store_true", help="Replace signals with random entries (same exit/sizing)")
+    parser.add_argument("--random-entry-prob", type=float, default=0.05)
     args = parser.parse_args()
+
+    np.random.seed(42)
 
     path = Path("Devcenter/data/since2019_future_data.txt")
     df = load_5min_txt(path)
     df = compute_indicators(df)
 
+    params = {}
+    if args.random_control:
+        params = {"random_control": True, "random_entry_prob": args.random_entry_prob}
+        print("=== RANDOM CONTROL GROUP ===")
+
     if not args.sweep:
-        result = run_backtest(df)
+        result = run_backtest(df, params)
         report(result["trades"], result["final_capital"], result["peak"])
         return
 

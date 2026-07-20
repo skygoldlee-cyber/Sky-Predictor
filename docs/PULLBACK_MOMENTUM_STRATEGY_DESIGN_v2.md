@@ -147,18 +147,25 @@ KDE는 1차 신호가 아니라 필터/스코어로만 사용.
 
 ---
 
-## 8.1 Baseline 결과 분석
+## 8.1 Baseline 및 랜덤 대조군 결과 분석
 
-초기 rule-based baseline (`pullback_momentum_backtest.py`, 2019-2026, 1 tick/side slippage) 결과:
+### Baseline (rule-based signal)
 
-- Sharpe: **-17.04**, 승률: **15.14%**, PF: **0.04**, MDD: **53.55%**
-- 단순 추세 + EMA20 풀백 + RSI + 5m z-score 조합으로는 목표에 크게 못 미침.
-- 주요 원인:
-  1. **진입 타이밍**: t-1 확정봉 기반 `open[t]` 진입이 풀백 반등을 놓치고, 오히려 추가 하락(평균회귀 실패)에 진입.
-  2. **추세 판정**: ADX > 25 + EMA60 정렬만으로는 "강한 추세"와 "조정 종료 시점"을 구분하기 부족.
-  3. **손절/익절**: 1 ATR stop / 1.5 ATR target가 KP200 5분봉 변동성 대비 너무 짧아 stopout 빈번.
+`pullback_momentum_backtest.py`, 2019-2026, 1 tick/side slippage:
 
-→ 이 설계는 **entry 신호가 유효한 edge를 갖지 않음**. 랜덤 대조군 실험을 통해 exit/사이징 기여도를 분리해야 하며, entry에는 KDE tail 확률, 세션별 패턴, 거래량/미결 등 추가 피처가 필요.
+- Sharpe: **-17.04**, 승률: **15.14%**, PF: **0.04**, MDD: **53.55%**, 거래 수: 251
+
+### Random control (동일 exit/sizing, 진입만 무작위)
+
+- 확률 `p=0.0025`로 진입 시: Sharpe **-12.49**, 승률 **18.50%**, PF **0.11**, 거래 수: 535
+- 확률 `p=0.05`로 진입 시: Sharpe **-26.45**, 승률 **24.13%**, PF **0.21**, 거래 수: 4,500
+
+### 해석
+
+- **Random control도 비슷하게 큰 손실**. 이는 entry 신호만의 문제가 아니라 **exit/sizing 규칙 자체가 기대값을 음수로 만듦**.
+- 1 ATR stop / 1.5 ATR target + 1 tick/side 슬리피지 조합에서는 무작위 진입으로도 장기 손실이 나며, signal-based 결과가 random보다 더 나쁘기도 함.
+- 따라서 **진입 신호 개선만으로는 목표에 도달할 수 없음**. exit/sizing 구조(예: ATR 배수, 손익비, trailing, time stop) 자체를 먼저 random control에서 생존 가능한 수준으로 재설계해야 함.
+- 다음 단계: random control에서 손실이 최소화되는 exit parameter 공간을 찾고, 그 위에 entry scorer를 얹는다.
 
 ## 9. 검증 로드맵
 
