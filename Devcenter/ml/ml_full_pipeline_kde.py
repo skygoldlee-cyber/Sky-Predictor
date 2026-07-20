@@ -31,6 +31,7 @@ np.random.seed(42)
 import pandas as pd
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBRegressor
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -115,6 +116,9 @@ def load_data(slippage_ticks: int = SLIPPAGE_TICKS) -> pd.DataFrame:
     df["year"] = df["entry_time"].dt.year
     df = apply_trading_costs(df, slippage_ticks=slippage_ticks)
     df = add_derived_features(df)
+    # Cost-normalized target for stage3 regression (per contract PnL)
+    size = df["size_factor"].replace(0, np.nan).fillna(1.0)
+    df["pnl_per_contract"] = df["net_krw"] / size
     return df
 
 
@@ -525,23 +529,106 @@ def stage3_exit_filter(
     Threshold is chosen on validation data using the specified metric.
     """
     model = train_xgboost_filter(train_df, val_df, feature_cols)
+    proba_train = model.predict_proba(train_df[feature_cols].fillna(0).astype(float))[:, 1]
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
+    proba_test = model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1]
     threshold = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
 
+    final_train = train_df.assign(exit_score=proba_train).loc[proba_train >= threshold].copy()
+    final_val = val_df.assign(exit_score=proba_val).loc[proba_val >= threshold].copy()
+    df_test_scored = test_df.assign(exit_score=proba_test)
+    final_test = df_test_scored.loc[proba_test >= threshold].copy()
+
+    if len(final_test) == 0:
+        metrics = _empty_classification_metrics()
+    else:
+        metrics = classification_metrics(
+            test_df["is_win"],
+            (df_test_scored["exit_score"] >= threshold).astype(int),
+            df_test_scored["exit_score"],
+        )
+    return final_test, metrics
+
+
+def train_xgboost_regressor(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    feature_cols: list,
+    target_col: str = "pnl_per_contract",
+) -> xgb.XGBRegressor:
+    """Train a deterministic XGBoost regressor for stage 3 exit scoring."""
+    X_train = train_df[feature_cols].fillna(0).astype(float)
+    y_train = train_df[target_col]
+    X_val = val_df[feature_cols].fillna(0).astype(float)
+    y_val = val_df[target_col]
+
+    model = XGBRegressor(
+        n_estimators=500,
+        max_depth=4,
+        learning_rate=0.05,
+        subsample=0.7,
+        colsample_bytree=0.7,
+        random_state=42,
+        reg_alpha=0.5,
+        reg_lambda=2.0,
+        early_stopping_rounds=20,
+    )
+    model.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_val, y_val)],
+        verbose=False,
+    )
+    return model
+
+
+def stage3_exit_regression(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    feature_cols: list,
+    min_trades: int = 30,
+    metric: str = "sharpe",
+    target_col: str = "pnl_per_contract",
+) -> Tuple[pd.DataFrame, dict]:
+    """Stage 3 exit filter using XGBoost regression on cost-normalized PnL.
+
+    The model predicts expected per-contract PnL; threshold selection keeps
+    only trades with positive expected value on the validation set.
+    """
+    model = train_xgboost_regressor(train_df, val_df, feature_cols, target_col=target_col)
+    pred_val = model.predict(val_df[feature_cols].fillna(0).astype(float))
+    threshold = select_threshold_by_pnl(val_df, pred_val, min_trades=min_trades, metric=metric)
+
     def apply(df):
-        proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
-        return df.assign(exit_score=proba).loc[proba >= threshold].copy()
+        pred = model.predict(df[feature_cols].fillna(0).astype(float))
+        return df.assign(exit_score=pred).loc[pred >= threshold].copy()
 
     final_train = apply(train_df)
     final_val = apply(val_df)
-    final_test = apply(test_df)
+    pred_test = model.predict(test_df[feature_cols].fillna(0).astype(float))
+    df_test_scored = test_df.assign(exit_score=pred_test)
+    final_test = df_test_scored[pred_test >= threshold].copy()
 
-    metrics = classification_metrics(
-        final_test["is_win"],
-        (final_test["exit_score"] >= threshold).astype(int),
-        final_test["exit_score"],
-    )
+    if len(final_test) == 0:
+        metrics = _empty_classification_metrics()
+    else:
+        metrics = classification_metrics(
+            (test_df[target_col] > 0).astype(int),
+            (df_test_scored["exit_score"] >= threshold).astype(int),
+            df_test_scored["exit_score"],
+        )
     return final_test, metrics
+
+
+def _empty_classification_metrics() -> dict:
+    return {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.0,
+    }
 
 
 def evaluate_trades(df: pd.DataFrame) -> dict:
@@ -592,11 +679,15 @@ def run_pipeline(
     stage1_metric: str = "pnl",
     stage2_metric: str = "pnl",
     stage3_metric: str = "sharpe",
+    stage3_type: str = "lstm",
+    lstm_config: dict | None = None,
+    sequence_length: int = 10,
 ) -> Tuple[pd.DataFrame, dict]:
     print(f"\n{'='*80}")
     print(f"Running full pipeline: {variant}")
     print(f"  train: {train_years}, val: {val_year}, test: {test_year}")
     print(f"  stage metrics: stage1={stage1_metric}, stage2={stage2_metric}, stage3={stage3_metric}")
+    print(f"  stage3_type={stage3_type}")
     print(f"{'='*80}")
 
     train_df, val_df, test_df = split_by_year(df, train_years, val_year, test_year)
@@ -620,15 +711,25 @@ def run_pipeline(
     print(f"  Entry metrics: {metrics2}")
     print(f"  Optimized -> train: {len(opt_train)}, val: {len(opt_val)}, test: {len(opt_test)}")
 
-    # Stage 3: LSTM exit timing (or bypass for stage1+stage2 only test)
-    print("\n[Stage 3/3] LSTM exit timing")
-    use_lstm = os.environ.get("SKIP_LSTM_STAGE", "0") != "1"
-    if use_lstm:
+    # Stage 3: exit filter / timing
+    print(f"\n[Stage 3/3] Exit stage ({stage3_type})")
+    if stage3_type == "lstm":
         final_test, metrics3 = stage3_exit_timing(
             opt_train, opt_val, opt_test, feature_cols_stage2,
-            sequence_length=10, metric=stage3_metric,
+            sequence_length=sequence_length, metric=stage3_metric,
+            lstm_config=lstm_config,
         )
-    else:
+    elif stage3_type == "xgb_cls":
+        final_test, metrics3 = stage3_exit_filter(
+            opt_train, opt_val, opt_test, feature_cols_stage2,
+            min_trades=30, metric=stage3_metric,
+        )
+    elif stage3_type == "xgb_reg":
+        final_test, metrics3 = stage3_exit_regression(
+            opt_train, opt_val, opt_test, feature_cols_stage2,
+            min_trades=30, metric=stage3_metric,
+        )
+    else:  # none
         final_test = opt_test.copy()
         metrics3 = classification_metrics(
             final_test["is_win"],
@@ -650,7 +751,7 @@ def run_pipeline(
     }
 
 
-def walk_forward_validation(df: pd.DataFrame, *args, **kwargs) -> list:
+def walk_forward_validation(df: pd.DataFrame, *args, stage3_type: str = "lstm", **kwargs) -> list:
     """Run multiple train/val/test year splits and compare baseline vs KDE."""
     folds = [
         ((2019, 2020, 2021, 2022, 2023), 2024, 2025),
@@ -663,7 +764,11 @@ def walk_forward_validation(df: pd.DataFrame, *args, **kwargs) -> list:
         print(f"# Walk-forward fold: train={train_years}, val={val_year}, test={test_year}")
         print(f"{'#'*80}")
         for use_kde, variant in [(False, "Baseline"), (True, "KDE-enhanced")]:
-            final_test, info = run_pipeline(df, use_kde, variant, train_years, val_year, test_year)
+            final_test, info = run_pipeline(
+                df, use_kde, variant, train_years, val_year, test_year,
+                stage3_type=stage3_type,
+                *args, **kwargs,
+            )
             info["fold"] = f"{train_years[-1]}->{test_year}"
             results.append(info)
             suffix = f"{train_years[-1]}_{test_year}"
@@ -705,6 +810,13 @@ def main() -> None:
     parser.add_argument("--lstm-epochs", type=int, default=30)
     parser.add_argument("--lstm-patience", type=int, default=5)
     parser.add_argument("--lstm-bidirectional", action="store_true")
+    parser.add_argument(
+        "--stage3-type",
+        type=str,
+        default="lstm",
+        choices=["lstm", "xgb_cls", "xgb_reg", "none"],
+        help="Stage 3 exit model type",
+    )
     args = parser.parse_args()
 
     lstm_config = {
@@ -720,15 +832,17 @@ def main() -> None:
     print(f"Loaded {len(df)} trades with slippage={args.slippage_ticks} tick(s)/side")
 
     if args.walk_forward:
-        results = walk_forward_validation(df, lstm_config, args.sequence_length)
+        results = walk_forward_validation(df, lstm_config, args.sequence_length, stage3_type=args.stage3_type)
     else:
         final_baseline, info_baseline = run_pipeline(
             df, False, "Baseline", (2019, 2020, 2021, 2022, 2023), 2024, (2025, 2026),
             lstm_config=lstm_config, sequence_length=args.sequence_length,
+            stage3_type=args.stage3_type,
         )
         final_kde, info_kde = run_pipeline(
             df, True, "KDE-enhanced", (2019, 2020, 2021, 2022, 2023), 2024, (2025, 2026),
             lstm_config=lstm_config, sequence_length=args.sequence_length,
+            stage3_type=args.stage3_type,
         )
         final_baseline.to_csv(OUTPUT_DIR / "final_trades_baseline_retrain.csv", index=False)
         final_kde.to_csv(OUTPUT_DIR / "final_trades_kde.csv", index=False)
