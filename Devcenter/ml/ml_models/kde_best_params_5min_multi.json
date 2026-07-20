@@ -1,0 +1,13 @@
+{
+  "window": 1000,
+  "bandwidth": "scott",
+  "grid_points": 1024,
+  "refit_every": 100,
+  "val_roc_auc": 0.4808446455505279,
+  "val_pnl": -1716121.370250005,
+  "val_sharpe": -2.252136246186573,
+  "val_win_rate": 0.3649122807017544,
+  "threshold": 0.5000000000000001,
+  "n_trades": 8059,
+  "multi_score": 0.8708725906767657
+}

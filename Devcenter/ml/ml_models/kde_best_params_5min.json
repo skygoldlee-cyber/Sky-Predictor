@@ -1,0 +1,8 @@
+{
+  "window": 300,
+  "bandwidth": "scott",
+  "grid_points": 1024,
+  "refit_every": 50,
+  "val_roc_auc": 0.6788171673309648,
+  "n_trades": 7948
+}

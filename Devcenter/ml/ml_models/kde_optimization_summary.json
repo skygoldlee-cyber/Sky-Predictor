@@ -1,0 +1,151 @@
+{
+  "best": {
+    "window": 2000,
+    "bandwidth": "0.001",
+    "n_trades": 371,
+    "val_roc_auc": 0.5414965986394558,
+    "test_roc_auc": 0.3843582887700535
+  },
+  "all_results": [
+    {
+      "window": 1000,
+      "bandwidth": "scott",
+      "n_trades": 371,
+      "val_roc_auc": 0.3972789115646258,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 1000,
+      "bandwidth": "silverman",
+      "n_trades": 371,
+      "val_roc_auc": 0.4244897959183674,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 1000,
+      "bandwidth": "0.0005",
+      "n_trades": 371,
+      "val_roc_auc": 0.43197278911564624,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 1000,
+      "bandwidth": "0.001",
+      "n_trades": 371,
+      "val_roc_auc": 0.4476190476190476,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 1000,
+      "bandwidth": "0.002",
+      "n_trades": 371,
+      "val_roc_auc": 0.4244897959183674,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 2000,
+      "bandwidth": "scott",
+      "n_trades": 371,
+      "val_roc_auc": 0.5374149659863945,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 2000,
+      "bandwidth": "silverman",
+      "n_trades": 371,
+      "val_roc_auc": 0.5374149659863945,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 2000,
+      "bandwidth": "0.0005",
+      "n_trades": 371,
+      "val_roc_auc": 0.5285714285714285,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 2000,
+      "bandwidth": "0.001",
+      "n_trades": 371,
+      "val_roc_auc": 0.5414965986394558,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 2000,
+      "bandwidth": "0.002",
+      "n_trades": 371,
+      "val_roc_auc": 0.5210884353741496,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 3000,
+      "bandwidth": "scott",
+      "n_trades": 371,
+      "val_roc_auc": 0.4285714285714286,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 3000,
+      "bandwidth": "silverman",
+      "n_trades": 371,
+      "val_roc_auc": 0.4285714285714286,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 3000,
+      "bandwidth": "0.0005",
+      "n_trades": 371,
+      "val_roc_auc": 0.5401360544217686,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 3000,
+      "bandwidth": "0.001",
+      "n_trades": 371,
+      "val_roc_auc": 0.46802721088435373,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 3000,
+      "bandwidth": "0.002",
+      "n_trades": 371,
+      "val_roc_auc": 0.43741496598639457,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 5000,
+      "bandwidth": "scott",
+      "n_trades": 371,
+      "val_roc_auc": 0.45374149659863944,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 5000,
+      "bandwidth": "silverman",
+      "n_trades": 371,
+      "val_roc_auc": 0.4843537414965986,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 5000,
+      "bandwidth": "0.0005",
+      "n_trades": 371,
+      "val_roc_auc": 0.5319727891156463,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 5000,
+      "bandwidth": "0.001",
+      "n_trades": 371,
+      "val_roc_auc": 0.31564625850340133,
+      "test_roc_auc": -1.0
+    },
+    {
+      "window": 5000,
+      "bandwidth": "0.002",
+      "n_trades": 371,
+      "val_roc_auc": 0.4993197278911564,
+      "test_roc_auc": -1.0
+    }
+  ]
+}

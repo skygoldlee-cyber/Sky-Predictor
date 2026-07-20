@@ -1,0 +1,12 @@
+{
+  "window": 1000,
+  "bandwidth": "silverman",
+  "grid_points": 1024,
+  "refit_every": 50,
+  "val_roc_auc": 0.6680228535530399,
+  "val_pnl": 1381645.8022500183,
+  "val_sharpe": 4.30970605478524,
+  "val_win_rate": 0.6590909090909091,
+  "threshold": 0.6500000000000001,
+  "n_trades": 7943
+}

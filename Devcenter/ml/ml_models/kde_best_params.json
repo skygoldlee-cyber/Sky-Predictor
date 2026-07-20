@@ -1,1 +1,1 @@
-{"window":5000,"bandwidth":"0.002","n_trades":368,"test_roc_auc":0.5494071146}
+{"window":2000,"bandwidth":"0.001","n_trades":371,"val_roc_auc":0.5414965986,"test_roc_auc":0.3843582888}
