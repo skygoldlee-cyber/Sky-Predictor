@@ -279,10 +279,15 @@ def stage1_filter(
     feature_cols: list,
     min_trades: int = 300,
     metric: str = "pnl",
+    fixed_threshold: float | None = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_xgboost_filter(train_df, val_df, feature_cols)
-    proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    if fixed_threshold is None:
+        proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
+        threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    else:
+        threshold = float(fixed_threshold)
+        val_score = 0.0
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -344,10 +349,15 @@ def stage2_entry_timing(
     feature_cols: list,
     min_trades: int = 100,
     metric: str = "pnl",
+    fixed_threshold: float | None = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     model = train_random_forest_entry(train_df, val_df, feature_cols)
-    proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    if fixed_threshold is None:
+        proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
+        threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    else:
+        threshold = float(fixed_threshold)
+        val_score = 0.0
 
     def apply(df):
         proba = model.predict_proba(df[feature_cols].fillna(0).astype(float))[:, 1]
@@ -542,6 +552,7 @@ def stage3_exit_filter(
     feature_cols: list,
     min_trades: int = 30,
     metric: str = "sharpe",
+    fixed_threshold: float | None = None,
 ) -> Tuple[pd.DataFrame, dict]:
     """Deterministic final exit filter using an XGBoost classifier.
 
@@ -552,7 +563,11 @@ def stage3_exit_filter(
     proba_train = model.predict_proba(train_df[feature_cols].fillna(0).astype(float))[:, 1]
     proba_val = model.predict_proba(val_df[feature_cols].fillna(0).astype(float))[:, 1]
     proba_test = model.predict_proba(test_df[feature_cols].fillna(0).astype(float))[:, 1]
-    threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    if fixed_threshold is None:
+        threshold, val_score, _ = select_threshold_by_pnl(val_df, proba_val, min_trades=min_trades, metric=metric)
+    else:
+        threshold = float(fixed_threshold)
+        val_score = 0.0
 
     final_train = train_df.assign(exit_score=proba_train).loc[proba_train >= threshold].copy()
     final_val = val_df.assign(exit_score=proba_val).loc[proba_val >= threshold].copy()
@@ -612,6 +627,7 @@ def stage3_exit_regression(
     min_trades: int = 30,
     metric: str = "sharpe",
     target_col: str = "pnl_per_contract",
+    fixed_threshold: float | None = None,
 ) -> Tuple[pd.DataFrame, dict]:
     """Stage 3 exit filter using XGBoost regression on cost-normalized PnL.
 
@@ -619,8 +635,12 @@ def stage3_exit_regression(
     only trades with positive expected value on the validation set.
     """
     model = train_xgboost_regressor(train_df, val_df, feature_cols, target_col=target_col)
-    pred_val = model.predict(val_df[feature_cols].fillna(0).astype(float))
-    threshold, val_score, _ = select_threshold_by_pnl(val_df, pred_val, min_trades=min_trades, metric=metric)
+    if fixed_threshold is None:
+        pred_val = model.predict(val_df[feature_cols].fillna(0).astype(float))
+        threshold, val_score, _ = select_threshold_by_pnl(val_df, pred_val, min_trades=min_trades, metric=metric)
+    else:
+        threshold = float(fixed_threshold)
+        val_score = 0.0
 
     def apply(df):
         pred = model.predict(df[feature_cols].fillna(0).astype(float))
@@ -706,6 +726,9 @@ def run_pipeline(
     stage3_type: str = "lstm",
     lstm_config: dict | None = None,
     sequence_length: int = 10,
+    stage1_threshold: float | None = None,
+    stage2_threshold: float | None = None,
+    stage3_threshold: float | None = None,
 ) -> Tuple[pd.DataFrame, dict]:
     print(f"\n{'='*80}")
     print(f"Running full pipeline: {variant}")
@@ -722,7 +745,8 @@ def run_pipeline(
     # Stage 1: XGBoost filter
     print("\n[Stage 1/3] XGBoost trade filter")
     filt_train, filt_val, filt_test, metrics1 = stage1_filter(
-        train_df, val_df, test_df, feature_cols_stage1, metric=stage1_metric
+        train_df, val_df, test_df, feature_cols_stage1,
+        metric=stage1_metric, fixed_threshold=stage1_threshold,
     )
     print(f"  Filter metrics: {metrics1}")
     print(f"  Filtered -> train: {len(filt_train)}, val: {len(filt_val)}, test: {len(filt_test)}")
@@ -730,7 +754,8 @@ def run_pipeline(
     # Stage 2: RF entry timing
     print("\n[Stage 2/3] Random Forest entry timing")
     opt_train, opt_val, opt_test, metrics2 = stage2_entry_timing(
-        filt_train, filt_val, filt_test, feature_cols_stage2, metric=stage2_metric
+        filt_train, filt_val, filt_test, feature_cols_stage2,
+        metric=stage2_metric, fixed_threshold=stage2_threshold,
     )
     print(f"  Entry metrics: {metrics2}")
     print(f"  Optimized -> train: {len(opt_train)}, val: {len(opt_val)}, test: {len(opt_test)}")
@@ -747,11 +772,13 @@ def run_pipeline(
         final_test, metrics3 = stage3_exit_filter(
             opt_train, opt_val, opt_test, feature_cols_stage2,
             min_trades=30, metric=stage3_metric,
+            fixed_threshold=stage3_threshold,
         )
     elif stage3_type == "xgb_reg":
         final_test, metrics3 = stage3_exit_regression(
             opt_train, opt_val, opt_test, feature_cols_stage2,
             min_trades=30, metric=stage3_metric,
+            fixed_threshold=stage3_threshold,
         )
     else:  # none
         final_test = opt_test.copy()
