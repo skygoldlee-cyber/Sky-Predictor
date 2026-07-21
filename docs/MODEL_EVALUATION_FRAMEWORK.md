@@ -2,7 +2,9 @@
 
 > 문서 ID: `DESIGN-EVAL-001`
 > 작성일: 2026-07-21
-> 목적: SkyPredictor KDE/ML 파이프라인의 여러 변형을 공정하고 재현 가능한 기준으로 비교
+> 목적: SkyPredictor 전략/모델(KDE/ML, rule-based, momentum 등)의 여러 변형을 공정하고 재현 가능한 기준으로 비교
+
+> 본 평가 체계는 **파이프라인에 독립적(pipeline-agnostic)**입니다. KDE/ML뿐만 아니라 rule-based, pullback momentum, LSTM, pattern 기반 등 어떤 거래 전략이든 동일한 기준을 적용할 수 있습니다.
 
 ---
 
