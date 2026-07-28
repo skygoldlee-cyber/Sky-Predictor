@@ -109,16 +109,31 @@ def apply_trading_costs(df: pd.DataFrame, slippage_ticks: int = SLIPPAGE_TICKS) 
     return df
 
 
-def load_data(slippage_ticks: int = SLIPPAGE_TICKS) -> pd.DataFrame:
+def load_data(slippage_ticks: int = SLIPPAGE_TICKS, target_horizon: int | None = None) -> pd.DataFrame:
     path = DATA_DIR / "ml_dataset_with_kde.csv"
     df = pd.read_csv(path)
     df["entry_time"] = pd.to_datetime(df["entry_time"])
     df["year"] = df["entry_time"].dt.year
     df = apply_trading_costs(df, slippage_ticks=slippage_ticks)
     df = add_derived_features(df)
-    # Cost-normalized target for stage3 regression (per contract PnL)
-    size = df["size_factor"].replace(0, np.nan).fillna(1.0)
-    df["pnl_per_contract"] = df["net_krw"] / size
+
+    # Use fixed-horizon directional returns as the supervised target if requested.
+    # This avoids circular leakage from the strategy's own exit decisions.
+    if target_horizon is not None:
+        ret_col = f"future_return_{target_horizon}"
+        win_col = f"is_win_h{target_horizon}"
+        if ret_col not in df.columns or win_col not in df.columns:
+            raise KeyError(
+                f"Fixed-horizon target columns {ret_col}/{win_col} not found. "
+                "Run Devcenter/ml/add_fixed_horizon_labels.py first."
+            )
+        size = df["size_factor"].replace(0, np.nan).fillna(1.0)
+        df["is_win"] = df[win_col]
+        df["pnl_per_contract"] = df[ret_col] * CONTRACT_MULTIPLIER
+    else:
+        # Cost-normalized target for stage3 regression (per contract PnL)
+        size = df["size_factor"].replace(0, np.nan).fillna(1.0)
+        df["pnl_per_contract"] = df["net_krw"] / size
     return df
 
 
@@ -176,6 +191,7 @@ def split_by_year(df: pd.DataFrame, train_years: tuple, val_year: int, test_year
 
 
 def _metric_score(df: pd.DataFrame, metric: str) -> float:
+    # Optimize the actual per-trade PnL when selecting thresholds.
     net = df["net_krw"]
     if len(net) < 2:
         return -np.inf
